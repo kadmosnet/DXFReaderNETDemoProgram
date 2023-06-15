@@ -8,9 +8,10 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>DXFReaderNETDemoProgram</RootNamespace>
     <AssemblyName>DXFReaderNETDemoProgram</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -170,6 +171,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="bin\Debug\fonts\Simplex.ttf" />
     <None Include="bin\Debug\fonts\simplex_.ttf" />
@@ -196,7 +198,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="bin\Debug\Cyotek.Windows.Forms.ColorPicker.dll" />
-    <Content Include="bin\Debug\DXFReaderNET.dll" />
     <Content Include="bin\Debug\gsdll32.dll" />
     <Content Include="bin\Debug\System.Windows.Forms.Ribbon.dll" />
   </ItemGroup>

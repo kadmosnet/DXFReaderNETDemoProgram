@@ -47,6 +47,8 @@
             this.buttonColor2 = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.comboBox3 = new System.Windows.Forms.ComboBox();
+            this.label7 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.PictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -54,7 +56,7 @@
             // 
             this.ButtonCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.ButtonCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ButtonCancel.Location = new System.Drawing.Point(198, 297);
+            this.ButtonCancel.Location = new System.Drawing.Point(198, 320);
             this.ButtonCancel.Margin = new System.Windows.Forms.Padding(2);
             this.ButtonCancel.Name = "ButtonCancel";
             this.ButtonCancel.Size = new System.Drawing.Size(88, 24);
@@ -66,7 +68,7 @@
             // 
             this.ButtonOk.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.ButtonOk.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ButtonOk.Location = new System.Drawing.Point(101, 297);
+            this.ButtonOk.Location = new System.Drawing.Point(101, 320);
             this.ButtonOk.Name = "ButtonOk";
             this.ButtonOk.Size = new System.Drawing.Size(88, 24);
             this.ButtonOk.TabIndex = 3;
@@ -164,8 +166,9 @@
             "Choose single entities",
             "Choose entities by rectangle",
             "Define polygon",
-            "Point inside entity"});
-            this.comboBox2.Location = new System.Drawing.Point(124, 262);
+            "Point inside entity",
+            "Selected entities"});
+            this.comboBox2.Location = new System.Drawing.Point(124, 285);
             this.comboBox2.Name = "comboBox2";
             this.comboBox2.Size = new System.Drawing.Size(162, 21);
             this.comboBox2.TabIndex = 22;
@@ -173,7 +176,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(9, 265);
+            this.label4.Location = new System.Drawing.Point(9, 288);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(60, 13);
             this.label4.TabIndex = 21;
@@ -231,13 +234,47 @@
             this.label6.TabIndex = 26;
             this.label6.Text = "Color2";
             // 
+            // comboBox3
+            // 
+            this.comboBox3.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.comboBox3.FormattingEnabled = true;
+            this.comboBox3.Items.AddRange(new object[] {
+            "0",
+            "10",
+            "20",
+            "30",
+            "40",
+            "50",
+            "60",
+            "70",
+            "80",
+            "90"});
+            this.comboBox3.Location = new System.Drawing.Point(124, 258);
+            this.comboBox3.Name = "comboBox3";
+            this.comboBox3.Size = new System.Drawing.Size(162, 21);
+            this.comboBox3.TabIndex = 29;
+            this.comboBox3.SelectedIndexChanged += new System.EventHandler(this.comboBox3_SelectedIndexChanged);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(9, 261);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(72, 13);
+            this.label7.TabIndex = 28;
+            this.label7.Text = "Transparency";
+            this.label7.Click += new System.EventHandler(this.label7_Click);
+            // 
             // GradientSelector
             // 
             this.AcceptButton = this.ButtonOk;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.ButtonCancel;
-            this.ClientSize = new System.Drawing.Size(301, 329);
+            this.ClientSize = new System.Drawing.Size(301, 355);
+            this.Controls.Add(this.comboBox3);
+            this.Controls.Add(this.label7);
             this.Controls.Add(this.buttonColor2);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.buttonColor1);
@@ -283,5 +320,7 @@
         internal System.Windows.Forms.Button buttonColor2;
         internal System.Windows.Forms.Label label6;
         private System.Windows.Forms.ToolTip toolTip1;
+        internal System.Windows.Forms.ComboBox comboBox3;
+        internal System.Windows.Forms.Label label7;
     }
 }

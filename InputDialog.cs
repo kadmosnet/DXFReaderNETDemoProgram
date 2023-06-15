@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-
-using System.Text;
 
 using System.Windows.Forms;
+
 
 namespace DXFReaderNETDemoProgram
 {
@@ -17,6 +12,7 @@ namespace DXFReaderNETDemoProgram
         public InputDialog()
         {
             InitializeComponent();
+
         }
         private readonly char decimalSeparetor = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator.ToCharArray()[0];
         private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
@@ -40,6 +36,14 @@ namespace DXFReaderNETDemoProgram
         private void ButtonOk_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void InputDialog_Load(object sender, EventArgs e)
+        {
+            if (ForceNumeric)
+            {
+                textBox1.MaxLength = 10;
+            }
         }
     }
 }

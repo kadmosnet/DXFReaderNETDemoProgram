@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-
-using System.Text;
-
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 namespace DXFReaderNETDemoProgram
 {
@@ -20,7 +12,7 @@ namespace DXFReaderNETDemoProgram
         }
         private readonly char decimalSeparetor = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator.ToCharArray()[0];
 
-       
+
 
         private void textBox2_KeyPress(object sender, KeyPressEventArgs e)
         {

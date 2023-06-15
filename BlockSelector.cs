@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+﻿using DXFReaderNET;
+using System;
 using System.Drawing;
-
-using System.Text;
-
 using System.Windows.Forms;
-using DXFReaderNET;
 
 namespace DXFReaderNETDemoProgram
 {
@@ -68,7 +62,7 @@ namespace DXFReaderNETDemoProgram
             }
             else
             {
-                
+
                 if (ComboBox1.SelectedItem != null)
                 {
 

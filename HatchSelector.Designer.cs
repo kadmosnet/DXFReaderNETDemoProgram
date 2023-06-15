@@ -287,7 +287,8 @@
             "Choose single entities",
             "Choose entities by rectangle",
             "Define polygon",
-            "Point inside entity"});
+            "Point inside entity",
+            "Selected entities"});
             this.comboBox2.Location = new System.Drawing.Point(124, 259);
             this.comboBox2.Name = "comboBox2";
             this.comboBox2.Size = new System.Drawing.Size(162, 21);

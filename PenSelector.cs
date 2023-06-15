@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-
-using System.Text;
 
 using System.Windows.Forms;
 
@@ -26,7 +20,7 @@ namespace DXFReaderNETDemoProgram
             {
                 e.Handled = true;
             }
-                        
+
             if ((e.KeyChar == decimalSeparetor) && ((sender as TextBox).Text.IndexOf(decimalSeparetor) > -1))
             {
                 e.Handled = true;

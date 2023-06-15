@@ -11,17 +11,19 @@ using DXFReaderNET;
 using DXFReaderNET.Entities;
 namespace DXFReaderNETDemoProgram
 {
+#pragma warning disable IDE0017, IDE1006
     public partial class DimStyleSelector : Form
     {
+
         //internal DXFReaderNET.DXFReaderNETControl DXFReaderNETControl;
         public DimStyleSelector()
         {
             InitializeComponent();
         }
         bool onStart = true;
-        //internal List<DXFReaderNET.Tables.DimensionStyle> dimstylesBuffer = new List<DXFReaderNET.Tables.DimensionStyle>();
-        internal DXFReaderNET.Collections.DimensionStyles dimstylesBuffer;// = new List<DXFReaderNET.Tables.DimensionStyle>();
-        internal string currentDimStyle;
+        internal List<DXFReaderNET.Tables.DimensionStyle> dimstylesBuffer = new List<DXFReaderNET.Tables.DimensionStyle>();
+        //nternal DXFReaderNET.Collections.DimensionStyles dimstylesBuffer;// = new List<DXFReaderNET.Tables.DimensionStyle>();
+        internal string currentDimStyle = "";
         private void DimStyleSelector_Load(object sender, EventArgs e)
         {
 

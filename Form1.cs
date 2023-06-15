@@ -1,12 +1,15 @@
 ﻿using DXFReaderNET;
 using DXFReaderNET.Entities;
+using DXFReaderNET.Tables;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Windows.Forms;
 using System.Linq;
+using System.Windows.Forms;
+
+
 
 namespace DXFReaderNETDemoProgram
 {
@@ -20,10 +23,74 @@ namespace DXFReaderNETDemoProgram
 
         #region declarations
 
-        private readonly static List<string> UnDoStack = new List<string>();
+        private static Stack<string> UnDoStack = new Stack<string>();
+        private static Stack<string> ReDoStack = new Stack<string>();
+
+
 
         private Vector2 panPointStart = Vector2.Zero;
+        internal enum Commands
+        {
+            None,
+            POINT,
+            LINE,
+            LINES,
+            TRACE,
+            MLINE,
+            RAY,
+            XLINE,
+            CIRCLE_Center_Radius,
+            CIRCLE_Diameter,
+            CIRCLE_3Points,
+            ELLIPSE,
+            SLOT,
+            LWPOLYLINE,
+            POLYLINE,
+            RECTANGLE,
+            POLIGON,
+            SOLID,
+            SPLINE,
+            ARCCenterStartAngleEndAngle,
+            ARCStartPointMiddlePointEndPoint,
+            ARCStartPointEndPointMiddlePoint,
+            HATCH,
+            HATCH_GRADIENT,
+            INSERT,
+            IMAGE,
+            ATTACHPDF,
+            TRIM,
+            EXTEND,
+            CHAMFER,
+            OFFSET,
+            JOIN,
+            FILLET,
+            NORMALIZE,
+            COPY,
+            MOVE,
+            ROTATE,
+            CREATEBLOCK,
+            MIRROR,
+            CREATELWPOLYLINE,
+            CREATEBULGEDLWPOLYLINE,
+            ARRAY,
+            POLARARRAY,
+            EXPLODEINSERT,
+            EXPLODEDIMENSION,
+            EXPLODEPOLYLINE,
+            EXPLODESPLINE,
+            EXPLODECIRCLE,
+            EXPLODEELLIPSE,
+            EXPLODEREGION,
+            DIMENSION,
+            TEXT,
+            DISTANCE,
+            AREA,
+            LEADER,
 
+
+
+
+        }
 
         internal enum FunctionsEnum
         {
@@ -47,8 +114,10 @@ namespace DXFReaderNETDemoProgram
             MoveEntitiesRubber3,
             MoveEntities1,
             MoveEntities2,
+            RotateEntities,
             RotateEntities1,
             RotateEntities2,
+            ScaleEntities,
             ScaleEntities1,
             ScaleEntities2,
             Ungroup,
@@ -64,6 +133,8 @@ namespace DXFReaderNETDemoProgram
             Ellipse3,
             ZoomWindow1,
             ZoomWindow2,
+            Connect1,
+            Connect2,
             Distance1,
             Distance2,
             LocatePoint,
@@ -72,6 +143,7 @@ namespace DXFReaderNETDemoProgram
             LwPolyline,
             Polyline,
             PolylineLenght,
+            Mline,
             Spline,
             SetLimits1,
             SetLimits2,
@@ -79,6 +151,7 @@ namespace DXFReaderNETDemoProgram
             Ray2,
             Xline1,
             Xline2,
+            Rectangle0,
             Rectangle1,
             Rectangle2,
             Trace1,
@@ -107,11 +180,14 @@ namespace DXFReaderNETDemoProgram
             GradientHatchOutermost,
             GradientHatchBoundaries,
             GradientHatchPoint,
-            GradientHatchRecangle1,
-            GradientHatchRecangle2,
+            GradientHatchRectangle1,
+            GradientHatchRectangle2,
             Arc1,
             Arc2,
             Arc3,
+            ArcCenterPStartPEnd1,
+            ArcCenterPStartPEnd2,
+            ArcCenterPStartPEnd3,
             ArcStartMiddleEnd1,
             ArcStartMiddleEnd2,
             ArcStartMiddleEnd3,
@@ -132,7 +208,10 @@ namespace DXFReaderNETDemoProgram
             DrawImageFixedSize,
             DrawText,
             ExplodeInsert,
+            ExplodeInsert1,
+            ExplodeInsert2,
             ExplodeDimension,
+            ExplodePoly,
             ExplodePoly1,
             ExplodePoly2,
             ExplodeCircle,
@@ -141,6 +220,8 @@ namespace DXFReaderNETDemoProgram
             ExplodeSplineRect2,
             ExplodeArc,
             ExplodeEllipse,
+            ExplodeEllipseArcs,
+            ExplodeCircleArcs,
             ExplodeRegion,
             Offset1,
             Offset2,
@@ -190,11 +271,19 @@ namespace DXFReaderNETDemoProgram
             Array2,
             ArrayPolar,
             Contour,
-
+            Orbit3D,
+            Lw2Poly,
+            Poly2Lw,
+            Leader1,
+            Leader2,
+            Leader3,
 
         }
-        private string cmdCoord = "";
+        //private string cmdCoord = "";
         private FunctionsEnum _CurrentFunction = FunctionsEnum.None;
+
+        private Commands LastCommand = Commands.None;
+
         private FunctionsEnum CurrentFunction
         {
             get { return _CurrentFunction; }
@@ -205,9 +294,14 @@ namespace DXFReaderNETDemoProgram
             }
         }
         private int m_SelectedContours = 0;
+
+        private double m_mlineScale = 20;
         List<DXFReaderNET.Objects.Group> addedContours = new List<DXFReaderNET.Objects.Group>();
 
         private double m_RectangleFilletRadius = 0;
+        private int m_precision = 100;
+
+
         private Vector2 p = Vector2.Zero;
         private Vector2 p1 = Vector2.Zero;
         private Vector2 pstart = Vector2.Zero;
@@ -222,10 +316,11 @@ namespace DXFReaderNETDemoProgram
 
         private readonly Cyotek.Windows.Forms.ColorPickerDialog Cdialog = new Cyotek.Windows.Forms.ColorPickerDialog();
         private string CurrentLoadDXFPath = Application.StartupPath;
+        private string CurrentLoadRecoveryDXFPath = Application.StartupPath;
         private string CurrentLoadOBJPath = Application.StartupPath;
         private string CurrentSaveDXFPath = Application.StartupPath;
         private string CurrentSaveBMPPath = Application.StartupPath;
-        private RubberBandType m_RubberBandType = RubberBandType.Solid;
+        private RubberBandType m_RubberBandType = RubberBandType.Dashed;
         private Color m_RubberBandColor = Color.FromArgb(150, 150, 150);
 
         private bool OnPlotPreview = false;
@@ -238,6 +333,8 @@ namespace DXFReaderNETDemoProgram
 
         private EntityObject m_filletLine1 = null;
         private EntityObject m_filletLine2 = null;
+
+
 
         private EntityObject m_entOffset = null;
         private List<EntityObject> m_entTrimBoundaries = new List<EntityObject>();
@@ -266,6 +363,7 @@ namespace DXFReaderNETDemoProgram
         private string m_GradientPatternName = "Linear";
         private string m_GradientHatchRotation = "0";
         private string m_GradientHatchBoundaries = "Choose single entities";
+        private string m_GradientHatchTransparency = "0";
         private bool m_GradientHatchCentered = true;
         private short m_GradientAciColor1 = 1;
         private short m_GradientAciColor2 = 5;
@@ -291,8 +389,10 @@ namespace DXFReaderNETDemoProgram
         private int m_ImageWidth = 0;
         private int m_ImageHeight = 0;
         private bool m_ImageScaleOnScreen = true;
+        private bool m_ContinuousSelection = false;
         private bool m_ImageEmbed = false;
         private bool m_showCommandLine = false;
+        private bool m_selectRotationOnScreen = false;
         private int m_ArrayColumns = 2;
         private int m_ArrayRows = 2;
         private int m_PolarArrayItems = 4;
@@ -324,22 +424,30 @@ namespace DXFReaderNETDemoProgram
             splitContainer1.Dock = DockStyle.Fill;
             splitContainer1.SplitterDistance = 0;
             dxfReaderNETControl1.NewDrawing();
-
+            ErrorLabel.Text = "";
             InitDrawing();
 
             ribbonButtonInquiryTest.Visible = false;
-            ribbonComboBoxLayout.Visible = false;
+            //.Visible = false;
             ribbonButtonCommandLine.Visible = false;
 
             ribbonButtonPointInPolygon.Visible = false;
             ribbonPanelHelp.ButtonMoreVisible = false;
             ribbonButtonModifyFillet.Visible = false;
             ribbonButtonShowFilledAreas.Visible = false;
+            ribbonButtonTruTOPS.Visible = false;
+            ribbonButtonSplitSections.Visible = false;
+            ribbonButtonRecoverDXFFIle.Visible = false;
             ribbonButtonPrintEntityProp.Visible = false;
-
+            ribbonPanelHelp.ButtonMoreVisible = false;
 
             ribbonButton1SaveTest.Visible = false;
-            barButtonItemGrabPoints.Visible = false;
+
+
+            ribbonButtonInquiryXdata.Visible = false;
+            ribbonButtonPrintEntitiesList.Visible = false;
+            ribbonButtonShowData.Visible = false;
+
             DrawPen = new Pen(CurrentDrawColor);
             DrawPen.Width = CurrentDrawPenWidth;
             if (CurrentDrawPenStyle == "Continuous")
@@ -353,33 +461,58 @@ namespace DXFReaderNETDemoProgram
             }
 #if DEBUG
             ribbonButtonInquiryTest.Visible = true;
-            ribbonComboBoxLayout.Visible = true;
+            //ribbonComboBoxLayout.Visible = true;
             ribbonButtonCommandLine.Visible = true;
 
             ribbonButtonPointInPolygon.Visible = true;
             ribbonPanelHelp.ButtonMoreVisible = true;
             ribbonButtonModifyFillet.Visible = true;
             ribbonButtonShowFilledAreas.Visible = true;
+            ribbonButtonTruTOPS.Visible = true;
+            ribbonButtonSplitSections.Visible = true;
+            ribbonButtonRecoverDXFFIle.Visible = true;
 
             ribbonButton1SaveTest.Visible = true;
-            barButtonItemGrabPoints.Visible = true;
+
             ribbonButtonPrintEntityProp.Visible = true;
-
-
+            ribbonPanelHelp.ButtonMoreVisible = true;
+            ribbonButtonInquiryXdata.Visible = true;
+            ribbonButtonPrintEntitiesList.Visible = true;
+            ribbonButtonShowData.Visible = true;
 #endif
+
+            CheckContinuousSelection();
+
         }
-
-
 
         private void InitDrawing()
         {
 
-            UnDoStack.Clear();
-            dxfReaderNETControl1.Dock = DockStyle.Fill;
+            toolStripProgressBar1.Value = 0;
             AddLinetipes(dxfReaderNETControl1);
+            AddLayerIfNotPresent("AUXILIARY");
+            //dxfReaderNETControl1.DXF.Layers["AUXILIARY"].IsLocked = true;
+            dxfReaderNETControl1.DXF.Layers["AUXILIARY"].Color = AciColor.FromCadIndex(10);
+            dxfReaderNETControl1.DXF.Layers["AUXILIARY"].Linetype = dxfReaderNETControl1.DXF.Linetypes["ISO double-dash dot __ __ . __ __ . __ __ . __ _"];
+            dxfReaderNETControl1.DXF.Layers["AUXILIARY"].Transparency.Value = 50;
+
+            ribbonButtonViewTreeView.Checked = false;
+            splitContainer1.SplitterDistance = 0;
+            splitContainer1.IsSplitterFixed = true;
+            TreeView1.Visible = false;
+            //RefreshTree();
+
+            hatchPatternsCustom.Clear();
+            ribbonButtonUndo.Enabled = false;
+            ribbonButtonRedo.Enabled = false;
+            UnDoStack.Clear();
+            ReDoStack.Clear();
+            dxfReaderNETControl1.Dock = DockStyle.Fill;
+
             //printPreviewControl1.Dock = DockStyle.Fill;
             dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
             StatusLabel.Text = "";
+
             StatusLabelX.Text = "";
             StatusLabelY.Text = "";
             toolStripStatusLabelInfo.Text = "";
@@ -388,6 +521,7 @@ namespace DXFReaderNETDemoProgram
 
             this.Text = "DXFReader.NET Component - Demo Program";
             ribbonColors();
+            SetSnapRibbon();
             ////////////////////////////////////////////////////////////////////////
             LoadLayersCombo();
 
@@ -416,6 +550,24 @@ namespace DXFReaderNETDemoProgram
                 ribbonButtonModPropLineType.DropDownItems.Add(newItem);
 
             }
+
+            ///////////////////////////////////////////////////////////////////////////
+            ///
+
+
+            ///////////////////////////////////////////////////////////////////////////
+            ribbonButtonModPropLineWeight.DropDownItems.Clear();
+            List<Lineweight> lwl = Enum.GetValues(typeof(Lineweight)).Cast<Lineweight>().ToList();
+            foreach (Lineweight lw in lwl)
+            {
+
+                RibbonButton newItem = new RibbonButton();
+                newItem.Text = lw.ToString();
+                ribbonButtonModPropLineWeight.DropDownItems.Add(newItem);
+
+            }
+
+
 
             ///////////////////////////////////////////////////////////////////////////
 
@@ -529,6 +681,9 @@ namespace DXFReaderNETDemoProgram
                 case PlotModeType.Window:
                     ribbonComboBoxPlotMode.SelectedItem = ribbonButtonPlotModeWindow;
                     break;
+                case PlotModeType.Centered:
+                    ribbonComboBoxPlotMode.SelectedItem = ribbonButtonPlotModeCentered;
+                    break;
             }
 
             ////////////////////////////////////////////////////////////////////////
@@ -599,13 +754,19 @@ namespace DXFReaderNETDemoProgram
             ribbonUpDownRubberPenWidth.TextBoxText = dxfReaderNETControl1.RubberBandPenWidth.ToString("###0");
 
             ribbonUpDownZoomFactor.TextBoxText = dxfReaderNETControl1.ZoomInOutPercent.ToString("###0");
+
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
             ShowStatusLabels();
+
+            LastCommand = Commands.None;
+
+
+
 
 
 
             //dxfReaderNETControl1.HighlightNotContinuous = true;
         }
-
 
         private void ribbonColors()
         {
@@ -625,7 +786,11 @@ namespace DXFReaderNETDemoProgram
             ribbonButtonHighlight.Checked = dxfReaderNETControl1.HighlightEntityOnHover;
             ribbonButtonCheckContHighligh.Checked = dxfReaderNETControl1.ContinuousHighlight;
             ribbonButton11.Checked = dxfReaderNETControl1.HighlightNotContinuous;
+            ribbonButtonGrabPoints.Checked = dxfReaderNETControl1.HighlightGrabPoints;
+            ribbonButtonContinuosSelection.Checked = m_ContinuousSelection;
 
+            ribbonButtonModifySelectSingleMulti.Enabled = !m_ContinuousSelection;
+            ribbonButtonModifySelectSinlge.Enabled = !m_ContinuousSelection;
 
             ribbonButtonShowAxes.Checked = dxfReaderNETControl1.ShowAxes;
             ribbonButtonShowBasepoint.Checked = dxfReaderNETControl1.ShowBasePoint;
@@ -635,8 +800,38 @@ namespace DXFReaderNETDemoProgram
             ribbonButtonAntialias.Checked = dxfReaderNETControl1.AntiAlias;
             ribbonColorChooserDrawMethodsColor.Color = CurrentDrawColor;
             ribbonButtonCommandLine.Checked = m_showCommandLine;
-            labelCommands.Visible = ribbonButtonCommandLine.Checked;
+            //labelCommands.Visible = ribbonButtonCommandLine.Checked;
+            panelCommands.Visible = ribbonButtonCommandLine.Checked;
+            ribbonButtonShowExtents.Checked = dxfReaderNETControl1.ShowExtents;
+            ribbonButtonGridInsideLimits.Checked = false;
+            if (dxfReaderNETControl1.GridDisplay == GridDisplayType.InsideDrawingLimits)
+            {
+                ribbonButtonGridInsideLimits.Checked = true;
+            }
 
+            ribbonButtonHighlight.Checked = dxfReaderNETControl1.HighlightEntityOnHover;
+
+
+
+
+
+
+
+        }
+
+        private void SetSnapRibbon()
+        {
+            ribbonButtonObjectSnapEndpoint.Checked = dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Endpoint);
+            ribbonButtonObjectSnapMidpoint.Checked = dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Midpoint);
+            ribbonButtonObjectSnapCenter.Checked = dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Center);
+            ribbonButtonObjectSnapIntersection.Checked = dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Intersection);
+            ribbonButtonObjectSnapQuadrant.Checked = dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Quadrant);
+            ribbonButtonObjectSnapPerpendicular.Checked = dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Perpendicular);
+            ribbonButtonObjectSnapTangent.Checked = dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Tangent);
+            ribbonButtonObjectSnapInsertion.Checked = dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Insertion);
+            ribbonButtonObjectSnapNearest.Checked = dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Nearest);
+            ribbonButtonObjectSnapNode.Checked = dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Node);
+            ribbonButtonObjectSnapGeometricCenter.Checked = dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.GeometricCenter);
         }
 
         private void ShowStatusLabels()
@@ -675,10 +870,10 @@ namespace DXFReaderNETDemoProgram
 
         }
 
-
         private void ribbonButton6_Click(object sender, EventArgs e)
         {
             dxfReaderNETControl1.ZoomExtents();
+            // dxfReaderNETControl1.ZoomCenter();
         }
 
         private void ribbonButton5_Click(object sender, EventArgs e)
@@ -692,17 +887,19 @@ namespace DXFReaderNETDemoProgram
             p = dxfReaderNETControl1.CurrentWCSpoint;
             StatusLabelX.Text = "x: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p.X);
             StatusLabelY.Text = "y: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p.Y);
-
-
-            if (e.Button == MouseButtons.Middle)
+            if (CurrentFunction == FunctionsEnum.Orbit3D)
             {
-
-                dxfReaderNETControl1.Pan(p, panPointStart);
-
+                dxfReaderNETControl1.Orbit(p, panPointStart);
                 return;
             }
 
-            if (e.Button == MouseButtons.Left && CurrentFunction == FunctionsEnum.None)
+            if (e.Button == MouseButtons.Middle)
+            {
+                dxfReaderNETControl1.Pan(p, panPointStart);
+                return;
+            }
+
+            if (e.Button == MouseButtons.Left && (CurrentFunction == FunctionsEnum.None || CurrentFunction == FunctionsEnum.GetEntities))
             {
                 dxfReaderNETControl1.ShowRubberBandBox(pstart, p);
                 leftPressed = true;
@@ -768,7 +965,9 @@ namespace DXFReaderNETDemoProgram
                     slotEnts.Add(a2);
 
 
-                    dxfReaderNETControl1.ShowRubberBandEntities(slotEnts, Vector2.Zero, null, RubberBandType.Solid);
+
+
+                    dxfReaderNETControl1.ShowRubberBandEntities(slotEnts, Vector2.Zero, m_RubberBandColor, m_RubberBandType);
                     toolStripStatusLabelInfo.Text = "ΔX: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p.X - p1.X) + " ΔY: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p.Y - p1.Y);
                     break;
 
@@ -826,13 +1025,21 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.AlignedDimension3:
                     dxfReaderNETControl1.ShowRubberBandAlignedDimension(p1, p2, p, m_RubberBandColor, m_RubberBandType);
                     break;
+
+                case FunctionsEnum.AngularDimensionArc2:
+                    Arc arc = (Arc)SelectedEntity;
+                    dxfReaderNETControl1.ShowRubberBandAngularDimension(arc.Center.ToVector2(), arc.Radius, arc.StartAngle, arc.EndAngle, p, m_RubberBandColor, m_RubberBandType);
+                    break;
                 case FunctionsEnum.GradientHatchBoundaries:
                 case FunctionsEnum.HatchBoundaries:
 
+                case FunctionsEnum.Leader2:
+                case FunctionsEnum.Leader3:
                 case FunctionsEnum.Lines:
                 case FunctionsEnum.PolylineLenght:
                 case FunctionsEnum.Polyline:
                 case FunctionsEnum.LwPolyline:
+                case FunctionsEnum.Mline:
                 case FunctionsEnum.Area:
                 case FunctionsEnum.DrawPolygon:
                     if (vertexes.Count > 0)
@@ -943,18 +1150,19 @@ namespace DXFReaderNETDemoProgram
                         }
                         rectEnts.Add(a);
 
-                        dxfReaderNETControl1.ShowRubberBandEntities(rectEnts, Vector2.Zero, null, RubberBandType.Solid);
+                        dxfReaderNETControl1.ShowRubberBandEntities(rectEnts, Vector2.Zero, m_RubberBandColor, m_RubberBandType);
 
                     }
                     else
                     {
-                        dxfReaderNETControl1.ShowRubberBandBox(p1, p2, m_RubberBandColor, RubberBandType.Solid);
+                        dxfReaderNETControl1.ShowRubberBandBox(p1, p2, m_RubberBandColor, m_RubberBandType);
                     }
 
 
                     toolStripStatusLabelInfo.Text = "Start point: x: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p1.X) + " y: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p1.Y) + " ΔX: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p2.X - p1.X) + " ΔY: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p2.Y - p1.Y);
                     break;
                 case FunctionsEnum.SetLimits2:
+                case FunctionsEnum.Connect2:
                 case FunctionsEnum.ZoomWindow2:
                 case FunctionsEnum.Image2:
                 case FunctionsEnum.DrawImage2:
@@ -962,10 +1170,11 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.PlotWindow2:
                 case FunctionsEnum.GetEntities2:
                 case FunctionsEnum.HatchRecangle2:
-                case FunctionsEnum.GradientHatchRecangle2:
+                case FunctionsEnum.GradientHatchRectangle2:
 
                 case FunctionsEnum.ExplodeSplineRect2:
                 case FunctionsEnum.ExplodePoly2:
+                case FunctionsEnum.ExplodeInsert2:
                     dxfReaderNETControl1.ShowRubberBandBox(p1, p);
                     toolStripStatusLabelInfo.Text = "Start point: x: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p1.X) + " y: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p1.Y) + " ΔX: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p.X - p1.X) + " ΔY: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p.Y - p1.Y);
                     break;
@@ -973,19 +1182,17 @@ namespace DXFReaderNETDemoProgram
 
                 case FunctionsEnum.Distance2:
 
-
                     dxfReaderNETControl1.ShowRubberBandLine(p1, p);
                     toolStripStatusLabelInfo.Text = "Distance: " + dxfReaderNETControl1.DXF.ToFormattedUnit(Vector2.Distance(p1, p));
                     break;
                 case FunctionsEnum.ArrayPolar:
                     p1 = p;
 
-                    double stepAng = (double)360 / (double)m_PolarArrayItems;
-                    double radius = Vector2.Distance(p2, p1);
+                    double stepAng = 360 / (double)m_PolarArrayItems;
+                    //double radius = Vector2.Distance(p2, p1);
                     List<EntityObject> arrayPaEnts = new List<EntityObject>();
                     for (int k = 0; k < m_PolarArrayItems; k++)
                     {
-
 
                         foreach (EntityObject entPA in dxfReaderNETControl1.DXF.SelectedEntities)
                         {
@@ -1006,18 +1213,18 @@ namespace DXFReaderNETDemoProgram
 
 
 
-                    double spacingX = Math.Abs(p.X - p1.X);
-                    double spacingY = Math.Abs(p.Y - p1.Y);
+                    //double spacingX = Math.Abs(p.X - p1.X);
+                    //double spacingY = Math.Abs(p.Y - p1.Y);
 
+                    double spacingX = p.X - p1.X;
+                    double spacingY = p.Y - p1.Y;
 
 
 
                     Vector2 displacement = Vector2.Zero;
-                    for (int k = 0; k < m_ArrayColumns; k++)
+                    for (int k = 0; k < m_ArrayRows; k++)
                     {
-
-
-                        for (int j = 0; j < m_ArrayRows; j++)
+                        for (int j = 0; j < m_ArrayColumns; j++)
                         {
 
                             foreach (EntityObject entA in dxfReaderNETControl1.DXF.SelectedEntities)
@@ -1040,12 +1247,25 @@ namespace DXFReaderNETDemoProgram
 
                     break;
 
+
+
+                case FunctionsEnum.Line2:
+                case FunctionsEnum.Trace2:
+                    dxfReaderNETControl1.ShowRubberBandLine(p1, p, m_RubberBandColor, m_RubberBandType);
+                    toolStripStatusLabelInfo.Text = "Length: " + dxfReaderNETControl1.DXF.ToFormattedUnit(Vector2.Distance(p1, p)) + " ΔX: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p.X - p1.X) + " ΔY: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p.Y - p1.Y);
+                    if (CurrentFunction == FunctionsEnum.Line2)
+                    {
+                        double angXY = Vector2.Angle(p1, p);
+                        toolStripStatusLabelInfo.Text += " Angle: " + dxfReaderNETControl1.DXF.ToFormattedAngle(angXY);
+                    }
+                    break;
+
                 case FunctionsEnum.CopyEntities2:
                 case FunctionsEnum.DrawLine2:
-                case FunctionsEnum.Line2:
                 case FunctionsEnum.Arc2:
+                case FunctionsEnum.ArcCenterPStartPEnd2:
                 case FunctionsEnum.DrawArc2:
-                case FunctionsEnum.Trace2:
+
                 case FunctionsEnum.Circle3p2:
                 case FunctionsEnum.AlignedDimension2:
                 case FunctionsEnum.LinearDimension2:
@@ -1062,22 +1282,22 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.ScaleEntities2:
 
 
-                    m_scale = Vector2.Distance(p1, p);
+                    m_scale = Vector2.Distance(p1, p) / 100;
                     List<EntityObject> scaleEnts = new List<EntityObject>();
                     foreach (EntityObject entity in dxfReaderNETControl1.DXF.SelectedEntities)
                     {
                         scaleEnts.Add((EntityObject)entity.Clone());
                     }
 
-                    dxfReaderNETControl1.DXF.ModifyEntities(scaleEnts, p1, Vector2.Zero, Vector2.Distance(p1, p), 0);
+                    dxfReaderNETControl1.DXF.ModifyEntities(scaleEnts, p1, Vector2.Zero, m_scale, 0);
 
                     dxfReaderNETControl1.ShowRubberBandEntities(scaleEnts, Vector2.Zero);
-
+                    toolStripStatusLabelInfo.Text = "Scale: " + dxfReaderNETControl1.DXF.ToFormattedUnit(m_scale);
                     break;
 
                 case FunctionsEnum.RotateEntities2:
-
-                    m_rotation = Vector2.Angle(p1, p) * MathHelper.RadToDeg;
+                    double angleRad = Vector2.Angle(p1, p);
+                    m_rotation = angleRad * MathHelper.RadToDeg;
                     List<EntityObject> rotEnts = new List<EntityObject>();
                     foreach (EntityObject entity in dxfReaderNETControl1.DXF.SelectedEntities)
                     {
@@ -1086,6 +1306,7 @@ namespace DXFReaderNETDemoProgram
                     dxfReaderNETControl1.DXF.ModifyEntities(rotEnts, p1, Vector2.Zero, 1, m_rotation);
 
                     dxfReaderNETControl1.ShowRubberBandEntities(rotEnts, Vector2.Zero);
+                    toolStripStatusLabelInfo.Text = "Angle: " + dxfReaderNETControl1.DXF.ToFormattedAngle(angleRad);
 
                     break;
 
@@ -1115,7 +1336,7 @@ namespace DXFReaderNETDemoProgram
 
                 case FunctionsEnum.Circle2:
 
-                    dxfReaderNETControl1.ShowRubberBandCircle(p1, Vector2.Distance(p1, p));
+                    dxfReaderNETControl1.ShowRubberBandCircle(p1, Vector2.Distance(p1, p), m_RubberBandColor, m_RubberBandType);
                     //dxfReaderNETControl1.ShowRubberBandLine(p1, p, Color.Yellow, RubberBandType.Solid);
                     toolStripStatusLabelInfo.Text = "Radius: " + dxfReaderNETControl1.DXF.ToFormattedUnit(Vector2.Distance(p1, p));
                     break;
@@ -1177,7 +1398,7 @@ namespace DXFReaderNETDemoProgram
                     break;
                 case FunctionsEnum.Polygon2:
                     vertexes.Clear();
-                    stepAng = (double)360 / (double)PolygonSides * MathHelper.DegToRad;
+                    stepAng = 360 / (double)PolygonSides * MathHelper.DegToRad;
 
                     double Radius = Vector2.Distance(p, p1);
                     double Rotation = Vector2.Angle(p, p1);
@@ -1190,7 +1411,7 @@ namespace DXFReaderNETDemoProgram
 
                         vertexes.Add(new Vector2(p1.X + Radius * Math.Cos(stepAng * k + Rotation), p1.Y + Radius * Math.Sin(stepAng * k + Rotation)));
                     }
-                    dxfReaderNETControl1.ShowRubberBandPolygon(vertexes, true);
+                    dxfReaderNETControl1.ShowRubberBandPolygon(vertexes, true, m_RubberBandColor, m_RubberBandType);
 
                     break;
                 case FunctionsEnum.Spline:
@@ -1238,9 +1459,9 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.Circle3p3:
 
                     Vector2 CenterPoint = MathHelper.CircleCenterFrom3Points(p1, p2, p);
-                    radius = Vector2.Distance(CenterPoint, p2);
+                    double radius = Vector2.Distance(CenterPoint, p2);
 
-                    dxfReaderNETControl1.ShowRubberBandCircle(CenterPoint, radius);
+                    dxfReaderNETControl1.ShowRubberBandCircle(CenterPoint, radius, m_RubberBandColor, m_RubberBandType);
 
                     toolStripStatusLabelInfo.Text = "Radius: " + dxfReaderNETControl1.DXF.ToFormattedUnit(radius);
                     break;
@@ -1264,8 +1485,11 @@ namespace DXFReaderNETDemoProgram
                     p2 = new Vector2(p1.X + VideoSize * Math.Cos(m), p1.Y + VideoSize * Math.Sin(m));
                     p3 = new Vector2(p1.X + VideoSize * Math.Cos(m + MathHelper.PI), p1.Y + VideoSize * Math.Sin(m + MathHelper.PI));
 
-                    dxfReaderNETControl1.ShowRubberBandLine(p1, p2);
-                    dxfReaderNETControl1.ShowRubberBandLine(p1, p3);
+                    //dxfReaderNETControl1.ShowRubberBandLine(p1, p2);
+                    //dxfReaderNETControl1.ShowRubberBandLine(p1, p3);
+                    dxfReaderNETControl1.ShowRubberBandLine(p2, p3);
+
+
                     toolStripStatusLabelInfo.Text = "Angle in XY Plane: " + dxfReaderNETControl1.DXF.ToFormattedAngle(m);
                     break;
 
@@ -1301,21 +1525,24 @@ namespace DXFReaderNETDemoProgram
                         vertexes.Add(new Vector2(pointX, pointY) + center);
                     }
 
-                    dxfReaderNETControl1.ShowRubberBandPolygon(vertexes, true);
+                    dxfReaderNETControl1.ShowRubberBandPolygon(vertexes, true, m_RubberBandColor, m_RubberBandType);
                     break;
 
 
                 case FunctionsEnum.Circle2p2:
 
 
-                    dxfReaderNETControl1.ShowRubberBandCircle(Vector2.MidPoint(p1, p), Vector2.Distance(p1, p) / 2);
+                    dxfReaderNETControl1.ShowRubberBandCircle(Vector2.MidPoint(p1, p), Vector2.Distance(p1, p) / 2, m_RubberBandColor, m_RubberBandType);
                     toolStripStatusLabelInfo.Text = "Radius: " + dxfReaderNETControl1.DXF.ToFormattedUnit(Vector2.Distance(p1, p) / 2);
                     break;
 
                 case FunctionsEnum.DrawArc3:
                 case FunctionsEnum.Arc3:
+                case FunctionsEnum.ArcCenterPStartPEnd3:
                     dxfReaderNETControl1.ShowRubberBandArc(p1, Vector2.Distance(p1, p2), Vector2.Angle(p1, p2) * MathHelper.RadToDeg, Vector2.Angle(p1, p) * MathHelper.RadToDeg);
                     break;
+
+
                 case FunctionsEnum.ArcStartMiddleEnd3:
                     CenterPoint = MathHelper.CircleCenterFrom3Points(p1, p2, p);
                     double StartAngle;
@@ -1354,7 +1581,7 @@ namespace DXFReaderNETDemoProgram
         private void ribbonButton9_Click(object sender, EventArgs e)
         {
             CurrentFunction = FunctionsEnum.ZoomWindow1;
-
+            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
             StatusLabel.Text = "Select start point of the window";
         }
 
@@ -1403,16 +1630,13 @@ namespace DXFReaderNETDemoProgram
             else
             {
 
-                StatusLabel.Text = "";
+                //StatusLabel.Text = "";
                 switch (CurrentFunction)
                 {
-                    case FunctionsEnum.Trim1:
-                        StatusLabel.Text = "Select object to trim";
-                        CurrentFunction = FunctionsEnum.Trim2;
-                        break;
+
                     case FunctionsEnum.GradientHatchBoundaries:
-                        CurrentFunction = FunctionsEnum.None;
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        contextMenuStrip1.Visible = false;
+                        InitStatus();
                         LwPolyline lw = new LwPolyline();
                         List<LwPolylineVertex> lwvertexes = new List<LwPolylineVertex>();
                         foreach (Vector2 v in vertexes)
@@ -1433,8 +1657,8 @@ namespace DXFReaderNETDemoProgram
                         vertexes.Clear();
                         break;
                     case FunctionsEnum.HatchBoundaries:
-                        CurrentFunction = FunctionsEnum.None;
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        contextMenuStrip1.Visible = false;
+                        InitStatus();
                         lw = new LwPolyline();
                         lwvertexes = new List<LwPolylineVertex>();
                         foreach (Vector2 v in vertexes)
@@ -1456,29 +1680,42 @@ namespace DXFReaderNETDemoProgram
 
 
                     case FunctionsEnum.GradientHatchOutermost:
-                        CurrentFunction = FunctionsEnum.None;
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        contextMenuStrip1.Visible = false;
+                        InitStatus();
                         m_LastAddedEntity = dxfReaderNETControl1.AddGradientHatch((HatchGradientPatternType)Enum.Parse(typeof(HatchGradientPatternType), m_GradientPatternName), Boundary, BoundaryOutermost, m_GradientAciColor1, m_GradientAciColor2, double.Parse(m_GradientHatchRotation, System.Globalization.CultureInfo.CurrentCulture), m_GradientHatchCentered);
 
-
+                        if (m_GradientHatchTransparency != "0")
+                        {
+                            if (m_LastAddedEntity != null)
+                            {
+                                Hatch myHatch = dxfReaderNETControl1.DXF.Hatches[dxfReaderNETControl1.DXF.Hatches.Count - 1];
+                                myHatch.Transparency = new Transparency(short.Parse(m_GradientHatchTransparency));
+                            }
+                        }
 
                         Boundary.Clear();
                         BoundaryOutermost.Clear();
                         break;
 
                     case FunctionsEnum.GradientHatch:
-
+                        contextMenuStrip1.Visible = false;
                         if (MessageBox.Show("Do you want to select hollow parts?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
                         {
                             CurrentFunction = FunctionsEnum.GradientHatchOutermost;
                         }
                         else
                         {
-                            CurrentFunction = FunctionsEnum.None;
-                            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                            InitStatus();
                             m_LastAddedEntity = dxfReaderNETControl1.AddGradientHatch((HatchGradientPatternType)Enum.Parse(typeof(HatchGradientPatternType), m_GradientPatternName), Boundary, BoundaryOutermost, m_GradientAciColor1, m_GradientAciColor2, double.Parse(m_GradientHatchRotation, System.Globalization.CultureInfo.CurrentCulture), m_GradientHatchCentered);
 
-
+                            if (m_GradientHatchTransparency != "0")
+                            {
+                                if (m_LastAddedEntity != null)
+                                {
+                                    Hatch myHatch = dxfReaderNETControl1.DXF.Hatches[dxfReaderNETControl1.DXF.Hatches.Count - 1];
+                                    myHatch.Transparency = new Transparency(short.Parse(m_GradientHatchTransparency));
+                                }
+                            }
 
                             Boundary.Clear();
                             BoundaryOutermost.Clear();
@@ -1487,8 +1724,8 @@ namespace DXFReaderNETDemoProgram
                         break;
 
                     case FunctionsEnum.HatchOutermost:
-                        CurrentFunction = FunctionsEnum.None;
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        contextMenuStrip1.Visible = false;
+                        InitStatus();
                         m_LastAddedEntity = dxfReaderNETControl1.AddHatch(m_PatternName, Boundary, BoundaryOutermost, double.Parse(m_HatchRotation, System.Globalization.CultureInfo.CurrentCulture), double.Parse(m_HatchScale, System.Globalization.CultureInfo.CurrentCulture), dxfReaderNETControl1.DXF.CurrentColor.Index);
 
 
@@ -1498,7 +1735,7 @@ namespace DXFReaderNETDemoProgram
                         break;
 
                     case FunctionsEnum.Hatch:
-
+                        contextMenuStrip1.Visible = false;
                         if (MessageBox.Show("Do you want to select hollow parts?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
                         {
                             CurrentFunction = FunctionsEnum.HatchOutermost;
@@ -1506,8 +1743,7 @@ namespace DXFReaderNETDemoProgram
                         }
                         else
                         {
-                            CurrentFunction = FunctionsEnum.None;
-                            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                            InitStatus();
                             m_LastAddedEntity = dxfReaderNETControl1.AddHatch(m_PatternName, Boundary, BoundaryOutermost, double.Parse(m_HatchRotation, System.Globalization.CultureInfo.CurrentCulture), double.Parse(m_HatchScale, System.Globalization.CultureInfo.CurrentCulture), dxfReaderNETControl1.DXF.CurrentColor.Index);
 
 
@@ -1519,68 +1755,23 @@ namespace DXFReaderNETDemoProgram
                         break;
 
                     case FunctionsEnum.GetEntities:
-                        StatusLabel.Text = "";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                        CurrentFunction = FunctionsEnum.None;
+                        //StatusLabel.Text = "";
+                        //dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        //CurrentFunction = FunctionsEnum.None;
 
                         break;
                     case FunctionsEnum.Lines:
-                        CurrentFunction = FunctionsEnum.None;
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-
-                        for (int k = 0; k < vertexes.Count - 1; k++)
-                        {
-                            dxfReaderNETControl1.DrawEntity(dxfReaderNETControl1.AddLine(new Vector3(vertexes[k].X, vertexes[k].Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(vertexes[k + 1].X, vertexes[k + 1].Y, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index));
-
-                        }
-                        if (MessageBox.Show("Close?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                        {
-                            dxfReaderNETControl1.DrawEntity(dxfReaderNETControl1.AddLine(new Vector3(vertexes[vertexes.Count - 1].X, vertexes[vertexes.Count - 1].Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(vertexes[0].X, vertexes[0].Y, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index));
-
-                        }
-
-                        vertexes.Clear();
-                        break;
-
                     case FunctionsEnum.Spline:
-                        CurrentFunction = FunctionsEnum.None;
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                        List<SplineVertex> splinevertexes = new List<SplineVertex>();
-                        foreach (Vector2 v in vertexes)
-                        {
-                            SplineVertex splinevertex = new SplineVertex(v.X, v.Y, dxfReaderNETControl1.DXF.CurrentElevation);
-
-                            splinevertexes.Add(splinevertex);
-                        }
-                        //bool isClosed = MessageBox.Show("Close?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes;
-
-                        m_LastAddedEntity = dxfReaderNETControl1.AddSpline(splinevertexes, false, dxfReaderNETControl1.DXF.CurrentColor.Index);
-                        vertexes.Clear();
-                        break;
-
-
-
                     case FunctionsEnum.LwPolyline:
-                        CurrentFunction = FunctionsEnum.None;
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                        List<LwPolylineVertex> lwpolyvertexes = new List<LwPolylineVertex>();
-                        foreach (Vector2 v in vertexes)
-                        {
-                            LwPolylineVertex polyvertex = new LwPolylineVertex(v.X, v.Y);
-                            polyvertex.StartWidth = dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth;
-                            polyvertex.EndWidth = dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth;
-                            lwpolyvertexes.Add(polyvertex);
-                        }
-                        bool isClosed = MessageBox.Show("Close?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
-                        m_LastAddedEntity = dxfReaderNETControl1.AddLightWeightPolyline(lwpolyvertexes, isClosed, dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth, dxfReaderNETControl1.DXF.CurrentColor.Index);
-                        vertexes.Clear();
+                    case FunctionsEnum.Polyline:
+                    case FunctionsEnum.Mline:
                         break;
                     case FunctionsEnum.PolylineLenght:
 
 
                         CurrentFunction = FunctionsEnum.None;
                         dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                        isClosed = MessageBox.Show("Close?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+                        bool isClosed = MessageBox.Show("Close?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
 
                         if (isClosed)
                         {
@@ -1594,38 +1785,24 @@ namespace DXFReaderNETDemoProgram
                         }
                         vertexes.Clear();
                         break;
-                    case FunctionsEnum.Polyline:
-                        CurrentFunction = FunctionsEnum.None;
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                        List<PolylineVertex> polyvertexes = new List<PolylineVertex>();
-                        foreach (Vector2 v in vertexes)
-                        {
-                            PolylineVertex polyvertex = new PolylineVertex(v.X, v.Y, dxfReaderNETControl1.DXF.CurrentElevation);
-                            polyvertex.StartWidth = dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth;
-                            polyvertex.EndWidth = dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth;
-                            polyvertexes.Add(polyvertex);
-                        }
-                        isClosed = MessageBox.Show("Close?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
 
-                        m_LastAddedEntity = dxfReaderNETControl1.AddPolyline(polyvertexes, isClosed, dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth, dxfReaderNETControl1.DXF.CurrentColor.Index);
-                        vertexes.Clear();
-                        break;
                     case FunctionsEnum.Area:
                         CurrentFunction = FunctionsEnum.None;
                         dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-
+                        contextMenuStrip1.Visible = false;
                         StatusLabel.Text = "Area: " + dxfReaderNETControl1.DXF.ToFormattedUnit(MathHelper.PolygonArea(vertexes)) + " Lenght: " + dxfReaderNETControl1.DXF.ToFormattedUnit((MathHelper.PolygonLenght(vertexes, true)));
                         vertexes.Clear();
                         break;
                     case FunctionsEnum.Solid4:
                         CurrentFunction = FunctionsEnum.None;
                         dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-
+                        contextMenuStrip1.Visible = false;
                         p4 = p3;
 
                         m_LastAddedEntity = dxfReaderNETControl1.AddSolid(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p2.X, p2.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p4.X, p4.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p3.X, p3.Y, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index);
                         break;
                     case FunctionsEnum.DrawPolygon:
+                        contextMenuStrip1.Visible = false;
                         CurrentFunction = FunctionsEnum.None;
                         dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
                         dxfReaderNETControl1.DrawPolygon(DrawPen, vertexes, ribbonButtonDrawMethodsFill.Checked, ribbonButtonDrawMethodsStore.Checked);
@@ -1657,59 +1834,8 @@ namespace DXFReaderNETDemoProgram
                 addedMultipleEntities = false;
 
             }
+
         }
-
-        private void ribbonButton13_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.DisplayPredefinedView(PredefinedViewType.Top);
-        }
-
-        private void ribbonButton15_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.DisplayPredefinedView(PredefinedViewType.Bottom);
-        }
-
-        private void ribbonButton16_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.DisplayPredefinedView(PredefinedViewType.Left);
-        }
-
-        private void ribbonButton17_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.DisplayPredefinedView(PredefinedViewType.Right);
-        }
-
-        private void ribbonButton18_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.DisplayPredefinedView(PredefinedViewType.Front);
-        }
-
-        private void ribbonButton19_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.DisplayPredefinedView(PredefinedViewType.Back);
-        }
-
-        private void ribbonButton20_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.DisplayPredefinedView(PredefinedViewType.SW_Isometric);
-        }
-
-        private void ribbonButton21_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.DisplayPredefinedView(PredefinedViewType.SE_Isometric);
-        }
-
-        private void ribbonButton22_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.DisplayPredefinedView(PredefinedViewType.NE_Isometric);
-        }
-
-        private void ribbonButton23_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.DisplayPredefinedView(PredefinedViewType.NW_Isometric);
-        }
-
-
 
         private void ribbonColorChooserForeColor_Click(object sender, EventArgs e)
         {
@@ -1884,16 +2010,25 @@ namespace DXFReaderNETDemoProgram
                 case Keys.Escape:
                     switch (CurrentFunction)
                     {
+                        case FunctionsEnum.Trim2:
+                            m_entTrimBoundaries.Clear();
+                            dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                            StatusLabel.Text = "";
+                            CurrentFunction = FunctionsEnum.None;
+                            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                            dxfReaderNETControl1.Refresh();
+                            break;
                         case FunctionsEnum.Trim1:
-                            StatusLabel.Text = "Select object to trim";
+                            StatusLabel.Text = "Select objects to trim. ESC or right click to end.";
                             CurrentFunction = FunctionsEnum.Trim2;
                             break;
                         default:
                             CurrentFunction = FunctionsEnum.None;
-                            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                            StatusLabel.Text = "";
 
-                            dxfReaderNETControl1.Refresh();
+                            CheckContinuousSelection();
+                            StatusLabel.Text = "";
+                            if (CurrentFunction != FunctionsEnum.Orbit3D)
+                                dxfReaderNETControl1.Refresh();
                             break;
                     }
 
@@ -1908,12 +2043,25 @@ namespace DXFReaderNETDemoProgram
                         ribbonButtonModifySelectAll_Click(sender, e);
                     }
                     break;
+                case Keys.Z:
+                    if (ModifierKeys == Keys.Control)
+                    {
+                        UnDo();
+                    }
+                    break;
+                case Keys.Y:
+                    if (ModifierKeys == Keys.Control)
+                    {
+                        ReDo();
+                    }
+                    break;
                 case Keys.S:
                     if (ModifierKeys == Keys.Control)
                     {
                         ribbonOrbMenuItem3_Click(sender, e);
                     }
                     break;
+
                 case Keys.O:
                     if (ModifierKeys == Keys.Control)
                     {
@@ -1924,112 +2072,46 @@ namespace DXFReaderNETDemoProgram
                 case Keys.D9:
                     if (ModifierKeys == Keys.Control)
                     {
-                        labelCommands.Visible = !labelCommands.Visible;
+                        //labelCommands.Visible = !labelCommands.Visible;
 
-                        ribbonButtonCommandLine.Checked = labelCommands.Visible;
+                        //ribbonButtonCommandLine.Checked = labelCommands.Visible;
+                    }
+                    break;
+
+
+                case Keys.M:
+                    if (ModifierKeys == Keys.Control)
+                    {
+                        if (dxfReaderNETControl1.DXF.SelectedEntities.Count > 0)
+                        {
+                            ribbonButtonModifyCopyMove_Click(sender, e);
+                        }
+                    }
+                    break;
+                case Keys.C:
+                    if (ModifierKeys == Keys.Control)
+                    {
+                        if (dxfReaderNETControl1.DXF.SelectedEntities.Count > 0)
+                        {
+                            ribbonButtonModidyCopyCopy_Click(sender, e);
+                        }
+                    }
+                    break;
+                case Keys.R:
+                    if (ModifierKeys == Keys.Control)
+                    {
+                        if (dxfReaderNETControl1.DXF.SelectedEntities.Count > 0)
+                        {
+                            ribbonButtonModifyCopyRotate_Click(sender, e);
+                        }
                     }
                     break;
 
             }
 
-            {
-                if (ModifierKeys == Keys.None && labelCommands.Visible && labelCommands.Text != "")
-                {
-                    switch (e.KeyCode)
-                    {
-                        case Keys.Enter:
-                            string[] coords = cmdCoord.Split((char)44);
-                            double coordX = 0;
-                            double coordY = 0;
-                            float output;
 
-                            if (float.TryParse(coords[0], out output))
-                            {
-                                coordX = double.Parse(coords[0].Replace(",", "."), System.Globalization.CultureInfo.InvariantCulture);
-                            }
-                            if (coords.Length == 2)
-                            {
-                                if (float.TryParse(coords[1], out output))
-                                {
 
-                                    coordY = double.Parse(coords[1].Replace(",", "."), System.Globalization.CultureInfo.InvariantCulture);
-                                }
-                            }
-                            p = new Vector2(coordX, coordY);
-                            setPoint();
-                            if (CurrentFunction == FunctionsEnum.LwPolyline && labelCommands.Visible)
-                            {
-                                ShowCommandLine();
-                            }
-                            if (m_LastAddedEntity != null)
-                            {
-                                if (m_LastAddedEntity.Type != EntityType.Hatch)
-                                {
-                                    dxfReaderNETControl1.DrawEntity(m_LastAddedEntity);
-                                }
-                                else
-                                {
-                                    dxfReaderNETControl1.Refresh();
-                                }
-                            }
-                            break;
-                        case Keys.NumPad0:
-                        case Keys.D0:
-                        case Keys.NumPad1:
-                        case Keys.D1:
-                        case Keys.NumPad2:
-                        case Keys.D2:
-                        case Keys.NumPad3:
-                        case Keys.D3:
-                        case Keys.NumPad4:
-                        case Keys.D4:
-                        case Keys.NumPad5:
-                        case Keys.D5:
-                        case Keys.NumPad6:
-                        case Keys.D6:
-                        case Keys.NumPad7:
-                        case Keys.D7:
-                        case Keys.NumPad8:
-                        case Keys.D8:
-                        case Keys.NumPad9:
-                        case Keys.D9:
-                            if (e.KeyValue > 57)
-                            {
-                                cmdCoord += (char)(e.KeyValue - 48);
-                            }
-                            else
-                            {
-                                cmdCoord += (char)e.KeyValue;
-                            }
 
-                            break;
-                        case Keys.OemMinus:
-                            if (cmdCoord == "" || cmdCoord.Substring(cmdCoord.Length - 1) == ",")
-                                cmdCoord += "-";
-                            break;
-                        case Keys.Oemcomma:
-                            if (!cmdCoord.Contains(","))
-                                cmdCoord += ",";
-                            break;
-                        case Keys.OemPeriod:
-                            cmdCoord += ".";
-                            break;
-                    }
-                    labelCommands.Text = labelCommands.Text.Substring(0, labelCommands.Text.IndexOf(":") + 1) + " " + cmdCoord;
-
-                }
-            }
-        }
-
-        private void ribbonColorChooserCurrentColor_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.DXF.CurrentColor = dxfReaderNETControl1.ShowPalette(dxfReaderNETControl1.DXF.CurrentColor);
-            ribbonColors();
-        }
-
-        private void ribbonButtonLayers_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.ShowLayers();
         }
 
         private void ribbonOrbMenuItem1_Click(object sender, EventArgs e)
@@ -2037,9 +2119,12 @@ namespace DXFReaderNETDemoProgram
 
             if (DiscardChanges())
             {
+                ErrorLabel.Text = "";
                 dxfReaderNETControl1.NewDrawing();
 
+
                 InitDrawing();
+
                 //dxfReaderNETControl1.UnRegisterComponent();
             }
 
@@ -2075,6 +2160,7 @@ namespace DXFReaderNETDemoProgram
             if (DiscardChanges())
             {
                 StatusLabel.Text = "";
+                ErrorLabel.Text = "";
                 openFileDialog1.DefaultExt = "dxf";
                 openFileDialog1.Filter = "DXF|*.dxf|All files (*.*)|*.*";
                 openFileDialog1.FileName = "";
@@ -2094,7 +2180,7 @@ namespace DXFReaderNETDemoProgram
             {
                 RibbonOrbRecentItem se = (RibbonOrbRecentItem)sender;
 
-                ReadDXF(se.Text);
+                ReadDXF(se.Value);
             }
         }
         private void AddMRU(string file_name)
@@ -2115,9 +2201,17 @@ namespace DXFReaderNETDemoProgram
             {
                 if (i < maxMRUnumber)
                 {
-                    RibbonOrbRecentItem newRecent = new RibbonOrbRecentItem(file_info);
+                    RibbonOrbRecentItem newRecent = new RibbonOrbRecentItem();
+                    string mruitem = file_info;
+                    if (mruitem.Length > 60)
+                    {
+                        mruitem = "[" + file_info.Substring(0, 25) + "...] " + Path.GetFileName(file_info);
+                    }
+                    newRecent.Text = mruitem;
+                    newRecent.Value = file_info;
                     newRecent.Click += new EventHandler(newRecent_Click);
                     ribbon1.OrbDropDown.RecentItems.Add(newRecent);
+
                 }
                 i++;
             }
@@ -2202,7 +2296,7 @@ namespace DXFReaderNETDemoProgram
             }
             else
             {
-                saveFileDialog1.FileName = Path.GetFileName(dxfReaderNETControl1.FileName); ;
+                saveFileDialog1.FileName = Path.GetFileName(dxfReaderNETControl1.FileName);
             }
 
 
@@ -2254,14 +2348,21 @@ namespace DXFReaderNETDemoProgram
                 }
                 if (saveFileDialog1.FilterIndex > 10) dxfReaderNETControl1.DXF.IsBinary = true;
 
-                if (dxfReaderNETControl1.WriteDXF(saveFileDialog1.FileName, dxfver, dxfReaderNETControl1.DXF.IsBinary))
-                {
-                    StatusLabel.Text = "DXF file saved";
-                }
-                else
-                {
-                    StatusLabel.Text = "Error in saving DXF file";
-                }
+                ErrorLabel.Text = "";
+                dxfReaderNETControl1.WriteDXF(saveFileDialog1.FileName, dxfver, dxfReaderNETControl1.DXF.IsBinary);
+
+
+                //if (dxfReaderNETControl1.WriteDXF(saveFileDialog1.FileName, dxfver, dxfReaderNETControl1.DXF.IsBinary))
+                //{
+                //    StatusLabel.Text = "DXF file saved";
+                //    ErrorLabel.Text = "";
+                //}
+                //else
+                //{
+                //    StatusLabel.Text = "Error in saving DXF file";
+                //}
+
+
                 CurrentSaveDXFPath = Path.GetDirectoryName(saveFileDialog1.FileName);
                 AddMRU(saveFileDialog1.FileName);
                 this.Text = "DXFReader.NET Component - Demo Program  - " + dxfReaderNETControl1.FileName;
@@ -2273,6 +2374,7 @@ namespace DXFReaderNETDemoProgram
         {
             if (dxfReaderNETControl1.FileName != null)
             {
+                ErrorLabel.Text = "";
                 dxfReaderNETControl1.WriteDXF(dxfReaderNETControl1.FileName);
             }
             else
@@ -2281,10 +2383,7 @@ namespace DXFReaderNETDemoProgram
             }
         }
 
-        private void ribbonButtonUnits_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.ShowDrawingUnits();
-        }
+
 
         private void ribbonOrbMenuItem5_Click(object sender, EventArgs e)
         {
@@ -2345,13 +2444,50 @@ namespace DXFReaderNETDemoProgram
         {
             string stringToPrint = "";
             PrintType = PrintTypeEnum.EntityProperties;
+            stringToPrint += "Entity type: " + EntityToPrint.Type.ToString() + "\n\n";
+            stringToPrint += "Handle: " + EntityToPrint.Handle;
+            stringToPrint += "\n";
+            stringToPrint += "Color: " + EntityToPrint.Color.ToString();
+            stringToPrint += "\n";
+            stringToPrint += "Layer: " + EntityToPrint.Layer.Name;
+            stringToPrint += "\n";
+            stringToPrint += "LineType: " + EntityToPrint.Linetype.Name;
+            stringToPrint += "\n";
             switch (EntityToPrint.Type)
             {
+
+                case EntityType.Arc:
+                    Arc a = (Arc)EntityToPrint;
+
+                    stringToPrint += "Start point: ";
+                    stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(a.StartPoint.X) + ";";
+                    stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(a.StartPoint.Y) + ";";
+                    stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(a.StartPoint.Z);
+                    stringToPrint += "\n";
+                    stringToPrint += "End point: ";
+                    stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(a.EndPoint.X) + ";";
+                    stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(a.EndPoint.Y) + ";";
+                    stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(a.EndPoint.Z);
+                    stringToPrint += "\n";
+
+                    stringToPrint += "Start angle: ";
+                    stringToPrint += dxfReaderNETControl1.DXF.ToFormattedAngle(a.StartAngle * MathHelper.DegToRad);
+                    stringToPrint += "\n";
+                    stringToPrint += "End angle: ";
+                    stringToPrint += dxfReaderNETControl1.DXF.ToFormattedAngle(a.EndAngle * MathHelper.DegToRad);
+                    stringToPrint += "\n";
+
+                    stringToPrint += "Radius: ";
+                    stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(a.Radius);
+
+
+                    stringToPrint += "Lenght: ";
+                    stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(a.Lenght);
+
+                    break;
                 case EntityType.Line:
                     Line l = (Line)EntityToPrint;
-                    stringToPrint += "Entity type: LINE\n\n";
-                    stringToPrint += "Handle: " + EntityToPrint.Handle;
-                    stringToPrint += "\n";
+
                     stringToPrint += "Start point: ";
                     stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(l.StartPoint.X) + ";";
                     stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(l.StartPoint.Y) + ";";
@@ -2371,11 +2507,18 @@ namespace DXFReaderNETDemoProgram
                     break;
                 case EntityType.LightWeightPolyline:
                     LwPolyline lw = (LwPolyline)EntityToPrint;
-                    stringToPrint += "Entity type: LWPOLYLINE\n\n";
-                    stringToPrint += "Handle: " + EntityToPrint.Handle;
-                    stringToPrint += "\n";
+
                     stringToPrint += "Vertexes #: ";
                     stringToPrint += lw.Vertexes.Count.ToString();
+                    stringToPrint += "\n";
+                    if (lw.IsClosed)
+                    {
+                        stringToPrint += "true";
+                    }
+                    else
+                    {
+                        stringToPrint += "false";
+                    }
                     stringToPrint += "\n";
                     stringToPrint += "Lenght: ";
                     stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(lw.Lenght);
@@ -2390,6 +2533,43 @@ namespace DXFReaderNETDemoProgram
                         stringToPrint += " Position: ";
                         stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(v.Position.X) + ";";
                         stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(v.Position.Y);
+                        stringToPrint += " Bulge: ";
+                        stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(v.Bulge);
+                        stringToPrint += "\n";
+                        nv++;
+                    }
+
+                    break;
+                case EntityType.Polyline:
+                    Polyline pl = (Polyline)EntityToPrint;
+
+                    stringToPrint += "Vertexes #: ";
+                    stringToPrint += pl.Vertexes.Count.ToString();
+                    stringToPrint += "\n";
+                    stringToPrint += "Closed: ";
+                    if (pl.IsClosed)
+                    {
+                        stringToPrint += "true";
+                    }
+                    else
+                    {
+                        stringToPrint += "false";
+                    }
+                    stringToPrint += "\n";
+                    stringToPrint += "Lenght: ";
+                    stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(pl.Lenght);
+                    stringToPrint += "\n";
+                    stringToPrint += "Area ";
+                    stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(pl.Area);
+                    stringToPrint += "\n";
+                    nv = 0;
+                    foreach (PolylineVertex v in pl.Vertexes)
+                    {
+                        stringToPrint += "Vertexes #: " + nv.ToString();
+                        stringToPrint += " Position: ";
+                        stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(v.Position.X) + ";";
+                        stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(v.Position.Y) + ";";
+                        stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(v.Position.Z);
                         stringToPrint += " Bulge: ";
                         stringToPrint += dxfReaderNETControl1.DXF.ToFormattedUnit(v.Bulge);
                         stringToPrint += "\n";
@@ -2416,7 +2596,7 @@ namespace DXFReaderNETDemoProgram
             printPreviewControl1.Height = this.ClientSize.Height - toolStripPlotPreview.Height - statusStrip1.Height;
 
             System.Drawing.Printing.PrintDocument doc = new System.Drawing.Printing.PrintDocument();
-
+            doc.DefaultPageSettings.Landscape = true;
 
 
             doc.PrintPage += new System.Drawing.Printing.PrintPageEventHandler(_PrintEntitiesList);
@@ -2426,49 +2606,182 @@ namespace DXFReaderNETDemoProgram
 
         internal void _PrintEntitiesList(object sender, System.Drawing.Printing.PrintPageEventArgs e)
         {
+            SolidBrush BrushGrey = new SolidBrush(Color.FromArgb(250, 250, 250));
+
+            e.Graphics.Clear(Color.White);
+            bool threeD = false;
             System.Text.StringBuilder stringToPrint = new System.Text.StringBuilder();
 
             PrintType = PrintTypeEnum.EntiesList;
-            int n = 0;
+            int n = -1;
+            StringFormat stringFormat = new StringFormat();
+            stringFormat.Alignment = StringAlignment.Near;
+            stringFormat.LineAlignment = StringAlignment.Near;
+            float spT = 50;
+            float spT2 = 80;
+            float[] tabs = { spT, spT + 40, spT, spT2, spT2, spT2, spT2, spT2, spT, spT, spT, spT, spT, spT, spT };
+            stringFormat.SetTabStops(0, tabs);
+
+            stringToPrint.Append("#\tType\tHandle\tPoint 1\tPoint 2\tPoint 3\tPoint 4\tCenter\tRadius\tRotation\tAngle 1\tAngle 2\tLenght\tArea\tHei./Offs.\tValue\n");
+
+            var newFont = new Font(this.Font.FontFamily, 6, this.Font.Style);
+            float tH = 10F;
+            e.Graphics.DrawString(stringToPrint.ToString(), newFont, Brushes.DarkGray, 10F, tH, stringFormat);
+
+
+            stringToPrint.Clear();
+
+            bool toggle = true;
             foreach (EntityObject EntityToPrint in dxfReaderNETControl1.DXF.Entities)
             {
                 n++;
-                if (n < 200)
+                if (n < 2000)
                 {
+
+
                     stringToPrint.Append(n.ToString() + " ");
-                    stringToPrint.Append(EntityToPrint.Type.ToString());
+                    stringToPrint.Append("\t");
+
+                    if (EntityToPrint.Type != EntityType.Dimension)
+                    {
+                        stringToPrint.Append(EntityToPrint.Type.ToString());
+                    }
+                    else
+                    {
+                        stringToPrint.Append("Dim." + ((Dimension)EntityToPrint).DimensionType.ToString());
+
+
+                    }
+                    stringToPrint.Append("\t");
                     stringToPrint.Append(" " + EntityToPrint.Handle);
+                    stringToPrint.Append("\t");
                     switch (EntityToPrint.Type)
                     {
+                        case EntityType.Dimension:
+                            switch (((Dimension)EntityToPrint).DimensionType)
+                            {
+                                case DimensionType.Angular:
+
+                                    Angular2LineDimension dimA = (Angular2LineDimension)(Dimension)EntityToPrint;
+
+
+                                    stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(dimA.StartFirstLine.X) + ";");
+                                    stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(dimA.StartFirstLine.Y));
+
+                                    stringToPrint.Append("\t");
+
+
+                                    stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(dimA.EndFirstLine.X) + ";");
+                                    stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(dimA.EndFirstLine.Y));
+                                    stringToPrint.Append("\t");
+
+
+                                    stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(dimA.StartSecondLine.X) + ";");
+                                    stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(dimA.StartSecondLine.Y));
+                                    stringToPrint.Append("\t");
+
+
+                                    stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(dimA.EndSecondLine.X) + ";");
+                                    stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(dimA.EndSecondLine.Y));
+
+                                    stringToPrint.Append("\t\t\t\t\t\t\t\t");
+                                    stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(dimA.Offset));
+                                    stringToPrint.Append("\t");
+                                    stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(dimA.Measurement));
+
+
+
+
+                                    break;
+                            }
+                            break;
+                        case EntityType.Text:
+                            Text text = (Text)EntityToPrint;
+
+
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(text.Position.X) + ";");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(text.Position.Y));
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(text.Position.Z));
+
+                            stringToPrint.Append("\t\t\t\t\t\t");
+
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedAngle(text.Rotation * MathHelper.DegToRad));
+                            stringToPrint.Append("\t\t\t\t\t");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(text.Height));
+                            stringToPrint.Append("\t");
+
+                            stringToPrint.Append(text.Value);
+                            break;
                         case EntityType.MText:
                             MText mtext = (MText)EntityToPrint;
 
-                            stringToPrint.Append(" Position: ");
+
                             stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(mtext.Position.X) + ";");
-                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(mtext.Position.Y) + ";");
-                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(mtext.Position.Z));
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(mtext.Position.Y));
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(mtext.Position.Z));
 
-                            stringToPrint.Append(" Height: ");
+                            stringToPrint.Append("\t\t\t\t\t\t");
+
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedAngle(mtext.Rotation * MathHelper.DegToRad));
+                            stringToPrint.Append("\t\t\t\t\t");
                             stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(mtext.Height));
+                            stringToPrint.Append("\t");
 
-
-                            stringToPrint.Append(" Value: ");
                             stringToPrint.Append(mtext.Value);
+                            break;
+                        case EntityType.Point:
+                            DXFReaderNET.Entities.Point p = (DXFReaderNET.Entities.Point)EntityToPrint;
+
+
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(p.Position.X) + ";");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(p.Position.Y));
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(p.Position.Z));
+
+
+
+                            break;
+                        case EntityType.Solid:
+                            Solid s = (Solid)EntityToPrint;
+
+
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(s.FirstVertex.X) + ";");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(s.FirstVertex.Y));
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(s.FirstVertex.Z));
+                            stringToPrint.Append("\t");
+
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(s.SecondVertex.X) + ";");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(s.SecondVertex.Y));
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(s.SecondVertex.Z));
+                            stringToPrint.Append("\t");
+
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(s.ThirdVertex.X) + ";");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(s.ThirdVertex.Y));
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(s.ThirdVertex.Z));
+                            stringToPrint.Append("\t");
+
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(s.FourthVertex.X) + ";");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(s.FourthVertex.Y));
+
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(s.FourthVertex.Z));
+                            stringToPrint.Append("\t");
+
+
                             break;
                         case EntityType.Line:
                             Line l = (Line)EntityToPrint;
 
-                            stringToPrint.Append(" Start point: ");
+
                             stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(l.StartPoint.X) + ";");
-                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(l.StartPoint.Y) + ";");
-                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(l.StartPoint.Z));
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(l.StartPoint.Y));
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(l.StartPoint.Z));
 
-                            stringToPrint.Append(" End point: ");
+                            stringToPrint.Append("\t");
+
                             stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(l.EndPoint.X) + ";");
-                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(l.EndPoint.Y) + ";");
-                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(l.EndPoint.Z));
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(l.EndPoint.Y));
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(l.EndPoint.Z));
+                            stringToPrint.Append("\t\t\t\t\t\t\t\t");
 
-                            stringToPrint.Append(" Lenght: ");
                             stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(l.Lenght));
 
                             //stringToPrint.Append( " Angle: ";
@@ -2478,56 +2791,206 @@ namespace DXFReaderNETDemoProgram
                         case EntityType.Arc:
                             Arc a = (Arc)EntityToPrint;
 
-                            stringToPrint.Append(" Start point: ");
+
+
+
                             stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(a.StartPoint.X) + ";");
-                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(a.StartPoint.Y) + ";");
-                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(a.StartPoint.Z));
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(a.StartPoint.Y));
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(a.StartPoint.Z));
+                            stringToPrint.Append("\t");
 
-                            stringToPrint.Append(" End point: ");
+
                             stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(a.EndPoint.X) + ";");
-                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(a.EndPoint.Y) + ";");
-                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(a.EndPoint.Z));
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(a.EndPoint.Y));
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(a.EndPoint.Z));
 
-                            stringToPrint.Append(" Lenght: ");
+                            stringToPrint.Append("\t\t\t");
+
+
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(a.Center.X) + ";");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(a.Center.Y));
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(a.Center.Z));
+
+                            stringToPrint.Append("\t");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(a.Radius));
+
+
+                            stringToPrint.Append("\t\t");
+
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedAngle(a.StartAngle * MathHelper.DegToRad));
+                            stringToPrint.Append("\t");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedAngle(a.EndAngle * MathHelper.DegToRad));
+
+
+                            stringToPrint.Append("\t");
                             stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(a.Lenght));
 
                             //stringToPrint.Append( " Angle: ";
                             //stringToPrint.Append( dxfReaderNETControl1.DXF.ToFormattedAngle(Vector2.Angle(l.StartPoint.ToVector2(), l.EndPoint.ToVector2()));
 
                             break;
+                        case EntityType.Circle:
+                            Circle c = (Circle)EntityToPrint;
+                            stringToPrint.Append("\t\t\t\t");
+
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(c.Center.X) + ";");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(c.Center.Y));
+                            if (threeD) stringToPrint.Append(";" + dxfReaderNETControl1.DXF.ToFormattedUnit(c.Center.Z));
+
+                            stringToPrint.Append("\t");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(c.Radius));
+
+
+                            stringToPrint.Append("\t\t\t\t");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(c.Lenght));
+                            stringToPrint.Append("\t");
+                            stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(c.Area));
+
+
+                            break;
                         case EntityType.LightWeightPolyline:
                             LwPolyline lw = (LwPolyline)EntityToPrint;
-                            stringToPrint.Append("Entity type: LWPOLYLINE\n\n");
-                            stringToPrint.Append("Handle: " + EntityToPrint.Handle);
-                            stringToPrint.Append("\n");
-                            stringToPrint.Append("Vertexes #: ");
-                            stringToPrint.Append(lw.Vertexes.Count.ToString());
-                            stringToPrint.Append("\n");
-                            stringToPrint.Append("Lenght: ");
+                            //stringToPrint.Append("Entity type: LWPOLYLINE\n\n");
+                            //stringToPrint.Append("Handle: " + EntityToPrint.Handle);
+                            //stringToPrint.Append("\n");
+                            //stringToPrint.Append("Vertexes #: ");
+                            //stringToPrint.Append(lw.Vertexes.Count.ToString());
+                            //stringToPrint.Append("\n");
+                            //stringToPrint.Append("Lenght: ");
+                            //stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(lw.Lenght));
+                            //stringToPrint.Append("\n");
+                            //stringToPrint.Append("Area ");
+                            //stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(lw.Area));
+
+                            stringToPrint.Append("\t\t\t\t\t\t\t\t\t");
                             stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(lw.Lenght));
-                            stringToPrint.Append("\n");
-                            stringToPrint.Append("Area ");
+                            stringToPrint.Append("\t");
                             stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(lw.Area));
+
                             stringToPrint.Append("\n");
+                            tH += 10F;
+                            if (toggle)
+                            {
+                                var rect = new RectangleF(10F, tH, 1000, 10f);
+
+                                //Filling a rectangle before drawing the string.
+
+                                e.Graphics.FillRectangle(BrushGrey, rect);
+                                toggle = false;
+                            }
+                            else
+                            {
+                                toggle = true;
+                            }
+                            e.Graphics.DrawString(stringToPrint.ToString(), newFont, Brushes.Black, 10F, tH, stringFormat);
                             int nv = 0;
                             foreach (LwPolylineVertex v in lw.Vertexes)
                             {
-                                stringToPrint.Append("Vertexes #: " + nv.ToString());
-                                stringToPrint.Append(" Position: ");
+                                stringToPrint.Clear();
+                                stringToPrint.Append("\t\t");
+                                stringToPrint.Append("#" + nv.ToString());
+                                stringToPrint.Append("\t");
                                 stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(v.Position.X) + ";");
                                 stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(v.Position.Y));
-                                stringToPrint.Append(" Bulge: ");
-                                stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(v.Bulge));
+                                //stringToPrint.Append(" Bulge: ");
+
+                                if (!MathHelper.IsZero(v.Bulge))
+                                {
+                                    stringToPrint.Append("\t\t\t\t\t\t\t");
+                                    stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedAngle(4 * Math.Atan(Math.Abs(v.Bulge)) * Math.Sign(v.Bulge)));
+
+
+                                }
                                 stringToPrint.Append("\n");
+                                tH += 10F;
+                                e.Graphics.DrawString(stringToPrint.ToString(), newFont, Brushes.Black, 10F, tH, stringFormat);
                                 nv++;
+                                stringToPrint.Clear();
                             }
+                            //stringToPrint.Append("\n");
+                            //tH += 10F;
+                            //e.Graphics.DrawString(stringToPrint.ToString(), newFont, Brushes.Black, 10F, tH, stringFormat);
+                            //toggle = !toggle;
+                            break;
+
+                        case EntityType.Spline:
+                            Spline sp = (Spline)EntityToPrint;
+
+
+                            stringToPrint.Append("\t\t\t\t\t\t\t\t\t");
+                            stringToPrint.Append("");
+                            stringToPrint.Append("\t");
+                            stringToPrint.Append("");
+
                             stringToPrint.Append("\n");
+                            tH += 10F;
+                            if (toggle)
+                            {
+                                var rect = new RectangleF(10F, tH, 1000, 10f);
+
+                                //Filling a rectangle before drawing the string.
+                                e.Graphics.FillRectangle(BrushGrey, rect);
+                                toggle = false;
+                            }
+                            else
+                            {
+                                toggle = true;
+                            }
+                            e.Graphics.DrawString(stringToPrint.ToString(), newFont, Brushes.Black, 10F, tH, stringFormat);
+                            nv = 0;
+                            foreach (SplineVertex cp in sp.ControlPoints)
+                            {
+                                stringToPrint.Clear();
+                                stringToPrint.Append("\t\t");
+                                stringToPrint.Append("#" + nv.ToString());
+                                stringToPrint.Append("\t");
+                                stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(cp.Position.X) + ";");
+                                stringToPrint.Append(dxfReaderNETControl1.DXF.ToFormattedUnit(cp.Position.Y));
+
+                                stringToPrint.Append("\n");
+                                tH += 10F;
+                                e.Graphics.DrawString(stringToPrint.ToString(), newFont, Brushes.Black, 10F, tH, stringFormat);
+                                nv++;
+                                stringToPrint.Clear();
+                            }
+                            //stringToPrint.Append("\n");
+                            //tH += 10F;
+                            //e.Graphics.DrawString(stringToPrint.ToString(), newFont, Brushes.Black, 10F, tH, stringFormat);
+                            //toggle = !toggle;
                             break;
                     }
-                    stringToPrint.Append("\n");
+                    //stringToPrint.Append("\n");
+
+                    if (stringToPrint.ToString().Length > 0)
+                    {
+                        tH += 10F;
+
+                        if (toggle)
+                        {
+                            var rect = new RectangleF(10F, tH, 1000, 10f);
+
+                            //Filling a rectangle before drawing the string.
+                            e.Graphics.FillRectangle(BrushGrey, rect);
+                            toggle = false;
+                        }
+                        else
+                        {
+                            toggle = true;
+                        }
+
+                        e.Graphics.DrawString(stringToPrint.ToString(), newFont, Brushes.Black, 10F, tH, stringFormat);
+                        stringToPrint.Clear();
+                    }
                 }
             }
-            e.Graphics.DrawString(stringToPrint.ToString(), this.Font, Brushes.Black, e.MarginBounds, StringFormat.GenericTypographic);
+
+
+
+            //e.Graphics.DrawString(stringToPrint.ToString(), this.Font, Brushes.Black, e.MarginBounds, StringFormat.GenericTypographic);
+
+
+
+
         }
 
 
@@ -2563,13 +3026,30 @@ namespace DXFReaderNETDemoProgram
                 this.Width = Screen.PrimaryScreen.Bounds.Width - 40;
                 this.Height = Screen.PrimaryScreen.Bounds.Height - 60;
             }
+            if (this.Left + this.Width > Screen.PrimaryScreen.Bounds.Width)
+            {
+                this.Width = Screen.PrimaryScreen.Bounds.Width - this.Left - 40;
+
+            }
+            if (this.Top + this.Height > Screen.PrimaryScreen.Bounds.Height)
+            {
+                this.Height = Screen.PrimaryScreen.Bounds.Height - this.Top - 60;
+
+            }
+            string mWindowState = Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "mWindowState", "").ToString();
+
+            if (mWindowState == "Maximized") this.WindowState = FormWindowState.Maximized;
+
             dxfReaderNETControl1.HighlightEntityOnHover = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightEntityOnHover", false).ToString());
             dxfReaderNETControl1.ContinuousHighlight = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ContinuousHighlight", false).ToString());
             dxfReaderNETControl1.HighlightNotContinuous = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightNotContinuous", false).ToString());
+            dxfReaderNETControl1.HighlightGrabPoints = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightGrabPoints", false).ToString());
 
             dxfReaderNETControl1.ShowAxes = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowAxes", false).ToString());
             dxfReaderNETControl1.ShowBasePoint = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowBasePoint", false).ToString());
             dxfReaderNETControl1.ShowLimits = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowLimits", false).ToString());
+            dxfReaderNETControl1.ShowExtents = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowExtents", false).ToString());
+
             dxfReaderNETControl1.ShowGrid = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowGrid", true).ToString());
             dxfReaderNETControl1.ShowGridRuler = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowGridRuler", false).ToString());
 
@@ -2588,7 +3068,10 @@ namespace DXFReaderNETDemoProgram
 
 
             m_showCommandLine = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowCommandLine", false).ToString());
+            m_selectRotationOnScreen = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "SelectRotationOnScreen", false).ToString());
 
+
+            dxfReaderNETControl1.ObjectOsnapMode = (ObjectOsnapTypeFlags)Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ObjectOsnapMode", 0);
 
             switch ((int)Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "RubberBandType", 0))
             {
@@ -2611,6 +3094,7 @@ namespace DXFReaderNETDemoProgram
             dxfReaderNETControl1.PlotUnits = (PlotUnitsType)Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotUnits", 0);
 
             CurrentLoadDXFPath = Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "CurrentLoadDXFPath", CurrentLoadDXFPath).ToString();
+            CurrentLoadRecoveryDXFPath = Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "CurrentLoadRecoveryDXFPath", CurrentLoadRecoveryDXFPath).ToString();
             CurrentSaveDXFPath = Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "CurrentSaveDXFPath", CurrentSaveDXFPath).ToString();
 
 
@@ -2625,7 +3109,6 @@ namespace DXFReaderNETDemoProgram
             dxfReaderNETControl1.PlotMarginLeft = float.Parse(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotMarginLeft", 0.0F).ToString(), System.Globalization.CultureInfo.CurrentCulture);
             dxfReaderNETControl1.PlotMarginRight = float.Parse(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotMarginRight", 0.0F).ToString(), System.Globalization.CultureInfo.CurrentCulture);
 
-            dxfReaderNETControl1.PlotMarginTop = float.Parse(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotMarginTop", 0.0F).ToString(), System.Globalization.CultureInfo.CurrentCulture);
 
             Vector2 po = new Vector2(float.Parse(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotOffsetX", 0.0F).ToString(), System.Globalization.CultureInfo.CurrentCulture), float.Parse(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotOffsetY", 0.0F).ToString(), System.Globalization.CultureInfo.CurrentCulture));
             dxfReaderNETControl1.PlotOffset = po;
@@ -2648,10 +3131,12 @@ namespace DXFReaderNETDemoProgram
             m_GradientPatternName = Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_GradientPatternName", "Linear").ToString();
             m_GradientHatchRotation = Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_GradientHatchRotation", "0").ToString();
             m_GradientHatchBoundaries = Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_GradientHatchBoundaries", "Choose single entities").ToString();
+            m_GradientHatchTransparency = Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_GradientHatchTransparency", "0").ToString();
 
 
             m_GradientHatchCentered = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_GradientHatchCentered", true).ToString());
 
+            m_ContinuousSelection = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_ContinuousSelection", true).ToString());
 
 
 
@@ -2665,7 +3150,16 @@ namespace DXFReaderNETDemoProgram
                     FileInfos.Add(file_name);
 
 
-                    RibbonOrbRecentItem newRecent = new RibbonOrbRecentItem(file_name);
+                    RibbonOrbRecentItem newRecent = new RibbonOrbRecentItem();
+                    string mruitem = file_name;
+                    if (mruitem.Length > 60)
+                    {
+                        mruitem = "[" + file_name.Substring(0, 25) + "...] " + Path.GetFileName(file_name);
+                    }
+                    newRecent.Text = mruitem;
+                    newRecent.Value = file_name;
+
+
 
                     newRecent.Click += new EventHandler(newRecent_Click);
                     ribbon1.OrbDropDown.RecentItems.Add(newRecent);
@@ -2678,6 +3172,7 @@ namespace DXFReaderNETDemoProgram
         private void SaveRegistry()
         {
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "CurrentLoadDXFPath", CurrentLoadDXFPath);
+            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "CurrentLoadRecoveryDXFPath", CurrentLoadRecoveryDXFPath);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "CurrentSaveDXFPath", CurrentSaveDXFPath);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "CurrentLoadOBJPath", CurrentLoadOBJPath);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "CurrentSaveBMPPath", CurrentSaveBMPPath);
@@ -2687,17 +3182,20 @@ namespace DXFReaderNETDemoProgram
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightEntityOnHover", dxfReaderNETControl1.HighlightEntityOnHover);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ContinuousHighlight", dxfReaderNETControl1.ContinuousHighlight);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightNotContinuous", dxfReaderNETControl1.HighlightNotContinuous);
+            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightGrabPoints", dxfReaderNETControl1.HighlightGrabPoints);
 
 
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowAxes", dxfReaderNETControl1.ShowAxes);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowBasePoint", dxfReaderNETControl1.ShowBasePoint);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowLimits", dxfReaderNETControl1.ShowLimits);
+            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowExtents", dxfReaderNETControl1.ShowExtents);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowGrid", dxfReaderNETControl1.ShowGrid);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowGridRuler", dxfReaderNETControl1.ShowGridRuler);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "AntiAlias", dxfReaderNETControl1.AntiAlias);
 
 
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowCommandLine", m_showCommandLine);
+            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "SelectRotationOnScreen", m_selectRotationOnScreen);
 
 
             switch (m_RubberBandType)
@@ -2739,6 +3237,9 @@ namespace DXFReaderNETDemoProgram
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "wLeft", this.Left);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "wTop", this.Top);
 
+            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "mWindowState", this.WindowState);
+
+
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotRotation", System.Convert.ToInt32(dxfReaderNETControl1.PlotRotation));
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotRendering", System.Convert.ToInt32(dxfReaderNETControl1.PlotRendering));
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotMode", System.Convert.ToInt32(dxfReaderNETControl1.PlotMode));
@@ -2767,12 +3268,15 @@ namespace DXFReaderNETDemoProgram
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_GradientPatternName", m_GradientPatternName);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_GradientHatchRotation", m_GradientHatchRotation);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_GradientHatchBoundaries", m_GradientHatchBoundaries);
+            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_GradientHatchTransparency", m_GradientHatchTransparency);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_GradientHatchCentered", m_GradientHatchCentered);
+
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_GradientAciColor1", m_GradientAciColor1);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_GradientAciColor2", m_GradientAciColor2);
 
+            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ObjectOsnapMode", System.Convert.ToInt32(dxfReaderNETControl1.ObjectOsnapMode));
 
-
+            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "m_ContinuousSelection", m_ContinuousSelection);
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -2791,13 +3295,6 @@ namespace DXFReaderNETDemoProgram
 
 
 
-        private void ribbonButtonLineSingle_Click(object sender, EventArgs e)
-        {
-
-            CurrentFunction = FunctionsEnum.Line1;
-            StatusLabel.Text = "Select start point of the line";
-            CheckSnap();
-        }
 
         private void CheckSnap()
         {
@@ -2809,7 +3306,10 @@ namespace DXFReaderNETDemoProgram
             }
         }
 
-
+        private bool EntitesSelected()
+        {
+            return dxfReaderNETControl1.DXF.SelectedEntities.Count() > 0;
+        }
         private void ribbonButtonObjectSnapEndpoint_Click(object sender, EventArgs e)
         {
 
@@ -2855,19 +3355,18 @@ namespace DXFReaderNETDemoProgram
             if (ribbonButtonObjectSnapNode.Checked)
                 m_OsnapMode |= ObjectOsnapTypeFlags.Node;
 
+            if (ribbonButtonObjectSnapGeometricCenter.Checked)
+                m_OsnapMode |= ObjectOsnapTypeFlags.GeometricCenter;
+
             dxfReaderNETControl1.ObjectOsnapMode = m_OsnapMode;
             CheckSnap();
+            if (dxfReaderNETControl1.HighlightGrabPoints)
+            {
+                dxfReaderNETControl1.Refresh();
+            }
         }
 
-        private void ribbonButtonObjectSnapCenter_Click(object sender, EventArgs e)
-        {
-            SetObjectSnapMode();
-        }
 
-        private void ribbonButtonObjectSnapIntersection_Click(object sender, EventArgs e)
-        {
-            SetObjectSnapMode();
-        }
 
         private void ribbonButtonObjectSnapQuadrant_Click(object sender, EventArgs e)
         {
@@ -2909,50 +3408,10 @@ namespace DXFReaderNETDemoProgram
             SetObjectSnapMode();
         }
 
-        private void ribbonButtonRay_Click(object sender, EventArgs e)
-        {
-            VideoSize = Vector2.Distance(dxfReaderNETControl1.LowerLeftCorner, dxfReaderNETControl1.UpperRightCorner);
-            StatusLabel.Text = "Select origin of the ray";
-            CurrentFunction = FunctionsEnum.Ray1;
-            CheckSnap();
-        }
 
-        private void ribbonButtonConstructionLine_Click(object sender, EventArgs e)
-        {
-            VideoSize = Vector2.Distance(dxfReaderNETControl1.LowerLeftCorner, dxfReaderNETControl1.UpperRightCorner);
-            StatusLabel.Text = "Select origin of construction line";
-            CurrentFunction = FunctionsEnum.Xline1;
-            CheckSnap();
-        }
 
-        private void ribbonButtonRectangle_Click(object sender, EventArgs e)
-        {
 
-            CurrentFunction = FunctionsEnum.Rectangle1;
 
-            StatusLabel.Text = "Select start corner of the rectangle";
-            CheckSnap();
-        }
-
-        private void ribbonButtonTrace_Click(object sender, EventArgs e)
-        {
-
-            string inputValue = dxfReaderNETControl1.DXF.DrawingVariables.Tracewidth.ToString();
-            if (ShowInputDialog(ref inputValue, "Trace width", true) == DialogResult.OK)
-            {
-                double Tracewidth = double.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
-
-                if (Tracewidth > 0)
-                {
-                    dxfReaderNETControl1.DXF.DrawingVariables.Tracewidth = Tracewidth;
-
-                    CurrentFunction = FunctionsEnum.Trace1;
-                    CheckSnap();
-                    StatusLabel.Text = "Select start point of the trace";
-                }
-            }
-
-        }
         private static DialogResult ShowInputDialog(ref string inputValue, string prompt, bool forceNumeric)
         {
 
@@ -2966,14 +3425,6 @@ namespace DXFReaderNETDemoProgram
             return result;
         }
 
-        private void ribbonButtonSolid_Click(object sender, EventArgs e)
-        {
-
-            CurrentFunction = FunctionsEnum.Solid1;
-
-            StatusLabel.Text = "Select first point";
-            CheckSnap();
-        }
 
         private void ribbonButtonSave_Click(object sender, EventArgs e)
         {
@@ -2991,29 +3442,22 @@ namespace DXFReaderNETDemoProgram
             CurrentFunction = FunctionsEnum.Ellipse1;
             StatusLabel.Text = "Select axis start point";
             CheckSnap();
-        }
-
-
-
-        private void ribbonButtonCircleTwoPoints_Click(object sender, EventArgs e)
-        {
-
-            CurrentFunction = FunctionsEnum.Circle2p1;
-            CheckSnap();
-            StatusLabel.Text = "Select diameter start point";
+            LastCommand = Commands.ELLIPSE;
         }
 
         private void dxfReaderNETControl1_EndRead(object sender, EndReadEventArgs e)
         {
 
             StatusLabel.Text = "DXF file loaded";
+            toolStripProgressBar1.Value = 0;
             Application.DoEvents();
         }
 
         private void dxfReaderNETControl1_EndDrawing(object sender, EndDrawingEventArgs e)
         {
-            //StatusLabel.Text = "";
-            //Application.DoEvents();
+            StatusLabel.Text = "";
+            toolStripProgressBar1.Value = 0;
+            Application.DoEvents();
             //CheckNotConnectedPoints();
 
         }
@@ -3023,10 +3467,6 @@ namespace DXFReaderNETDemoProgram
             ribbonOrbMenuItem1_Click(sender, e);
         }
 
-        private void ribbonButtonDrawingInfo_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.ShowDrawingInfo();
-        }
 
         private void ribbonButtonShowAxes_Click(object sender, EventArgs e)
         {
@@ -3057,17 +3497,28 @@ namespace DXFReaderNETDemoProgram
         {
 
 
-
             string inputValue = m_RectangleFilletRadius.ToString();
-            if (ShowInputDialog(ref inputValue, "Rounded corners radius (negative for notched corners)", true) == DialogResult.OK)
+
+            if (!labelCommands.Visible)
             {
-                m_RectangleFilletRadius = double.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
 
-                CurrentFunction = FunctionsEnum.Rectangle1;
+                if (ShowInputDialog(ref inputValue, "Rounded corners radius (negative for notched corners)", true) == DialogResult.OK)
+                {
+                    m_RectangleFilletRadius = double.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
 
-                StatusLabel.Text = "Select start corner of the rectangle";
+                    CurrentFunction = FunctionsEnum.Rectangle1;
 
-                CheckSnap();
+                    StatusLabel.Text = "Select start corner of the rectangle";
+                    LastCommand = Commands.RECTANGLE;
+                    CheckSnap();
+                }
+            }
+            else
+            {
+                labelCommands.Text = "RECTANGLE specify rounded corners radius (negative for notched corners):";
+                txtCommand.Text = inputValue;
+                //cmdCoord = inputValue;
+                CurrentFunction = FunctionsEnum.Rectangle0;
             }
 
 
@@ -3077,19 +3528,7 @@ namespace DXFReaderNETDemoProgram
         {
             dxfReaderNETControl1.ShowLayers();
             LoadLayersCombo();
-            //foreach (DXFReaderNET.Tables.Layer layer in dxfReaderNETControl1.DXF.Layers)
-            //{
-            //    RibbonButton newItem = new RibbonButton();
-            //    newItem.Text = layer.Name;
 
-            //    if (dxfReaderNETControl1.DXF.CurrentLayer == layer.Name)
-            //    {
-            //        ribbonComboBoxLayers.SelectedItem = newItem;
-            //    }
-            //}
-            //RibbonButton newAddItem = new RibbonButton();
-            //newAddItem.Text = "Add layer...";
-            //ribbonComboBoxLayers.DropDownItems.Add(newAddItem);
         }
 
         private void ribbonButtonDrawLineTrace_Click(object sender, EventArgs e)
@@ -3102,21 +3541,29 @@ namespace DXFReaderNETDemoProgram
                 if (Tracewidth > 0)
                 {
                     dxfReaderNETControl1.DXF.DrawingVariables.Tracewidth = Tracewidth;
-
-                    CurrentFunction = FunctionsEnum.Trace1;
-
-                    CheckSnap();
-                    StatusLabel.Text = "Select start point of the trace";
+                    StartDrawLineTrace();
                 }
             }
         }
 
+
+        private void StartDrawLineTrace()
+        {
+
+
+            CurrentFunction = FunctionsEnum.Trace1;
+
+            CheckSnap();
+            StatusLabel.Text = "Select start point of the trace";
+            LastCommand = Commands.TRACE;
+        }
         private void ribbonButtonDrawPolylineSolid_Click(object sender, EventArgs e)
         {
 
             CurrentFunction = FunctionsEnum.Solid1;
             CheckSnap();
             StatusLabel.Text = "Select first point";
+            LastCommand = Commands.SOLID;
         }
 
         private void ribbonButtonDrawPolylinePolygon_Click(object sender, EventArgs e)
@@ -3133,6 +3580,7 @@ namespace DXFReaderNETDemoProgram
                     CurrentFunction = FunctionsEnum.Polygon1;
                     CheckSnap();
                     StatusLabel.Text = "Select center point";
+                    LastCommand = Commands.POLIGON;
                 }
             }
         }
@@ -3173,12 +3621,14 @@ namespace DXFReaderNETDemoProgram
 
                     }
                     CheckSnap();
+                    LastCommand = Commands.IMAGE;
                 }
             }
         }
 
         private void ribbonButtonDrawImagePDF_Click(object sender, EventArgs e)
         {
+
             PDFSelector pdfSelector = new PDFSelector();
             pdfSelector.TextBoxFileName.Text = m_PDFFileName;
             pdfSelector.TextBoxRotation.Text = m_PDFRotation;
@@ -3195,6 +3645,7 @@ namespace DXFReaderNETDemoProgram
                 CurrentFunction = FunctionsEnum.PDFUnderlay;
                 CheckSnap();
                 StatusLabel.Text = "Select the position of the PDF underlay";
+                LastCommand = Commands.ATTACHPDF;
             }
         }
 
@@ -3206,7 +3657,7 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonDrawLineSingle_Click(object sender, EventArgs e)
         {
-
+            LastCommand = Commands.LINE;
             CurrentFunction = FunctionsEnum.Line1;
             CheckSnap();
             StatusLabel.Text = "Select start point of the line";
@@ -3219,6 +3670,7 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonDrawLineRay_Click(object sender, EventArgs e)
         {
+            LastCommand = Commands.RAY;
             VideoSize = Vector2.Distance(dxfReaderNETControl1.LowerLeftCorner, dxfReaderNETControl1.UpperRightCorner);
             StatusLabel.Text = "Select origin of the ray";
             CurrentFunction = FunctionsEnum.Ray1;
@@ -3227,6 +3679,7 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonDrawContructionLine_Click(object sender, EventArgs e)
         {
+            LastCommand = Commands.XLINE;
             VideoSize = Vector2.Distance(dxfReaderNETControl1.LowerLeftCorner, dxfReaderNETControl1.UpperRightCorner);
             StatusLabel.Text = "Select origin of construction line";
             CurrentFunction = FunctionsEnum.Xline1;
@@ -3235,6 +3688,7 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonDrawCircleRadius_Click(object sender, EventArgs e)
         {
+            LastCommand = Commands.CIRCLE_Center_Radius;
             StatusLabel.Text = "Select center point";
             CurrentFunction = FunctionsEnum.Circle1;
             CheckSnap();
@@ -3242,7 +3696,7 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonDrawCircle2Points_Click(object sender, EventArgs e)
         {
-
+            LastCommand = Commands.CIRCLE_Diameter;
             CurrentFunction = FunctionsEnum.Circle2p1;
             CheckSnap();
             StatusLabel.Text = "Select diameter start point";
@@ -3250,6 +3704,7 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonDrawCircle3Points_Click(object sender, EventArgs e)
         {
+            LastCommand = Commands.CIRCLE_3Points;
             StatusLabel.Text = "Select first point";
             CurrentFunction = FunctionsEnum.Circle3p1;
             CheckSnap();
@@ -3535,11 +3990,69 @@ namespace DXFReaderNETDemoProgram
             StatusLabel.Text = "Select entity";
         }
 
-        private void ribbonButtonInquiryTest_Click(object sender, EventArgs e)
+        private void TestRoutine()
         {
 
-            //TestRoutine();
+        }
+        private void FlattenEntities(IEnumerable<EntityObject> Entities)
+        {
+            foreach (EntityObject ent in Entities)
+            {
+                switch (ent.Type)
+                {
+                    case EntityType.Point:
+                        ((DXFReaderNET.Entities.Point)ent).Position = new Vector3(((DXFReaderNET.Entities.Point)ent).Position.X, ((DXFReaderNET.Entities.Point)ent).Position.Y, 0);
 
+                        break;
+                    case EntityType.Line:
+                        ((Line)ent).StartPoint = new Vector3(((Line)ent).StartPoint.X, ((Line)ent).StartPoint.Y, 0);
+                        ((Line)ent).EndPoint = new Vector3(((Line)ent).EndPoint.X, ((Line)ent).EndPoint.Y, 0);
+
+                        break;
+                    case EntityType.Arc:
+
+                        ((Arc)ent).Center = new Vector3(((Arc)ent).Center.X, ((Arc)ent).Center.Y, 0);
+
+                        break;
+                    case EntityType.Circle:
+
+                        ((Circle)ent).Center = new Vector3(((Circle)ent).Center.X, ((Circle)ent).Center.Y, 0);
+
+                        break;
+                    case EntityType.Ellipse:
+
+                        ((Ellipse)ent).Center = new Vector3(((Ellipse)ent).Center.X, ((Ellipse)ent).Center.Y, 0);
+
+                        break;
+
+                    case EntityType.Polyline:
+                        Polyline polyline = (Polyline)ent;
+
+                        for (int k = 0; k < polyline.Vertexes.Count; k++)
+                        {
+                            polyline.Vertexes[k].Position = new Vector3(polyline.Vertexes[k].Position.X, polyline.Vertexes[k].Position.Y, 0);
+
+                        }
+
+                        break;
+
+                    case EntityType.Spline:
+                        Spline spline = (Spline)ent;
+
+                        for (int k = 0; k < spline.ControlPoints.Count; k++)
+                        {
+                            spline.ControlPoints[k].Position = new Vector3(spline.ControlPoints[k].Position.X, spline.ControlPoints[k].Position.Y, 0);
+
+                        }
+
+                        break;
+
+                }
+            }
+        }
+        private void ribbonButtonInquiryTest_Click(object sender, EventArgs e)
+        {
+            TestRoutine();
 
         }
 
@@ -3577,15 +4090,20 @@ namespace DXFReaderNETDemoProgram
                 if (Polylinewidth >= 0)
                 {
                     dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth = Polylinewidth;
+                    StartDrawPolyline();
 
-                    CurrentFunction = FunctionsEnum.Polyline;
-                    vertexes.Clear();
-                    CheckSnap();
-                    StatusLabel.Text = "Select points with left mouse click. Right mouse click to end.";
+
                 }
             }
         }
-
+        private void StartDrawPolyline()
+        {
+            CurrentFunction = FunctionsEnum.Polyline;
+            vertexes.Clear();
+            CheckSnap();
+            StatusLabel.Text = "Select points with left mouse click. Right mouse click to end.";
+            LastCommand = Commands.POLYLINE;
+        }
         private void ribbonButtonInquiryMeasureArea_Click(object sender, EventArgs e)
         {
 
@@ -3610,17 +4128,7 @@ namespace DXFReaderNETDemoProgram
             StatusLabel.Text = "Select start point of the line";
         }
 
-        private void ribbonButtonDrawMethodsColor_Click(object sender, EventArgs e)
-        {
-            Cdialog.Text = "Drawing methods color";
-            Cdialog.Color = CurrentDrawColor;
 
-            if (Cdialog.ShowDialog() == DialogResult.OK)
-            {
-                CurrentDrawColor = Cdialog.Color;
-
-            }
-        }
 
         private void ribbonButtonDrawMethodsPenWidth_Click(object sender, EventArgs e)
         {
@@ -3703,6 +4211,18 @@ namespace DXFReaderNETDemoProgram
             {
                 CurrentDrawColor = Cdialog.Color;
                 ribbonColorChooserDrawMethodsColor.Color = CurrentDrawColor;
+
+                DrawPen = new Pen(CurrentDrawColor);
+                DrawPen.Width = CurrentDrawPenWidth;
+                if (CurrentDrawPenStyle == "Continuous")
+                {
+                    DrawPen.DashStyle = System.Drawing.Drawing2D.DashStyle.Solid;
+                }
+                else
+                {
+                    DrawPen.DashStyle = System.Drawing.Drawing2D.DashStyle.Custom;
+                    DrawPen.DashPattern = new float[] { CurrentDrawDashLength, CurrentDrawSkipLength };
+                }
             }
         }
 
@@ -3738,14 +4258,18 @@ namespace DXFReaderNETDemoProgram
                 {
                     dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth = Polylinewidth;
 
-                    CurrentFunction = FunctionsEnum.LwPolyline;
-                    vertexes.Clear();
-                    StatusLabel.Text = "Select points with left mouse click. Right mouse click to end.";
-                    CheckSnap();
+                    StartDrawLwPolyline();
                 }
             }
         }
-
+        private void StartDrawLwPolyline()
+        {
+            CurrentFunction = FunctionsEnum.LwPolyline;
+            vertexes.Clear();
+            StatusLabel.Text = "Select points with left mouse click. Right mouse click to end.";
+            CheckSnap();
+            LastCommand = Commands.LWPOLYLINE;
+        }
         private void ribbonButtonDrawMethodsImage_Click(object sender, EventArgs e)
         {
             ImageSelector imageSelector = new ImageSelector();
@@ -3818,7 +4342,11 @@ namespace DXFReaderNETDemoProgram
                 if (ent.IsVisible && dxfReaderNETControl1.DXF.Layers[ent.Layer.Name].IsVisible && !dxfReaderNETControl1.DXF.Layers[ent.Layer.Name].IsFrozen && !dxfReaderNETControl1.DXF.Layers[ent.Layer.Name].IsLocked)
                 {
                     if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
+                    {
                         dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
+                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    }
+
                 }
             }
 
@@ -3828,6 +4356,7 @@ namespace DXFReaderNETDemoProgram
         private void ribbonButtonModyfiSelectClear_Click(object sender, EventArgs e)
         {
             dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
             dxfReaderNETControl1.Refresh();
         }
 
@@ -3836,8 +4365,10 @@ namespace DXFReaderNETDemoProgram
 
             if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
+                SaveUndo();
                 dxfReaderNETControl1.DXF.RemoveEntities(dxfReaderNETControl1.DXF.SelectedEntities);
                 dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
                 dxfReaderNETControl1.Refresh();
 
             }
@@ -3856,9 +4387,22 @@ namespace DXFReaderNETDemoProgram
             {
                 if (dxfReaderNETControl1.DXF.SelectedEntities != null)
                 {
-                    dxfReaderNETControl1.DXF.RemoveEntities();
-                    dxfReaderNETControl1.DXF.AddEntities(dxfReaderNETControl1.DXF.SelectedEntities);
+                    SaveUndo();
+                    foreach (EntityObject ent in dxfReaderNETControl1.DXF.Entities)
+                    {
+                        if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
+                        {
+                            dxfReaderNETControl1.DXF.RemoveEntity(ent);
+                        }
+
+
+                    }
+
+
+                    //dxfReaderNETControl1.DXF.RemoveEntities();
+                    //dxfReaderNETControl1.DXF.AddEntities(dxfReaderNETControl1.DXF.SelectedEntities);
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
                     dxfReaderNETControl1.Refresh();
                 }
 
@@ -3926,21 +4470,41 @@ namespace DXFReaderNETDemoProgram
         {
 
 
-            //string inputValue = m_rotation.ToString();
-            //if (ShowInputDialog(ref inputValue, "Rotation angle [°]", true) == DialogResult.OK)
-            //{
-            //    m_rotation = double.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
+            string inputValue = m_rotation.ToString();
 
-            //    if (m_rotation != 0)
-            //    {
-            //        CurrentFunction = FunctionsEnum.RotateEntities;
-            //        CheckSnap();
-            //        StatusLabel.Text = "Select base point";
-            //    }
-            //}
-            CurrentFunction = FunctionsEnum.RotateEntities1;
-            CheckSnap();
-            StatusLabel.Text = "Select base point";
+            InputDialog inputBox = new InputDialog();
+            inputBox.textBox1.Text = inputValue;
+            inputBox.label1.Text = "Rotation angle [°]"; ;
+            inputBox.ForceNumeric = true;
+            inputBox.checkBoxInputDialog.Visible = true;
+            inputBox.checkBoxInputDialog.Text = "Select rotation on screen";
+            inputBox.checkBoxInputDialog.Checked = m_selectRotationOnScreen;
+            DialogResult result = inputBox.ShowDialog();
+
+
+
+            if (result == DialogResult.OK)
+            {
+                inputValue = inputBox.textBox1.Text;
+                m_rotation = double.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
+                m_selectRotationOnScreen = inputBox.checkBoxInputDialog.Checked;
+                if (inputBox.checkBoxInputDialog.Checked)
+                {
+                    CurrentFunction = FunctionsEnum.RotateEntities1;
+                }
+                else
+                {
+                    if (m_rotation != 0)
+                    {
+                        CurrentFunction = FunctionsEnum.RotateEntities;
+
+                    }
+                }
+                CheckSnap();
+                StatusLabel.Text = "Select base point";
+            }
+
+
 
         }
 
@@ -3965,6 +4529,11 @@ namespace DXFReaderNETDemoProgram
                 ribbonButtonModifyDeleteHandle.Enabled = false;
                 ribbonButtonModifyDeleteButHandle.Enabled = false;
                 ribbonButtonModifyRemoveBlocks.Enabled = false;
+
+                ribbonButtonDeleteEntitiesByLineType.Enabled = false;
+                ribbonButtonDeleteCoincident.Enabled = false;
+                ribbonButtonDeleteNotConnected.Enabled = false;
+                ribbonButtonDeleteZeroLen.Enabled = false;
             }
             else
             {
@@ -3974,6 +4543,12 @@ namespace DXFReaderNETDemoProgram
                 ribbonButtonModifyDeleteHandle.Enabled = true;
                 ribbonButtonModifyDeleteButHandle.Enabled = true;
                 ribbonButtonModifyRemoveBlocks.Enabled = true;
+                ribbonButtonDeleteEntitiesByLineType.Enabled = true;
+                ribbonButtonDeleteCoincident.Enabled = true;
+                ribbonButtonDeleteNotConnected.Enabled = true;
+                ribbonButtonDeleteZeroLen.Enabled = true;
+                if (dxfReaderNETControl1.DXF.Entities.Count < 2)
+                    ribbonButtonDeleteCoincident.Enabled = false;
 
             }
 
@@ -4052,7 +4627,7 @@ namespace DXFReaderNETDemoProgram
         {
             CurrentFunction = FunctionsEnum.GetEntities;
             dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
-            StatusLabel.Text = "Select entities or press right button to end";
+            StatusLabel.Text = "Select entities. ESC or right click to end.";
         }
 
         private void ribbonButtonModifyCopy_DropDownShowing(object sender, EventArgs e)
@@ -4076,13 +4651,16 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonDrawLineContinous_Click(object sender, EventArgs e)
         {
+            LastCommand = Commands.LINES;
             CurrentFunction = FunctionsEnum.Lines;
             CheckSnap();
             StatusLabel.Text = "Select points with left mouse click. Right mouse clic to end.";
+            vertexes.Clear();
         }
 
         private void ribbonButtonSplineControlPoints_Click(object sender, EventArgs e)
         {
+            LastCommand = Commands.SPLINE;
             CurrentFunction = FunctionsEnum.Spline;
             CheckSnap();
             StatusLabel.Text = "Select control points with left mouse click. Right mouse clic to end.";
@@ -4192,40 +4770,62 @@ namespace DXFReaderNETDemoProgram
                 m_PatternName = hatchSelector.ComboBox1.Text;
 
                 m_HatchBoundaries = hatchSelector.comboBox2.Text;
-                Boundary.Clear();
-                BoundaryOutermost.Clear();
-
-                switch (m_HatchBoundaries)
-                {
-                    case "Choose single entities":
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
-                        StatusLabel.Text = "Select entities with left mouse click. Right mouse clic to finish.";
-                        CurrentFunction = FunctionsEnum.Hatch;
-                        break;
-                    case "Choose entities by rectangle":
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                        StatusLabel.Text = "Select start point of selection rectangle";
-                        CurrentFunction = FunctionsEnum.HatchRecangle1;
-                        Boundary.Clear();
-                        break;
-                    case "Define polygon":
-
-                        StatusLabel.Text = "Select points with left mouse click. Right mouse clic to close.";
-                        CurrentFunction = FunctionsEnum.HatchBoundaries;
-                        CheckSnap();
-                        break;
-                    case "Point inside entity":
-
-                        StatusLabel.Text = "Select a point inside a closed entity.";
-                        CurrentFunction = FunctionsEnum.HatchPoint;
-                        CheckSnap();
-                        break;
-
-                }
+                CreateHatch();
+                LastCommand = Commands.HATCH;
             }
 
         }
+        private void CreateHatch()
+        {
+            Boundary.Clear();
+            BoundaryOutermost.Clear();
 
+            switch (m_HatchBoundaries)
+            {
+                case "Choose single entities":
+                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
+                    StatusLabel.Text = "Select entities with left mouse click. Right mouse clic to finish.";
+                    CurrentFunction = FunctionsEnum.Hatch;
+                    break;
+                case "Choose entities by rectangle":
+                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    StatusLabel.Text = "Select start point of selection rectangle";
+                    CurrentFunction = FunctionsEnum.HatchRecangle1;
+                    Boundary.Clear();
+                    break;
+                case "Define polygon":
+
+                    StatusLabel.Text = "Select points with left mouse click. Right mouse clic to close.";
+                    CurrentFunction = FunctionsEnum.HatchBoundaries;
+                    CheckSnap();
+                    break;
+                case "Point inside entity":
+
+                    StatusLabel.Text = "Select a point inside a closed entity.";
+                    CurrentFunction = FunctionsEnum.HatchPoint;
+                    CheckSnap();
+                    break;
+                case "Selected entities":
+                    if (dxfReaderNETControl1.DXF.SelectedEntities.Count() > 0)
+                    {
+                        List<EntityObject> externalContour = new List<EntityObject>();
+                        List<EntityObject> innerEntities = new List<EntityObject>();
+                        FindBoundaries(dxfReaderNETControl1.DXF.SelectedEntities, out externalContour, out innerEntities);
+
+                        m_LastAddedEntity = dxfReaderNETControl1.AddHatch(m_PatternName, externalContour, innerEntities, double.Parse(m_HatchRotation, System.Globalization.CultureInfo.CurrentCulture), double.Parse(m_HatchScale, System.Globalization.CultureInfo.CurrentCulture), dxfReaderNETControl1.DXF.CurrentColor.Index);
+
+                        dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                        dxfReaderNETControl1.Refresh();
+                    }
+                    else
+                    {
+                        StatusLabel.Text = "There are no selected entities";
+                    }
+
+                    break;
+
+            }
+        }
         private void ribbonButtonDrawHatch_Click(object sender, EventArgs e)
         {
             ribbonButtonDrawHatchNormal_Click(sender, e);
@@ -4240,6 +4840,7 @@ namespace DXFReaderNETDemoProgram
             gradientSelector.TextBoxRotation.Text = m_GradientHatchRotation;
             gradientSelector.ComboBox1.SelectedIndex = gradientSelector.ComboBox1.FindString(m_GradientPatternName);
             gradientSelector.comboBox2.SelectedIndex = gradientSelector.comboBox2.FindString(m_GradientHatchBoundaries);
+            gradientSelector.comboBox3.SelectedIndex = gradientSelector.comboBox3.FindString(m_GradientHatchTransparency);
             gradientSelector.checkBoxCentered.Checked = m_GradientHatchCentered;
             gradientSelector.buttonColor1.BackColor = AciColor.FromCadIndex(m_GradientAciColor1).ToColor();
             gradientSelector.buttonColor2.BackColor = AciColor.FromCadIndex(m_GradientAciColor2).ToColor();
@@ -4249,7 +4850,7 @@ namespace DXFReaderNETDemoProgram
 
             if (gradientSelector.ShowDialog() == DialogResult.OK)
             {
-
+                LastCommand = Commands.HATCH_GRADIENT;
                 m_GradientHatchCentered = gradientSelector.checkBoxCentered.Checked;
                 m_GradientAciColor1 = (short)gradientSelector.buttonColor1.Tag;
                 m_GradientAciColor2 = (short)gradientSelector.buttonColor2.Tag;
@@ -4258,39 +4859,70 @@ namespace DXFReaderNETDemoProgram
                 m_GradientPatternName = gradientSelector.ComboBox1.Text;
 
                 m_GradientHatchBoundaries = gradientSelector.comboBox2.Text;
-                Boundary.Clear();
-                BoundaryOutermost.Clear();
+                m_GradientHatchTransparency = gradientSelector.comboBox3.Text;
+                CreateGradientHatch();
+            }
+        }
+        private void CreateGradientHatch()
+        {
+            Boundary.Clear();
+            BoundaryOutermost.Clear();
 
-                switch (m_GradientHatchBoundaries)
-                {
+            switch (m_GradientHatchBoundaries)
+            {
 
-                    case "Choose single entities":
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
-                        StatusLabel.Text = "Select entities with left mouse click. Right mouse clic to finish.";
-                        CurrentFunction = FunctionsEnum.GradientHatch;
-                        break;
-                    case "Choose entities by rectangle":
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                        StatusLabel.Text = "Select start point of selection rectangle";
-                        CurrentFunction = FunctionsEnum.GradientHatchRecangle1;
-                        Boundary.Clear();
-                        break;
+                case "Choose single entities":
+                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
+                    StatusLabel.Text = "Select entities with left mouse click. Right mouse clic to finish.";
+                    CurrentFunction = FunctionsEnum.GradientHatch;
+                    break;
+                case "Choose entities by rectangle":
+                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    StatusLabel.Text = "Select start point of selection rectangle";
+                    CurrentFunction = FunctionsEnum.GradientHatchRectangle1;
+                    Boundary.Clear();
+                    break;
 
 
-                    case "Define polygon":
+                case "Define polygon":
 
-                        StatusLabel.Text = "Select points with left mouse click. Right mouse clic to close.";
-                        CurrentFunction = FunctionsEnum.GradientHatchBoundaries;
-                        CheckSnap();
-                        break;
-                    case "Point inside entity":
+                    StatusLabel.Text = "Select points with left mouse click. Right mouse clic to close.";
+                    CurrentFunction = FunctionsEnum.GradientHatchBoundaries;
+                    CheckSnap();
+                    break;
+                case "Point inside entity":
 
-                        StatusLabel.Text = "Select a point inside a closed entity.";
-                        CurrentFunction = FunctionsEnum.GradientHatchPoint;
-                        CheckSnap();
-                        break;
+                    StatusLabel.Text = "Select a point inside a closed entity.";
+                    CurrentFunction = FunctionsEnum.GradientHatchPoint;
+                    CheckSnap();
+                    break;
 
-                }
+                case "Selected entities":
+                    if (dxfReaderNETControl1.DXF.SelectedEntities.Count() > 0)
+                    {
+                        List<EntityObject> externalContour = new List<EntityObject>();
+                        List<EntityObject> innerEntities = new List<EntityObject>();
+                        FindBoundaries(dxfReaderNETControl1.DXF.SelectedEntities, out externalContour, out innerEntities);
+
+                        m_LastAddedEntity = dxfReaderNETControl1.AddGradientHatch((HatchGradientPatternType)Enum.Parse(typeof(HatchGradientPatternType), m_GradientPatternName), externalContour, innerEntities, m_GradientAciColor1, m_GradientAciColor2, double.Parse(m_GradientHatchRotation, System.Globalization.CultureInfo.CurrentCulture), m_GradientHatchCentered);
+                        if (m_GradientHatchTransparency != "0")
+                        {
+                            if (m_LastAddedEntity != null)
+                            {
+                                Hatch myHatch = dxfReaderNETControl1.DXF.Hatches[dxfReaderNETControl1.DXF.Hatches.Count - 1];
+                                myHatch.Transparency = new Transparency(short.Parse(m_GradientHatchTransparency));
+                            }
+                        }
+                        dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                        dxfReaderNETControl1.Refresh();
+                    }
+                    else
+                    {
+                        StatusLabel.Text = "There are no selected entities";
+                    }
+
+                    break;
+
             }
         }
 
@@ -4327,41 +4959,49 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonModifyExplodeInsert_Click(object sender, EventArgs e)
         {
-            CurrentFunction = FunctionsEnum.ExplodeInsert;
-            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquareQuestionMark;
-            StatusLabel.Text = "Select insert entity";
+
         }
 
         private void ribbonButtonModifyExplodePoly_Click(object sender, EventArgs e)
         {
-            //CurrentFunction = FunctionsEnum.ExplodePoly;
-            //dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquareQuestionMark;
-            //StatusLabel.Text = "Select polyline or light weight polyline entity";
 
-
-            CurrentFunction = FunctionsEnum.ExplodePoly1;
-            StatusLabel.Text = "Select start point of selection rectangle";
         }
 
         private void ribbonButtonModifyExplodeCircle_Click(object sender, EventArgs e)
         {
-            CurrentFunction = FunctionsEnum.ExplodeCircle;
-            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquareQuestionMark;
-            StatusLabel.Text = "Select circle entity";
+            string inputValue = m_precision.ToString();
+            if (ShowInputDialog(ref inputValue, "Precision", true) == DialogResult.OK)
+            {
+                m_precision = int.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
+                CurrentFunction = FunctionsEnum.ExplodeCircle;
+                dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquareQuestionMark;
+                StatusLabel.Text = "Select circle entity";
+            }
         }
 
         private void ribbonButtonModifyExplodeArc_Click(object sender, EventArgs e)
         {
-            CurrentFunction = FunctionsEnum.ExplodeArc;
-            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquareQuestionMark;
-            StatusLabel.Text = "Select arc entity";
+            string inputValue = m_precision.ToString();
+            if (ShowInputDialog(ref inputValue, "Precision", true) == DialogResult.OK)
+            {
+                m_precision = int.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
+                CurrentFunction = FunctionsEnum.ExplodeArc;
+                dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquareQuestionMark;
+                StatusLabel.Text = "Select arc entity";
+            }
         }
 
         private void ribbonButtonModifyExplodeEllipse_Click(object sender, EventArgs e)
         {
-            CurrentFunction = FunctionsEnum.ExplodeEllipse;
-            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquareQuestionMark;
-            StatusLabel.Text = "Select ellipse entity";
+            string inputValue = m_precision.ToString();
+            if (ShowInputDialog(ref inputValue, "Precision", true) == DialogResult.OK)
+            {
+                m_precision = int.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
+
+                CurrentFunction = FunctionsEnum.ExplodeEllipse;
+                dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquareQuestionMark;
+                StatusLabel.Text = "Select ellipse entity";
+            }
         }
 
         private void ribbonButtonModifyLines2Poly_Click(object sender, EventArgs e)
@@ -4374,10 +5014,12 @@ namespace DXFReaderNETDemoProgram
                 {
                     if (newPoly.Vertexes.Count > 0)
                     {
+                        SaveUndo();
                         newPoly.Color = dxfReaderNETControl1.DXF.CurrentColor;
                         dxfReaderNETControl1.DXF.AddEntity(newPoly);
                         dxfReaderNETControl1.DXF.RemoveEntities(dxfReaderNETControl1.DXF.SelectedEntities);
                         dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
                         dxfReaderNETControl1.Refresh();
                     }
                 }
@@ -4457,7 +5099,10 @@ namespace DXFReaderNETDemoProgram
             blockSelector.TextBoxScale.Text = m_BlockScale;
             blockSelector.TextBoxRotation.Text = m_BlockRotation;
             blockSelector.ComboBox1.Items.Clear();
-            blockSelector.DXFReaderNETControl = dxfReaderNETControl1;
+            //blockSelector.DXFReaderNETControl = dxfReaderNETControl1;
+            blockSelector.DXFReaderNETControl = new DXFReaderNETControl();
+
+
             foreach (DXFReaderNET.Blocks.Block _block in dxfReaderNETControl1.DXF.Blocks.Items)
             {
                 if (_block.Entities.Count > 0 || _block.AttributeDefinitions.Count > 0)
@@ -4465,9 +5110,13 @@ namespace DXFReaderNETDemoProgram
 #if DEBUG
 
                     blockSelector.ComboBox1.Items.Add(_block.Name.ToString());
+                    blockSelector.DXFReaderNETControl.DXF.Blocks.Add((DXFReaderNET.Blocks.Block)_block.Clone());
 #else
-  if (!_block.Name.StartsWith("*") && !_block.Name.StartsWith("_"))
+  if (!_block.Name.StartsWith("*") && !_block.Name.StartsWith("_")) {
+
                         blockSelector.ComboBox1.Items.Add(_block.Name.ToString());
+
+                        }
 #endif
 
                 }
@@ -4734,7 +5383,6 @@ namespace DXFReaderNETDemoProgram
         }
 
 
-
         private void ribbonButtonAnnotationsDimension_Click(object sender, EventArgs e)
         {
             ribbonButtonAnnotationsDimensionAlignedStartEnd_Click(sender, e);
@@ -4936,14 +5584,12 @@ namespace DXFReaderNETDemoProgram
         }
 
 
-
-
-
         private void ribbonColorChooserRubberBand_Click(object sender, EventArgs e)
         {
 
 
             colorDialog1.Color = m_RubberBandColor;
+
 
             if (colorDialog1.ShowDialog() == DialogResult.OK)
             {
@@ -4955,15 +5601,25 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonExplodeSplineSingle_Click(object sender, EventArgs e)
         {
+            //string inputValue = m_precision.ToString();
+            //if (ShowInputDialog(ref inputValue, "Precision", true) == DialogResult.OK)
+            //{
+            //    m_precision = int.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
             CurrentFunction = FunctionsEnum.ExplodeSpline;
             dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquareQuestionMark;
             StatusLabel.Text = "Select spline entity";
+            //}
         }
 
         private void ribbonButtonExplodeSplineRectangle_Click(object sender, EventArgs e)
         {
+            //string inputValue = m_precision.ToString();
+            //if (ShowInputDialog(ref inputValue, "Precision", true) == DialogResult.OK)
+            //{
+            //m_precision = int.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
             CurrentFunction = FunctionsEnum.ExplodeSplineRect1;
             StatusLabel.Text = "Select start point of selection rectangle";
+            //}
         }
 
         private void ribbonButtonPlotPreview_Click(object sender, EventArgs e)
@@ -5003,7 +5659,7 @@ namespace DXFReaderNETDemoProgram
             switch (PrintType)
             {
                 case PrintTypeEnum.Drawing:
-                    if (dxfReaderNETControl1.PlotMode == PlotModeType.Window)
+                    if (dxfReaderNETControl1.PlotMode == PlotModeType.Window && !OnPlotPreview)
                     {
                         CurrentFunction = FunctionsEnum.PlotWindow1;
                         StatusLabel.Text = "Select start point of the ploting window";
@@ -5092,7 +5748,10 @@ namespace DXFReaderNETDemoProgram
         {
             dxfReaderNETControl1.PlotMode = PlotModeType.Window;
         }
-
+        private void ribbonButtonPlotModeCentered_Click(object sender, EventArgs e)
+        {
+            dxfReaderNETControl1.PlotMode = PlotModeType.Centered;
+        }
         private void ribbonButtonPlotRenderingColor_Click(object sender, EventArgs e)
         {
             dxfReaderNETControl1.PlotRendering = PlotRenderingType.Color;
@@ -5134,6 +5793,7 @@ namespace DXFReaderNETDemoProgram
             CheckSnap();
             vertexes.Clear();
             StatusLabel.Text = "Select control points with left mouse click. Right mouse clic to end.";
+            LastCommand = Commands.SPLINE;
         }
 
         private void ribbonUpDownPlotMarginTop_DownButtonClicked(object sender, MouseEventArgs e)
@@ -5424,21 +6084,42 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonModifyCopyScale_Click(object sender, EventArgs e)
         {
-            //string inputValue = m_scale.ToString();
-            //if (ShowInputDialog(ref inputValue, "Scale factor", true) == DialogResult.OK)
-            //{
-            //    m_scale = double.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
+            string inputValue = m_scale.ToString();
 
-            //    if (m_scale != 1)
-            //    {
-            //        CurrentFunction = FunctionsEnum.ScaleEntities;
-            //        CheckSnap();
-            //        StatusLabel.Text = "Select base point";
-            //    }
-            //}
-            CurrentFunction = FunctionsEnum.ScaleEntities1;
-            CheckSnap();
-            StatusLabel.Text = "Select base point";
+            InputDialog inputBox = new InputDialog();
+            inputBox.textBox1.Text = inputValue;
+            inputBox.label1.Text = "Scale factor"; ;
+            inputBox.ForceNumeric = true;
+            inputBox.checkBoxInputDialog.Visible = true;
+            inputBox.checkBoxInputDialog.Text = "Select scale on screen";
+            inputBox.checkBoxInputDialog.Checked = m_selectRotationOnScreen;
+            DialogResult result = inputBox.ShowDialog();
+
+
+
+            if (result == DialogResult.OK)
+            {
+                inputValue = inputBox.textBox1.Text;
+                m_scale = double.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
+                m_selectRotationOnScreen = inputBox.checkBoxInputDialog.Checked;
+                if (inputBox.checkBoxInputDialog.Checked)
+                {
+                    CurrentFunction = FunctionsEnum.ScaleEntities1;
+                }
+                else
+                {
+                    if (m_scale != 1)
+                    {
+                        CurrentFunction = FunctionsEnum.ScaleEntities;
+
+                    }
+                }
+                CheckSnap();
+                StatusLabel.Text = "Select base point";
+            }
+
+
+
         }
 
         private void ribbonButton1SaveTest_Click(object sender, EventArgs e)
@@ -5462,16 +6143,21 @@ namespace DXFReaderNETDemoProgram
 
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
-
+                StatusLabel.Text = "";
+                ErrorLabel.Text = "";
 
                 if (dxfReaderNETControl1.WriteDXF(saveFileDialog1.FileName, DXFReaderNET.Header.DxfVersion.AutoCad2013, dxfReaderNETControl1.DXF.IsBinary))
                 {
                     StatusLabel.Text = "DXF file saved";
+                    ErrorLabel.Text = "";
                 }
                 else
                 {
                     StatusLabel.Text = "Error in saving DXF file";
                 }
+
+
+
                 CurrentSaveDXFPath = Path.GetDirectoryName(saveFileDialog1.FileName);
                 AddMRU(saveFileDialog1.FileName);
 
@@ -5523,6 +6209,8 @@ namespace DXFReaderNETDemoProgram
                 dxfReaderNETControl1.DXF.ActiveLayout = ((RibbonComboBox)sender).SelectedItem.Text.Trim();
                 dxfReaderNETControl1.Refresh();
                 dxfReaderNETControl1.ZoomExtents();
+                if (ribbonButtonViewTreeView.Checked)
+                    RefreshTree();
             }
         }
 
@@ -5563,19 +6251,23 @@ namespace DXFReaderNETDemoProgram
         {
             StatusLabel.Text = "Select axis start point";
             CurrentFunction = FunctionsEnum.Ellipse1;
+            LastCommand = Commands.ELLIPSE;
             CheckSnap();
         }
-
+        int addedPat = 0;
         private void ribbonButtonDrawHatchPatterns_Click(object sender, EventArgs e)
         {
             openFileDialog1.DefaultExt = "pat";
             openFileDialog1.Filter = "Hatch Pattern definition file|*.pat|All files (*.*)|*.*";
             openFileDialog1.FileName = "";
-
+            openFileDialog1.Multiselect = true;
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                LoadPAT(openFileDialog1.FileName);
-
+                addedPat = 0;
+                foreach (String file in openFileDialog1.FileNames)
+                {
+                    LoadPAT(file);
+                }
             }
         }
         private void LoadPAT(string PATfilename)
@@ -5587,14 +6279,25 @@ namespace DXFReaderNETDemoProgram
 
             foreach (HatchPattern pattern in patterns)
             {
-                if (hatchPatternsCustom.Contains(pattern))
+                bool namePresent = false;
+                foreach (HatchPattern p2 in hatchPatternsCustom)
                 {
-                    hatchPatternsCustom.Remove(pattern);
+                    if (p2.Name == pattern.Name)
+                    {
+                        namePresent = true;
+                        break;
+                    }
+
                 }
-                hatchPatternsCustom.Add(pattern);
+                if (!namePresent)
+                {
+                    hatchPatternsCustom.Add(pattern);
+                    addedPat++;
+                }
+
             }
 
-
+            StatusLabel.Text = "Added " + addedPat.ToString() + " patterns";
 
         }
         private void LoadLIN(string LINfilename)
@@ -5631,108 +6334,253 @@ namespace DXFReaderNETDemoProgram
         }
         private void Form1_Resize(object sender, EventArgs e)
         {
-            labelCommands.Left = statusStrip1.Width / 2 - labelCommands.Width / 2;
-            labelCommands.Top = statusStrip1.Top - labelCommands.Height;
+
+
+            panelCommands.Width = 650;
+            panelCommands.Left = statusStrip1.Width / 2 - panelCommands.Width / 2;
+            panelCommands.Top = statusStrip1.Top - panelCommands.Height;
+            labelCommands.Top = 2;
+            labelCommands.Left = 0;
+            txtCommand.Top = 2;
+
+            txtCommand.BorderStyle = BorderStyle.None;
+
+
         }
 
         private void ribbonButtonCommandLine_Click(object sender, EventArgs e)
         {
-            labelCommands.Visible = ribbonButtonCommandLine.Checked;
+            //labelCommands.Visible = ribbonButtonCommandLine.Checked;
+            panelCommands.Visible = ribbonButtonCommandLine.Checked;
             m_showCommandLine = ribbonButtonCommandLine.Checked;
         }
         private void ShowCommandLine()
         {
             if (labelCommands.Visible)
             {
-                cmdCoord = "";
+                //cmdCoord = "";
                 switch (CurrentFunction)
                 {
-
                     case FunctionsEnum.None:
                         labelCommands.Text = "";
 
                         break;
+
+                    case FunctionsEnum.Slot2:
+                        txtCommand.Text = "";
+                        labelCommands.Text = "SLOT specify end corner:";
+
+                        break;
+                    case FunctionsEnum.Slot1:
+                        txtCommand.Text = "";
+                        labelCommands.Text = "SLOT specify start corner:";
+
+                        break;
+                    case FunctionsEnum.Rectangle2:
+                        txtCommand.Text = "";
+                        labelCommands.Text = "RECTANGLE specify end corner:";
+
+                        break;
+                    case FunctionsEnum.Rectangle1:
+                        txtCommand.Text = "";
+                        labelCommands.Text = "RECTANGLE specify start corner:";
+
+                        break;
+                    case FunctionsEnum.ArrayPolar:
+                        txtCommand.Text = "";
+                        labelCommands.Text = "POLAR ARRAY specify center:";
+
+                        break;
                     case FunctionsEnum.Line1:
-                        labelCommands.Text = "LINE specify start point: ";
+                        txtCommand.Text = "";
+                        labelCommands.Text = "LINE specify start point:";
+
                         break;
                     case FunctionsEnum.Line2:
-                        labelCommands.Text = "LINE specify end point: ";
+                        txtCommand.Text = "";
+                        labelCommands.Text = "LINE specify end point:";
                         break;
 
                     case FunctionsEnum.Circle1:
-                        labelCommands.Text = "CIRCLE specify center: ";
+                        txtCommand.Text = "";
+                        labelCommands.Text = "CIRCLE specify center:";
                         break;
                     case FunctionsEnum.Circle2:
-                        labelCommands.Text = "CIRCLE specify radius: ";
+                        txtCommand.Text = "";
+                        labelCommands.Text = "CIRCLE specify radius:";
                         break;
                     case FunctionsEnum.LwPolyline:
-                        labelCommands.Text = "LWPOLYLINE specify vertex: ";
+                        txtCommand.Text = "";
+                        labelCommands.Text = "LWPOLYLINE specify vertex:";
+                        break;
+                    case FunctionsEnum.Mline:
+                        txtCommand.Text = "";
+                        labelCommands.Text = "MLINE specify vertex:";
                         break;
 
                     case FunctionsEnum.Circle2p1:
-                        labelCommands.Text = "CIRCLE specify start point of diameter: ";
+                        txtCommand.Text = "";
+                        labelCommands.Text = "CIRCLE specify start point of diameter:";
                         break;
                     case FunctionsEnum.Circle2p2:
-                        labelCommands.Text = "CIRCLE specify end point of diameter: ";
+                        txtCommand.Text = "";
+                        labelCommands.Text = "CIRCLE specify end point of diameter:";
                         break;
 
                     case FunctionsEnum.Circle3p1:
-                        labelCommands.Text = "CIRCLE specify first point: ";
+                        txtCommand.Text = "";
+                        labelCommands.Text = "CIRCLE specify first point:";
                         break;
                     case FunctionsEnum.Circle3p2:
-                        labelCommands.Text = "CIRCLE specify second point: ";
+                        txtCommand.Text = "";
+                        labelCommands.Text = "CIRCLE specify second point:";
                         break;
                     case FunctionsEnum.Circle3p3:
-                        labelCommands.Text = "CIRCLE specify third point: ";
+                        txtCommand.Text = "";
+                        labelCommands.Text = "CIRCLE specify third point:";
                         break;
 
+                }
+                txtCommand.Left = labelCommands.Left + labelCommands.Width;
+                txtCommand.Width = panelCommands.Width - txtCommand.Left;
+                if (labelCommands.Text.Trim() != "")
+                {
+                    txtCommand.Enabled = true;
+                    txtCommand.Focus();
+                }
+                else
+                {
+                    txtCommand.Enabled = false;
+                    txtCommand.BackColor = System.Drawing.SystemColors.ControlLightLight;
                 }
             }
         }
         private void InitStatus()
         {
-            CurrentFunction = FunctionsEnum.None;
-            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+            CheckContinuousSelection();
             StatusLabel.Text = "";
             SaveUndo();
+            labelCommands.Text = "";
+            txtCommand.Text = "";
+            txtCommand.Enabled = false;
+            txtCommand.BackColor = System.Drawing.SystemColors.ControlLightLight;
         }
 
         private void setPoint()
         {
+
             EntityObject ent = null;
             m_LastAddedEntity = null;
             addedMultipleEntities = false;
             switch (CurrentFunction)
             {
-                case FunctionsEnum.Contour:
-                    m_SelectedContours += 1;
-                    StatusLabel.Text = "Select an entity of the contour. ESC to end. Selected countours: " + m_SelectedContours.ToString();
-                    //CurrentFunction = FunctionsEnum.None;
-                    //dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                case FunctionsEnum.Poly2Lw:
+                    CheckContinuousSelection();
                     ent = dxfReaderNETControl1.GetEntity(pNoSnap);
                     if (ent != null)
                     {
-
-                        List<EntityObject> contours = dxfReaderNETControl1.Contour(ent);
-
-                        if (contours.Count > 0)
+                        InitStatus();
+                        if (ent.Type == EntityType.Polyline)
                         {
-                            string groupNameF = newGroupName(dxfReaderNETControl1, "CONTOUR");
-                            DXFReaderNET.Objects.Group newGgroupF = new DXFReaderNET.Objects.Group(groupNameF);
-
-                            foreach (EntityObject entity in contours)
+                            List<LwPolylineVertex> Vertexes = new List<LwPolylineVertex>();
+                            foreach (PolylineVertex v in ((Polyline)ent).Vertexes)
                             {
-                                if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(entity))
-                                {
-                                    newGgroupF.Entities.Add(entity);
-                                    dxfReaderNETControl1.DXF.SelectedEntities.Add(entity);
-                                    dxfReaderNETControl1.HighLight(entity);
-                                }
+                                LwPolylineVertex vPl = new LwPolylineVertex();
+                                vPl.Bulge = v.Bulge;
+                                vPl.Position = v.Position.ToVector2();
+
+                                Vertexes.Add(vPl);
                             }
-                            dxfReaderNETControl1.DXF.Groups.Add(newGgroupF);
-                            addedContours.Add(newGgroupF);
-                            dxfReaderNETControl1.DXF.Modified = false;
+
+                            double lwWid = (((Polyline)ent).StartWidth + ((Polyline)ent).EndWidth) / 2;
+                            dxfReaderNETControl1.DXF.RemoveEntity(ent);
+                            dxfReaderNETControl1.AddLightWeightPolyline(Vertexes, ((Polyline)ent).IsClosed, lwWid, ((Polyline)ent).Color.Index, ((Polyline)ent).Layer.Name, ((Polyline)ent).Linetype.Name);
+
+                            dxfReaderNETControl1.Refresh();
+                            break;
                         }
+                    }
+                    break;
+
+
+                case FunctionsEnum.Lw2Poly:
+                    CheckContinuousSelection();
+                    ent = dxfReaderNETControl1.GetEntity(pNoSnap);
+                    if (ent != null)
+                    {
+                        InitStatus();
+                        if (ent.Type == EntityType.LightWeightPolyline)
+                        {
+                            List<PolylineVertex> VertexesP = new List<PolylineVertex>();
+                            foreach (LwPolylineVertex v in ((LwPolyline)ent).Vertexes)
+                            {
+                                PolylineVertex vP = new PolylineVertex();
+                                vP.Bulge = v.Bulge;
+                                vP.Position = v.Position.ToVector3();
+
+                                VertexesP.Add(vP);
+                            }
+
+                            double lwWid = (((LwPolyline)ent).StartWidth + ((LwPolyline)ent).EndWidth) / 2;
+                            dxfReaderNETControl1.DXF.RemoveEntity(ent);
+                            dxfReaderNETControl1.AddPolyline(VertexesP, ((LwPolyline)ent).IsClosed, lwWid, ((LwPolyline)ent).Color.Index, ((LwPolyline)ent).Layer.Name, ((LwPolyline)ent).Linetype.Name);
+
+                            dxfReaderNETControl1.Refresh();
+                            break;
+                        }
+                    }
+                    break;
+                case FunctionsEnum.Contour:
+
+                    //CurrentFunction = FunctionsEnum.None;
+                    //dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    ent = dxfReaderNETControl1.GetEntity(pNoSnap);
+
+                    //bool isInAnotherContour = false;
+                    //foreach (DXFReaderNET.Objects.Group _group in dxfReaderNETControl1.DXF.Groups)
+                    //{
+                    //    foreach (EntityObject entity in _group.Entities)
+                    //    {
+                    //    }
+                    //    if (_group.Entities.Contains(ent))
+                    //    {
+                    //        isInAnotherContour = true;
+                    //        break;
+                    //    }
+
+                    //}
+
+                    //if (!isInAnotherContour)
+                    //{
+                    if (ent != null)
+                    {
+                        DateTime StartTime = DateTime.Now;
+                        List<EntityObject> contours = dxfReaderNETControl1.Contour(ent);
+                        TimeSpan ElapsedTime = DateTime.Now.Subtract(StartTime);
+                        toolStripStatusLabelInfo.Text = "Time: " + ElapsedTime.ToString(@"s\.fff\s");
+
+                        //if (contours.Count > 0)
+                        //{
+                        //    string groupNameF = newGroupName(dxfReaderNETControl1, "CONTOUR");
+                        //    DXFReaderNET.Objects.Group newGgroupF = new DXFReaderNET.Objects.Group(groupNameF);
+
+                        foreach (EntityObject entity in contours)
+                        {
+                            //if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(entity))
+                            //{
+                            //newGgroupF.Entities.Add(entity);
+                            dxfReaderNETControl1.DXF.SelectedEntities.Add(entity);
+
+                            dxfReaderNETControl1.HighLight(entity);
+                            //}
+                        }
+                        //    dxfReaderNETControl1.DXF.Groups.Add(newGgroupF);
+                        //    addedContours.Add(newGgroupF);
+                        //    dxfReaderNETControl1.DXF.Modified = false;
+                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                        m_SelectedContours += 1;
+                        StatusLabel.Text = "Select an entity of the contour. ESC to end. Selected contours: " + m_SelectedContours.ToString();
+                        //}
 
                     }
                     else
@@ -5740,7 +6588,11 @@ namespace DXFReaderNETDemoProgram
                         StatusLabel.Text = "No entity found";
 
                     }
-
+                    //}
+                    //else
+                    //{
+                    //    StatusLabel.Text = "Contour is already defined";
+                    //}
                     break;
 
 
@@ -5779,7 +6631,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
 
                     break;
@@ -5795,8 +6647,7 @@ namespace DXFReaderNETDemoProgram
 
                         Vector2 Ap = new Vector2(p1.X + r, p2.Y);
                         Vector2 Bp = new Vector2(p2.X - r, p2.Y);
-                        double ang1 = 270;
-                        double ang2 = 90;
+
                         if (p2.X - p1.X > 0)
                         {
                             if (Math.Abs(p2.X - p1.X) < 2 * r)
@@ -5826,55 +6677,26 @@ namespace DXFReaderNETDemoProgram
                                 B = new Vector2(p2.X + r, p1.Y);
                                 Ap = new Vector2(p1.X - r, p2.Y);
                                 Bp = new Vector2(p2.X + r, p2.Y);
-                                ang1 = 90;
-                                ang2 = 270;
+
                             }
                         }
 
-                        string groupName = newGroupName(dxfReaderNETControl1, "SLOT");
-                        DXFReaderNET.Objects.Group newGgroup = new DXFReaderNET.Objects.Group(groupName);
-                        List<EntityObject> RectangleEntities = new List<EntityObject>();
-                        EntityObject newEntity;
-                        newEntity = dxfReaderNETControl1.AddLine(A.ToVector3(), B.ToVector3(), dxfReaderNETControl1.DXF.CurrentColor.Index);
-                        RectangleEntities.Add(newEntity);
-                        dxfReaderNETControl1.DXF.RemoveEntity(newEntity);
-                        //newGgroup.Entities.Add(m_LastAddedEntity);
 
-                        newEntity = dxfReaderNETControl1.AddArc(Vector3.MidPoint(B.ToVector3(), Bp.ToVector3()), r, ang1, ang2, dxfReaderNETControl1.DXF.CurrentColor.Index);
-                        RectangleEntities.Add(newEntity);
-                        dxfReaderNETControl1.DXF.RemoveEntity(newEntity);
-                        //newGgroup.Entities.Add(m_LastAddedEntity);
+                        List<LwPolylineVertex> polyVertexes = new List<LwPolylineVertex>();
+                        polyVertexes.Add(new LwPolylineVertex(A.X, A.Y));
+                        if (Vector2.Distance(A, B) != 0)
+                            polyVertexes.Add(new LwPolylineVertex(B.X, B.Y));
+                        polyVertexes[polyVertexes.Count - 1].Bulge = 1;
+                        if (Vector2.Distance(B, Bp) != 0)
+                            polyVertexes.Add(new LwPolylineVertex(Bp.X, Bp.Y));
+                        if (Vector2.Distance(Bp, Ap) != 0)
+                            polyVertexes.Add(new LwPolylineVertex(Ap.X, Ap.Y));
+                        polyVertexes[polyVertexes.Count - 1].Bulge = 1;
 
-                        newEntity = dxfReaderNETControl1.AddLine(Bp.ToVector3(), Ap.ToVector3(), dxfReaderNETControl1.DXF.CurrentColor.Index);
-                        RectangleEntities.Add(newEntity);
-                        dxfReaderNETControl1.DXF.RemoveEntity(newEntity);
-                        //newGgroup.Entities.Add(m_LastAddedEntity);
-
-                        newEntity = dxfReaderNETControl1.AddArc(Vector3.MidPoint(A.ToVector3(), Ap.ToVector3()), r, ang2, ang1, dxfReaderNETControl1.DXF.CurrentColor.Index);
-                        RectangleEntities.Add(newEntity);
-                        dxfReaderNETControl1.DXF.RemoveEntity(newEntity);
-
-                        m_LastAddedEntity = new LwPolyline(RectangleEntities, true);
-                        newGgroup.Entities.Add(m_LastAddedEntity);
-
-                        dxfReaderNETControl1.DXF.Groups.Add(newGgroup);
-                        addedMultipleEntities = true;
+                        m_LastAddedEntity = dxfReaderNETControl1.AddLightWeightPolyline(polyVertexes, true, 0, dxfReaderNETControl1.DXF.CurrentColor.Index);
 
 
-                        //List<LwPolylineVertex> polyVertexes = new List<LwPolylineVertex>();
-                        //polyVertexes.Add(new LwPolylineVertex(A.X, A.Y));
-                        //polyVertexes.Add(new LwPolylineVertex(B.X, B.Y));
-                        //polyVertexes[polyVertexes.Count - 1].Bulge = 1;
-                        //polyVertexes.Add(new LwPolylineVertex(Bp.X, Bp.Y));
-                        //polyVertexes.Add(new LwPolylineVertex(Ap.X, Ap.Y));
-                        //polyVertexes[polyVertexes.Count - 1].Bulge = 1;
 
-                        //m_LastAddedEntity = dxfReaderNETControl1.AddLightWeightPolyline(polyVertexes, true, 0, dxfReaderNETControl1.DXF.CurrentColor.Index);
-
-                        //string groupNameR = newGroupName(dxfReaderNETControl1, "SLOT");
-                        //DXFReaderNET.Objects.Group newGgroupR = new DXFReaderNET.Objects.Group(groupNameR);
-                        //newGgroupR.Entities.Add(m_LastAddedEntity);
-                        //dxfReaderNETControl1.DXF.Groups.Add(newGgroupR);
 
                     }
 
@@ -5891,13 +6713,14 @@ namespace DXFReaderNETDemoProgram
                     break;
                 case FunctionsEnum.Join2:
                     InitStatus();
+                    p1 = p;
                     m_entTrim = dxfReaderNETControl1.GetEntity(pNoSnap);
                     if (m_entTrim != null)
                     {
 
-                        if (!dxfReaderNETControl1.Join(m_entJoinBoundary, m_entTrim, p))
+                        if (!dxfReaderNETControl1.Join(m_entJoinBoundary, m_entTrim, p1))
                         {
-                            StatusLabel.Text = "The selected entity is not suitable for join";
+
 
                         }
                         else
@@ -5911,13 +6734,13 @@ namespace DXFReaderNETDemoProgram
                     {
 
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
 
                     m_entJoinBoundary = null;
                     break;
                 case FunctionsEnum.Join1:
-
+                    p1 = pNoSnap;
                     m_entJoinBoundary = dxfReaderNETControl1.GetEntity(pNoSnap);
                     if (m_entJoinBoundary != null)
                     {
@@ -5930,7 +6753,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         CurrentFunction = FunctionsEnum.None;
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                         StatusLabel.Text = "No entity found";
 
                     }
@@ -5938,13 +6761,21 @@ namespace DXFReaderNETDemoProgram
 
                 case FunctionsEnum.GradientHatchPoint:
                     InitStatus();
-                    EntityObject contour = MathHelper.EntitiyOutsidePoint(AllVisibleEntities(), p);
+                    EntityObject contour = MathHelper.EntityOutsidePoint(AllVisibleEntities(), p);
                     if (contour != null)
                     {
-                        Boundary.Add(MathHelper.EntitiyOutsidePoint(AllVisibleEntities(), p));
+                        Boundary.Add(MathHelper.EntityOutsidePoint(AllVisibleEntities(), p));
 
                         m_LastAddedEntity = dxfReaderNETControl1.AddGradientHatch((HatchGradientPatternType)Enum.Parse(typeof(HatchGradientPatternType), m_GradientPatternName), Boundary, BoundaryOutermost, m_GradientAciColor1, m_GradientAciColor2, double.Parse(m_GradientHatchRotation, System.Globalization.CultureInfo.CurrentCulture), m_GradientHatchCentered);
 
+                        if (m_GradientHatchTransparency != "0")
+                        {
+                            if (m_LastAddedEntity != null)
+                            {
+                                Hatch myHatch = dxfReaderNETControl1.DXF.Hatches[dxfReaderNETControl1.DXF.Hatches.Count - 1];
+                                myHatch.Transparency = new Transparency(short.Parse(m_GradientHatchTransparency));
+                            }
+                        }
                     }
 
 
@@ -5955,10 +6786,10 @@ namespace DXFReaderNETDemoProgram
                     break;
                 case FunctionsEnum.HatchPoint:
                     InitStatus();
-                    contour = MathHelper.EntitiyOutsidePoint(AllVisibleEntities(), p);
+                    contour = MathHelper.EntityOutsidePoint(AllVisibleEntities(), p);
                     if (contour != null)
                     {
-                        Boundary.Add(MathHelper.EntitiyOutsidePoint(AllVisibleEntities(), p));
+                        Boundary.Add(MathHelper.EntityOutsidePoint(AllVisibleEntities(), p));
 
                         m_LastAddedEntity = dxfReaderNETControl1.AddHatch(m_PatternName, Boundary, BoundaryOutermost, double.Parse(m_HatchRotation, System.Globalization.CultureInfo.CurrentCulture), double.Parse(m_HatchScale, System.Globalization.CultureInfo.CurrentCulture), dxfReaderNETControl1.DXF.CurrentColor.Index);
 
@@ -6006,7 +6837,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
 
@@ -6046,7 +6877,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
 
@@ -6060,7 +6891,7 @@ namespace DXFReaderNETDemoProgram
                     break;
 
                 case FunctionsEnum.AngularDimensionCenterStartEnd3:
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     CurrentFunction = FunctionsEnum.AngularDimensionCenterStartEnd4;
                     StatusLabel.Text = "Select dimension position";
                     p3 = p;
@@ -6111,7 +6942,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
 
@@ -6133,7 +6964,7 @@ namespace DXFReaderNETDemoProgram
                         {
                             SelectedLine1 = (Line)ent;
                             StatusLabel.Text = "Select dimension position";
-                            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                            CheckContinuousSelection();
                             CurrentFunction = FunctionsEnum.AngularDimension2Lines3;
                         }
                         else
@@ -6146,7 +6977,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
 
@@ -6175,7 +7006,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
 
@@ -6208,7 +7039,7 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.LinearDimensionLine1:
 
                     p1 = p;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     StatusLabel.Text = "";
                     ent = dxfReaderNETControl1.GetEntity(p);
                     if (ent != null)
@@ -6224,7 +7055,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
 
@@ -6245,7 +7076,7 @@ namespace DXFReaderNETDemoProgram
                     break;
                 case FunctionsEnum.LinearDimension2:
                     CurrentFunction = FunctionsEnum.LinearDimension3;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     StatusLabel.Text = "Select dimension position";
                     p2 = p;
                     break;
@@ -6268,7 +7099,7 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.AlignedDimensionLine1:
 
                     p1 = p;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     StatusLabel.Text = "";
                     ent = dxfReaderNETControl1.GetEntity(p);
                     if (ent != null)
@@ -6284,7 +7115,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
 
@@ -6298,7 +7129,7 @@ namespace DXFReaderNETDemoProgram
                     break;
                 case FunctionsEnum.AlignedDimension2:
                     CurrentFunction = FunctionsEnum.AlignedDimension3;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     StatusLabel.Text = "Select dimension position";
                     p2 = p;
                     break;
@@ -6326,6 +7157,7 @@ namespace DXFReaderNETDemoProgram
 
                     dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
                     break;
 
                 case FunctionsEnum.RotateAxis1:
@@ -6348,9 +7180,11 @@ namespace DXFReaderNETDemoProgram
                     {
                         StatusLabel.Text = "Block '" + m_newBlockName + "' created";
                         dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
                         dxfReaderNETControl1.Refresh();
                         m_newBlockName = "";
                     }
+
                     break;
 
 
@@ -6358,72 +7192,24 @@ namespace DXFReaderNETDemoProgram
                     InitStatus();
 
 
-                    List<EntityObject> entitiesToOffset = new List<EntityObject>();
-                    int newSlotGropuNumber = 0;
 
-                    foreach (DXFReaderNET.Objects.Group _group in dxfReaderNETControl1.DXF.Groups)
+
+
+
+                    if (dxfReaderNETControl1.Offset(m_entOffset, m_offset, p) == null)
                     {
-                        if (_group.Entities.Contains(m_entOffset))
-                        {
-                            foreach (EntityObject _ent in _group.Entities)
-                            {
-                                if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(_ent))
-                                    entitiesToOffset.Add(_ent);
 
-                            }
-
-                        }
-                        if (_group.Name.StartsWith("SLOT"))
-                        {
-                            newSlotGropuNumber = Convert.ToInt32(_group.Name.Replace("SLOT", ""));
-                        }
-
+                        StatusLabel.Text = "The selected entity is not suitable for offset";
                     }
 
-                    if (entitiesToOffset.Count < 2)
-                    {
-                        entitiesToOffset.Add(m_entOffset);
-                        if (dxfReaderNETControl1.Offset(m_entOffset, m_offset, p) == null)
-                        {
-
-                            dxfReaderNETControl1.DXF.Entities[dxfReaderNETControl1.DXF.Entities.Count - 1].Layer = dxfReaderNETControl1.DXF.Layers[dxfReaderNETControl1.DXF.CurrentLayer];
-                            StatusLabel.Text = "The selected entity is not suitable for offset";
-                        }
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                        dxfReaderNETControl1.Refresh();
-                    }
-                    else
-
-                    {
-                        LwPolyline lw = new LwPolyline(entitiesToOffset, true);
-                        //lw.Layer.Name = dxfReaderNETControl1.DXF.CurrentLayer;
-                        dxfReaderNETControl1.Offset(lw, m_offset, p);
-                        EntityObject newEnt = dxfReaderNETControl1.DXF.Entities[dxfReaderNETControl1.DXF.Entities.Count - 1];
-                        if (newEnt.Type == EntityType.LightWeightPolyline)
-                        {
-                            List<EntityObject> newEntitiesS = ((LwPolyline)newEnt).Explode();
-                            dxfReaderNETControl1.DXF.AddEntities(newEntitiesS);
-                            dxfReaderNETControl1.DXF.RemoveEntity(newEnt);
-
-                            if (newSlotGropuNumber > 0)
-                            {
-                                string groupName = newGroupName(dxfReaderNETControl1, "SLOT");
-                                DXFReaderNET.Objects.Group newGgroup = new DXFReaderNET.Objects.Group(groupName);
-                                newGgroup.Entities.AddRange(newEntitiesS);
-
-                                dxfReaderNETControl1.DXF.Groups.Add(newGgroup);
-                            }
-                        }
-
-
-                        dxfReaderNETControl1.Refresh();
-                    }
+                    CheckContinuousSelection();
+                    dxfReaderNETControl1.Refresh();
 
 
                     break;
 
                 case FunctionsEnum.Offset1:
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     m_entOffset = dxfReaderNETControl1.GetEntity(p);
                     if (m_entOffset != null)
                     {
@@ -6435,65 +7221,48 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
 
 
                 case FunctionsEnum.Trim2:
-                    InitStatus();
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    //InitStatus();
+                    //CheckContinuousSelection();
                     m_entTrim = dxfReaderNETControl1.GetEntity(pNoSnap);
                     if (m_entTrim != null)
                     {
-                        if (m_entTrimBoundaries.Count == 1)
-                        {
-                            if (!dxfReaderNETControl1.Trim(m_entTrimBoundaries[0], m_entTrim, p))
-                            {
-                                StatusLabel.Text = "The selected entity is not suitable for trim";
 
-                            }
-                            else
-                            {
-                                dxfReaderNETControl1.Refresh();
-                            }
+                        if (!dxfReaderNETControl1.Trim(m_entTrimBoundaries, m_entTrim, p))
+                        {
+                            StatusLabel.Text = "The selected  " + m_entTrim.Type.ToString() + " entity is not suitable for trim";
+
                         }
                         else
                         {
-                            if (!dxfReaderNETControl1.Trim(m_entTrimBoundaries, m_entTrim, p))
-                            {
-                                StatusLabel.Text = "The selected entity is not suitable for trim";
 
-                            }
-                            else
-                            {
-                                dxfReaderNETControl1.Refresh();
-                            }
+                            dxfReaderNETControl1.Refresh();
                         }
 
-
-                        //StatusLabel.Text = "Select object to trim";
-                        //CurrentFunction = FunctionsEnum.Trim2;
 
                     }
                     else
                     {
 
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     m_entTrim = null;
 
                     break;
                 case FunctionsEnum.Trim1:
-                    //dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    //CheckContinuousSelection();
                     EntityObject boundary = dxfReaderNETControl1.GetEntity(pNoSnap);
                     if (boundary != null)
                     {
-
                         dxfReaderNETControl1.HighLight(boundary);
+                        dxfReaderNETControl1.DXF.SelectedEntities.Add(boundary);
                         m_entTrimBoundaries.Add(boundary);
-
 
                     }
                     else
@@ -6506,7 +7275,7 @@ namespace DXFReaderNETDemoProgram
 
 
                 case FunctionsEnum.Extend2:
-                    InitStatus();
+                    //InitStatus();
                     m_entTrim = dxfReaderNETControl1.GetEntity(pNoSnap);
                     if (m_entTrim != null)
                     {
@@ -6520,17 +7289,15 @@ namespace DXFReaderNETDemoProgram
                             dxfReaderNETControl1.Refresh();
                         }
 
-
-
                     }
                     else
                     {
 
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        //CheckContinuousSelection();
                     }
 
-                    m_entExtendBoundary = null;
+                    //m_entExtendBoundary = null;
                     break;
                 case FunctionsEnum.Extend1:
 
@@ -6539,14 +7306,14 @@ namespace DXFReaderNETDemoProgram
                     {
 
                         dxfReaderNETControl1.HighLight(m_entExtendBoundary);
-                        StatusLabel.Text = "Select object to extend";
+                        StatusLabel.Text = "Select object to extend. ESC or right click to end.";
                         CurrentFunction = FunctionsEnum.Extend2;
 
                     }
                     else
                     {
                         CurrentFunction = FunctionsEnum.None;
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                         StatusLabel.Text = "No entity found";
 
                     }
@@ -6574,7 +7341,7 @@ namespace DXFReaderNETDemoProgram
                     {
 
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
 
 
@@ -6588,15 +7355,13 @@ namespace DXFReaderNETDemoProgram
                         {
                             case EntityType.Line:
                                 dxfReaderNETControl1.HighLight(m_filletLine1);
-                                StatusLabel.Text = "Select second line";
+                                StatusLabel.Text = "Select second object";
                                 CurrentFunction = FunctionsEnum.Fillet2;
                                 break;
+
+
                             case EntityType.LightWeightPolyline:
                             case EntityType.Polyline:
-                                InitStatus();
-
-
-
                                 if (!dxfReaderNETControl1.Fillet(m_filletLine1, null, dxfReaderNETControl1.DXF.DrawingVariables.FilletRad))
                                 {
                                     StatusLabel.Text = "The selected polyline is not suitable for fillet";
@@ -6604,11 +7369,15 @@ namespace DXFReaderNETDemoProgram
                                 }
                                 else
                                 {
+                                    InitStatus();
                                     dxfReaderNETControl1.Refresh();
                                 }
 
                                 break;
-
+                            default:
+                                InitStatus();
+                                StatusLabel.Text = "The selected object is not suitable for fillet";
+                                break;
 
                         }
 
@@ -6617,7 +7386,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         CurrentFunction = FunctionsEnum.None;
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                         StatusLabel.Text = "No entity found";
                     }
                     break;
@@ -6644,7 +7413,7 @@ namespace DXFReaderNETDemoProgram
                     {
 
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
 
 
@@ -6687,7 +7456,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         CurrentFunction = FunctionsEnum.None;
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                         StatusLabel.Text = "No entity found";
                     }
                     break;
@@ -6735,7 +7504,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
                 case FunctionsEnum.ExplodeInsert:
@@ -6765,7 +7534,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
                 case FunctionsEnum.ExplodeDimension:
@@ -6800,7 +7569,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
                 case FunctionsEnum.ExplodeSpline:
@@ -6812,7 +7581,9 @@ namespace DXFReaderNETDemoProgram
                         {
                             List<EntityObject> insertEntities = new List<EntityObject>();
                             int precision = ((Spline)ent).ControlPoints.Count;
-                            if (precision < 100) precision = 100;
+
+                            //if (precision < m_precision) precision = m_precision;
+                            if (precision < 40) precision = 40;
                             dxfReaderNETControl1.DXF.AddEntity(((Spline)ent).ToPolyline(precision));
                             dxfReaderNETControl1.DXF.RemoveEntity(ent);
                             dxfReaderNETControl1.Refresh();
@@ -6827,7 +7598,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
                 case FunctionsEnum.ExplodeCircle:
@@ -6839,7 +7610,7 @@ namespace DXFReaderNETDemoProgram
                         {
                             List<EntityObject> insertEntities = new List<EntityObject>();
 
-                            dxfReaderNETControl1.DXF.AddEntity(((Circle)ent).ToPolyline(100));
+                            dxfReaderNETControl1.DXF.AddEntity(((Circle)ent).ToPolyline(m_precision));
                             dxfReaderNETControl1.DXF.RemoveEntity(ent);
                             dxfReaderNETControl1.Refresh();
                             StatusLabel.Text = "Circle entity exploded into a new light weight polyline";
@@ -6853,7 +7624,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
                 case FunctionsEnum.ExplodeArc:
@@ -6864,7 +7635,7 @@ namespace DXFReaderNETDemoProgram
                         if (ent.Type == EntityType.Arc)
                         {
 
-                            dxfReaderNETControl1.DXF.AddEntity(((Arc)ent).ToPolyline(36));
+                            dxfReaderNETControl1.DXF.AddEntity(((Arc)ent).ToPolyline(m_precision));
                             dxfReaderNETControl1.DXF.RemoveEntity(ent);
                             dxfReaderNETControl1.Refresh();
                             StatusLabel.Text = "Arc entity exploded into a new light weight polyline";
@@ -6878,7 +7649,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
                 case FunctionsEnum.ExplodeEllipse:
@@ -6889,7 +7660,7 @@ namespace DXFReaderNETDemoProgram
                         if (ent.Type == EntityType.Ellipse)
                         {
 
-                            dxfReaderNETControl1.DXF.AddEntity(((Ellipse)ent).ToPolyline(100));
+                            dxfReaderNETControl1.DXF.AddEntity(((Ellipse)ent).ToPolyline(m_precision));
                             dxfReaderNETControl1.DXF.RemoveEntity(ent);
                             dxfReaderNETControl1.Refresh();
                             StatusLabel.Text = "Ellipse entity exploded into a new light weight polyline";
@@ -6903,9 +7674,86 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
+                case FunctionsEnum.ExplodeEllipseArcs:
+                    InitStatus();
+                    ent = dxfReaderNETControl1.GetEntity(p);
+                    if (ent != null)
+                    {
+                        if (ent.Type == EntityType.Ellipse)
+                        {
+                            LwPolyline ellipseLW = ((Ellipse)ent).ToPolyline(m_precision * 2);
+
+                            for (int k = 0; k < ellipseLW.Vertexes.Count - 2; k += 2)
+                            {
+
+                                Vector3 sp = ellipseLW.Vertexes[k].Position.ToVector3();
+                                Vector3 mp = ellipseLW.Vertexes[k + 1].Position.ToVector3();
+                                Vector3 ep = ellipseLW.Vertexes[k + 2].Position.ToVector3();
+                                dxfReaderNETControl1.AddArc(sp, mp, ep, ent.Color.Index);
+
+                            }
+                            if (((Ellipse)ent).IsFullEllipse)
+                            {
+                                Vector3 sp = ellipseLW.Vertexes[ellipseLW.Vertexes.Count - 2].Position.ToVector3();
+                                Vector3 mp = ellipseLW.Vertexes[ellipseLW.Vertexes.Count - 1].Position.ToVector3();
+                                Vector3 ep = ellipseLW.Vertexes[0].Position.ToVector3();
+                                dxfReaderNETControl1.AddArc(sp, mp, ep, ent.Color.Index);
+
+                            }
+
+                            dxfReaderNETControl1.DXF.RemoveEntity(ent);
+                            dxfReaderNETControl1.Refresh();
+                            StatusLabel.Text = "Ellipse entity exploded into " + m_precision.ToString() + " arcs";
+                        }
+                        else
+                        {
+                            StatusLabel.Text = "Selected entity is not an ellipse";
+                        }
+
+                    }
+                    else
+                    {
+                        StatusLabel.Text = "No entity found";
+                        CheckContinuousSelection();
+                    }
+                    break;
+                case FunctionsEnum.ExplodeCircleArcs:
+                    InitStatus();
+                    ent = dxfReaderNETControl1.GetEntity(p);
+                    if (ent != null)
+                    {
+                        if (ent.Type == EntityType.Circle)
+                        {
+                            Circle c = (Circle)ent;
+                            double sA = 360 / (double)m_precision;
+                            for (double k = 0; k < m_precision; k++)
+                            {
+                                dxfReaderNETControl1.AddArc(c.Center, c.Radius, k * sA, (k + 1) * sA, c.Color.Index, c.Layer.Name, c.Linetype.Name);
+
+                            }
+
+
+
+                            dxfReaderNETControl1.DXF.RemoveEntity(ent);
+                            dxfReaderNETControl1.Refresh();
+                            StatusLabel.Text = "Circle entity exploded into " + m_precision.ToString() + " arcs";
+                        }
+                        else
+                        {
+                            StatusLabel.Text = "Selected entity is not an circle";
+                        }
+
+                    }
+                    else
+                    {
+                        StatusLabel.Text = "No entity found";
+                        CheckContinuousSelection();
+                    }
+                    break;
+
 
                 case FunctionsEnum.GradientHatch:
                 case FunctionsEnum.Hatch:
@@ -6935,8 +7783,8 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.Ray2:
                     InitStatus();
                     p2 = p;
-
-                    m_LastAddedEntity = dxfReaderNETControl1.AddRay(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p2.X - p1.X, p2.Y - p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index);
+                    AddLayerIfNotPresent("AUXILIARY");
+                    m_LastAddedEntity = dxfReaderNETControl1.AddRay(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p2.X - p1.X, p2.Y - p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index, "AUXILIARY");
 
                     break;
 
@@ -6947,10 +7795,10 @@ namespace DXFReaderNETDemoProgram
                     break;
 
                 case FunctionsEnum.Xline2:
-
-                    p2 = p;
                     InitStatus();
-                    m_LastAddedEntity = dxfReaderNETControl1.AddXLine(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p2.X - p1.X, p2.Y - p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index);
+                    p2 = p;
+                    AddLayerIfNotPresent("AUXILIARY");
+                    m_LastAddedEntity = dxfReaderNETControl1.AddXLine(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p2.X - p1.X, p2.Y - p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index, "AUXILIARY");
 
 
                     break;
@@ -7006,15 +7854,40 @@ namespace DXFReaderNETDemoProgram
                     StatusLabel.Text = "Select end point of the line";
                     p1 = p;
                     break;
+
+                case FunctionsEnum.Leader3:
+                    InitStatus();
+                    p3 = p;
+
+                    m_LastAddedEntity = dxfReaderNETControl1.AddLeader(p1, p2, p3, m_Text);
+
+                    if (m_Text != "")
+                        dxfReaderNETControl1.DrawEntity(dxfReaderNETControl1.DXF.MTexts[dxfReaderNETControl1.DXF.MTexts.Count - 1]);
+                    vertexes.Add(p3);
+                    break;
+
+                case FunctionsEnum.Leader2:
+                    CurrentFunction = FunctionsEnum.Leader3;
+                    StatusLabel.Text = "Select leader end point";
+                    p2 = p;
+                    vertexes.Add(p2);
+                    break;
+                case FunctionsEnum.Leader1:
+                    CurrentFunction = FunctionsEnum.Leader2;
+                    StatusLabel.Text = "Select leader next point";
+
+                    p1 = p;
+                    vertexes.Add(p1);
+                    break;
                 case FunctionsEnum.GradientHatchBoundaries:
                 case FunctionsEnum.HatchBoundaries:
-
                 case FunctionsEnum.Lines:
                 case FunctionsEnum.Polyline:
                 case FunctionsEnum.LwPolyline:
                 case FunctionsEnum.PolylineLenght:
                 case FunctionsEnum.Area:
                 case FunctionsEnum.DrawPolygon:
+                case FunctionsEnum.Mline:
                     vertexes.Add(p);
                     break;
                 case FunctionsEnum.Spline:
@@ -7052,7 +7925,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
 
                     break;
@@ -7063,7 +7936,7 @@ namespace DXFReaderNETDemoProgram
                     break;
                 case FunctionsEnum.LocatePoint:
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
 
                     StatusLabel.Text = "X: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p.X);
                     StatusLabel.Text += " Y: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p.Y);
@@ -7072,7 +7945,7 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.GetGroupEntities:
                     StatusLabel.Text = "";
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     ent = dxfReaderNETControl1.GetEntity(pNoSnap);
 
                     if (ent != null)
@@ -7086,7 +7959,10 @@ namespace DXFReaderNETDemoProgram
                                 {
 
                                     if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(_ent))
-                                        dxfReaderNETControl1.DXF.SelectedEntities.Add(_ent);
+                                    {
+                                        dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
+                                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                                    }
                                     dxfReaderNETControl1.HighLight(_ent);
 
                                 }
@@ -7104,30 +7980,42 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
                 case FunctionsEnum.GetEntity:
                     StatusLabel.Text = "";
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     ent = dxfReaderNETControl1.GetEntity(pNoSnap);
                     if (ent != null)
                     {
+
                         if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
+                        {
                             dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
-                        dxfReaderNETControl1.HighLight(ent);
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                            dxfReaderNETControl1.HighLight(ent);
+                        }
+                        else
+                        {
+                            dxfReaderNETControl1.DXF.SelectedEntities.Remove(ent);
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                            //dxfReaderNETControl1.DrawEntity(ent);
+                            dxfReaderNETControl1.Refresh();
+
+                        }
                     }
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
                 case FunctionsEnum.MoveEnt1:
                     StatusLabel.Text = "";
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     ent = dxfReaderNETControl1.GetEntity(pNoSnap);
                     if (ent != null)
                     {
@@ -7140,7 +8028,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
                     break;
 
@@ -7148,9 +8036,21 @@ namespace DXFReaderNETDemoProgram
                     ent = dxfReaderNETControl1.GetEntity(pNoSnap);
                     if (ent != null)
                     {
+                        StatusLabel.Text = EntityInfo(dxfReaderNETControl1, ent);
                         if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
+                        {
                             dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
-                        dxfReaderNETControl1.HighLight(ent);
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                            dxfReaderNETControl1.HighLight(ent);
+                        }
+                        else
+                        {
+                            dxfReaderNETControl1.DXF.SelectedEntities.Remove(ent);
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                            //dxfReaderNETControl1.DrawEntity(ent);
+                            dxfReaderNETControl1.Refresh();
+
+                        }
                     }
 
 
@@ -7158,7 +8058,7 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.ListXdata:
                     StatusLabel.Text = "";
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     ent = dxfReaderNETControl1.GetEntity(pNoSnap);
                     if (ent != null)
                     {
@@ -7190,7 +8090,7 @@ namespace DXFReaderNETDemoProgram
                     else
                     {
                         StatusLabel.Text = "No entity found";
-                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                        CheckContinuousSelection();
                     }
 
                     break;
@@ -7198,7 +8098,7 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.PrintEntityProperties:
                     StatusLabel.Text = "";
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     ent = dxfReaderNETControl1.GetEntity(pNoSnap);
                     if (ent != null)
                     {
@@ -7214,7 +8114,7 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.EntityProperties:
                     StatusLabel.Text = "";
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     ent = dxfReaderNETControl1.GetEntity(pNoSnap);
                     if (ent != null)
                     {
@@ -7228,24 +8128,24 @@ namespace DXFReaderNETDemoProgram
 
                     break;
 
+
+                case FunctionsEnum.SetLimits2:
+                    InitStatus();
+                    p2 = p;
+                    toolStripStatusLabelInfo.Text = "";
+
+                    dxfReaderNETControl1.SetLimits(p1, p2);
+                    dxfReaderNETControl1.Refresh();
+                    break;
                 case FunctionsEnum.SetLimits1:
                     CurrentFunction = FunctionsEnum.SetLimits2;
                     StatusLabel.Text = "Select upper right corner";
                     p1 = p;
                     break;
-                case FunctionsEnum.SetLimits2:
-                    p2 = p;
-
-                    toolStripStatusLabelInfo.Text = "";
-
-                    InitStatus();
-                    dxfReaderNETControl1.SetLimits(p1, p2);
-                    dxfReaderNETControl1.Refresh();
-                    break;
                 case FunctionsEnum.ZoomWindow2:
                     p2 = pNoSnap;
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     toolStripStatusLabelInfo.Text = "";
                     StatusLabel.Text = "";
                     dxfReaderNETControl1.ZoomWindow(p1, p2);
@@ -7256,11 +8156,25 @@ namespace DXFReaderNETDemoProgram
                     p1 = pNoSnap;
                     break;
 
+                case FunctionsEnum.Connect2:
+                    p2 = pNoSnap;
+                    AutoJoinEntities(dxfReaderNETControl1.GetEntities(p1, p2));
+                    dxfReaderNETControl1.Refresh();
+                    CurrentFunction = FunctionsEnum.None;
+                    CheckContinuousSelection();
+                    toolStripStatusLabelInfo.Text = "";
+                    StatusLabel.Text = "";
 
+                    break;
+                case FunctionsEnum.Connect1:
+                    CurrentFunction = FunctionsEnum.Connect2;
+                    StatusLabel.Text = "Select end point of the window";
+                    p1 = pNoSnap;
+                    break;
                 case FunctionsEnum.PlotWindow2:
                     p2 = pNoSnap;
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     toolStripStatusLabelInfo.Text = "";
                     StatusLabel.Text = "";
                     dxfReaderNETControl1.DXF.DrawingVariables.PLimMin = p1;
@@ -7282,28 +8196,17 @@ namespace DXFReaderNETDemoProgram
                     break;
 
 
-                //case FunctionsEnum.Pan2:
-                //    CurrentFunction = FunctionsEnum.None;
-                //    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                //    p2 = p;
-                //    toolStripStatusLabelInfo.Text = "";
-                //    dxfReaderNETControl1.Pan(p1, p2);
-                //    break;
-                //case FunctionsEnum.Pan1:
-                //    CurrentFunction = FunctionsEnum.Pan2;
-                //    StatusLabel.Text = "Select end point";
-                //    p1 = p;
-                //    break;
+
                 case FunctionsEnum.ArrayPolar:
-                    CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    InitStatus();
+
                     toolStripStatusLabelInfo.Text = "";
                     p1 = p;
                     //p2 = MathHelper.EntitiesCenter(dxfReaderNETControl1.DXF.SelectedEntities);
 
-                    double stepAng = (double)360 / (double)m_PolarArrayItems;
-                    double radius = Vector2.Distance(p2, p1);
-                    for (int k = 0; k < m_PolarArrayItems; k++)
+                    double stepAng = 360 / (double)m_PolarArrayItems;
+                    //double radius = Vector2.Distance(p2, p1);
+                    for (double k = 0; k < m_PolarArrayItems; k++)
                     {
 
 
@@ -7320,26 +8223,31 @@ namespace DXFReaderNETDemoProgram
                     }
                     dxfReaderNETControl1.DXF.RemoveEntities(dxfReaderNETControl1.DXF.SelectedEntities);
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
                     dxfReaderNETControl1.Refresh();
                     break;
 
                 case FunctionsEnum.Array2:
-                    CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    InitStatus();
+
                     p2 = p;
-                    double spacingX = Math.Abs(p2.X - p1.X);
-                    double spacingY = Math.Abs(p2.Y - p1.Y);
+                    //double spacingX = Math.Abs(p2.X - p1.X);
+                    //double spacingY = Math.Abs(p2.Y - p1.Y);
+                    double spacingX = p2.X - p1.X;
+                    double spacingY = p2.Y - p1.Y;
 
                     toolStripStatusLabelInfo.Text = "";
 
 
 
                     Vector2 displacement = Vector2.Zero;
-                    for (int k = 0; k < m_ArrayColumns; k++)
+                    //for (int k = 0; k < m_ArrayColumns; k++)
+                    //{
+                    //    for (int j = 0; j < m_ArrayRows; j++)
+
+                    for (int k = 0; k < m_ArrayRows; k++)
                     {
-
-
-                        for (int j = 0; j < m_ArrayRows; j++)
+                        for (int j = 0; j < m_ArrayColumns; j++)
                         {
 
                             foreach (EntityObject entA in dxfReaderNETControl1.DXF.SelectedEntities)
@@ -7356,19 +8264,22 @@ namespace DXFReaderNETDemoProgram
                     }
                     dxfReaderNETControl1.DXF.RemoveEntities(dxfReaderNETControl1.DXF.SelectedEntities);
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
                     dxfReaderNETControl1.Refresh();
 
 
                     break;
                 case FunctionsEnum.Array1:
                     CurrentFunction = FunctionsEnum.Array2;
+
                     StatusLabel.Text = "Select end point of distance between items";
                     p1 = p;
                     break;
 
                 case FunctionsEnum.Distance2:
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
+
                     p2 = p;
                     toolStripStatusLabelInfo.Text = "";
 
@@ -7403,10 +8314,6 @@ namespace DXFReaderNETDemoProgram
 
                             m_LastAddedEntity = dxfReaderNETControl1.AddLightWeightPolyline(polyVertexes, true, 0, dxfReaderNETControl1.DXF.CurrentColor.Index);
 
-                            string groupNameR = newGroupName(dxfReaderNETControl1, "RECTANGLE");
-                            DXFReaderNET.Objects.Group newGgroupR = new DXFReaderNET.Objects.Group(groupNameR);
-                            newGgroupR.Entities.Add(m_LastAddedEntity);
-                            dxfReaderNETControl1.DXF.Groups.Add(newGgroupR);
 
                         }
                         else
@@ -7430,10 +8337,17 @@ namespace DXFReaderNETDemoProgram
                             Vector2 pr4e = new Vector2(p1.X, p1.Y + filletradius);
                             if ((p2.X - p1.X) < 0)
                             {
-                                pr1e = new Vector2(p1.X - filletradius, p1.Y);
                                 pr1s = new Vector2(p2.X + filletradius, p1.Y);
-                                pr3e = new Vector2(p2.X + filletradius, p2.Y);
+                                pr1e = new Vector2(p1.X - filletradius, p1.Y);
+
                                 pr3s = new Vector2(p1.X - filletradius, p2.Y);
+                                pr3e = new Vector2(p2.X + filletradius, p2.Y);
+
+                                //pr1s = new Vector2(p2.X - filletradius, p1.Y);
+                                //pr1e = new Vector2(p1.X + filletradius, p1.Y);
+
+                                //pr3s = new Vector2(p1.X + filletradius, p2.Y);
+                                //pr3e = new Vector2(p2.X - filletradius, p2.Y);
 
 
                             }
@@ -7444,16 +8358,25 @@ namespace DXFReaderNETDemoProgram
 
                                 pr4e = new Vector2(p1.X, p2.Y + filletradius);
                                 pr4s = new Vector2(p1.X, p1.Y - filletradius);
-                            }
-                            //    goto salto;
 
-                            string groupNameR = newGroupName(dxfReaderNETControl1, "RECTANGLE");
-                            DXFReaderNET.Objects.Group newGgroupR = new DXFReaderNET.Objects.Group(groupNameR);
+                                //pr2s = new Vector2(p2.X, p2.Y - filletradius);
+                                //pr2e = new Vector2(p2.X, p1.Y + filletradius);
+
+                                //pr4s = new Vector2(p1.X, p1.Y + filletradius);
+                                //pr4e = new Vector2(p1.X, p2.Y - filletradius);
+
+                            }
+                            //goto salto;
+
+
+                            //string groupNameR = newGroupName(dxfReaderNETControl1, "RECTANGLE");
+                            //DXFReaderNET.Objects.Group newGgroupR = new DXFReaderNET.Objects.Group(groupNameR);
 
                             List<EntityObject> RectangleEntities = new List<EntityObject>();
                             EntityObject newEntity;
+
                             newEntity = dxfReaderNETControl1.AddLine(pr1s.ToVector3(), pr1e.ToVector3(), dxfReaderNETControl1.DXF.CurrentColor.Index);
-                            RectangleEntities.Add(newEntity);
+                            RectangleEntities.Add((EntityObject)newEntity.Clone());
                             dxfReaderNETControl1.DXF.RemoveEntity(newEntity);
                             //newGgroupR.Entities.Add(m_LastAddedEntity);
                             if (filletradius2 < 0)
@@ -7465,12 +8388,12 @@ namespace DXFReaderNETDemoProgram
                             {
                                 newEntity = dxfReaderNETControl1.AddArc(new Vector3(pr1e.X, pr2s.Y, 0), filletradius, 270, 0, dxfReaderNETControl1.DXF.CurrentColor.Index);
                             }
-                            RectangleEntities.Add(newEntity);
+                            RectangleEntities.Add((EntityObject)newEntity.Clone());
                             dxfReaderNETControl1.DXF.RemoveEntity(newEntity);
                             //newGgroupR.Entities.Add(m_LastAddedEntity);
 
                             newEntity = dxfReaderNETControl1.AddLine(pr2s.ToVector3(), pr2e.ToVector3(), dxfReaderNETControl1.DXF.CurrentColor.Index);
-                            RectangleEntities.Add(newEntity);
+                            RectangleEntities.Add((EntityObject)newEntity.Clone());
                             dxfReaderNETControl1.DXF.RemoveEntity(newEntity);
                             //newGgroupR.Entities.Add(m_LastAddedEntity);
                             if (filletradius2 < 0)
@@ -7482,12 +8405,12 @@ namespace DXFReaderNETDemoProgram
                             {
                                 newEntity = dxfReaderNETControl1.AddArc(new Vector3(pr3s.X, pr2e.Y, 0), filletradius, 0, 90, dxfReaderNETControl1.DXF.CurrentColor.Index);
                             }
-                            RectangleEntities.Add(newEntity);
+                            RectangleEntities.Add((EntityObject)newEntity.Clone());
                             dxfReaderNETControl1.DXF.RemoveEntity(newEntity);
                             //newGgroupR.Entities.Add(m_LastAddedEntity);
 
                             newEntity = dxfReaderNETControl1.AddLine(pr3s.ToVector3(), pr3e.ToVector3(), dxfReaderNETControl1.DXF.CurrentColor.Index);
-                            RectangleEntities.Add(newEntity);
+                            RectangleEntities.Add((EntityObject)newEntity.Clone());
                             dxfReaderNETControl1.DXF.RemoveEntity(newEntity);
                             //newGgroupR.Entities.Add(m_LastAddedEntity);
 
@@ -7501,12 +8424,12 @@ namespace DXFReaderNETDemoProgram
                                 newEntity = dxfReaderNETControl1.AddArc(new Vector3(pr3e.X, pr4s.Y, 0), filletradius, 90, 180, dxfReaderNETControl1.DXF.CurrentColor.Index);
 
                             }
-                            RectangleEntities.Add(newEntity);
+                            RectangleEntities.Add((EntityObject)newEntity.Clone());
                             dxfReaderNETControl1.DXF.RemoveEntity(newEntity);
                             //newGgroupR.Entities.Add(m_LastAddedEntity);
 
                             newEntity = dxfReaderNETControl1.AddLine(pr4s.ToVector3(), pr4e.ToVector3(), dxfReaderNETControl1.DXF.CurrentColor.Index);
-                            RectangleEntities.Add(newEntity);
+                            RectangleEntities.Add((EntityObject)newEntity.Clone());
                             dxfReaderNETControl1.DXF.RemoveEntity(newEntity);
                             //newGgroupR.Entities.Add(m_LastAddedEntity);
                             if (filletradius2 < 0)
@@ -7519,71 +8442,39 @@ namespace DXFReaderNETDemoProgram
                                 newEntity = dxfReaderNETControl1.AddArc(new Vector3(pr1s.X, pr4e.Y, 0), filletradius, 180, 270, dxfReaderNETControl1.DXF.CurrentColor.Index);
 
                             }
-                            RectangleEntities.Add(newEntity);
+                            RectangleEntities.Add((EntityObject)newEntity.Clone());
                             dxfReaderNETControl1.DXF.RemoveEntity(newEntity);
                             //newGgroupR.Entities.Add(m_LastAddedEntity);
                             m_LastAddedEntity = new LwPolyline(RectangleEntities, true);
-                            newGgroupR.Entities.Add(m_LastAddedEntity);
-                            dxfReaderNETControl1.DXF.Groups.Add(newGgroupR);
-                            addedMultipleEntities = true;
-                            //salto:
+                            ((LwPolyline)m_LastAddedEntity).Thickness = dxfReaderNETControl1.DXF.CurrentThickness;
+                            ((LwPolyline)m_LastAddedEntity).Elevation = dxfReaderNETControl1.DXF.CurrentElevation;
+                            m_LastAddedEntity.Layer = dxfReaderNETControl1.DXF.Layers[dxfReaderNETControl1.DXF.CurrentLayer];
+                            m_LastAddedEntity.Linetype = dxfReaderNETControl1.DXF.Linetypes[dxfReaderNETControl1.DXF.CurrentLineTypeName];
+                            dxfReaderNETControl1.DXF.AddEntity(m_LastAddedEntity);
 
-
-                            //List<LwPolylineVertex> polyVertexes = new List<LwPolylineVertex>();
-                            //polyVertexes.Add(new LwPolylineVertex(pr1s.X, pr1s.Y));
-                            //polyVertexes.Add(new LwPolylineVertex(pr1e.X, pr1e.Y));
-                            //if (filletradius2 >= 0)
-                            //{
-                            //    polyVertexes[polyVertexes.Count - 1].Bulge = Math.Tan(MathHelper.HalfPI / 4);
-
-                            //}
-                            //else
-                            //{
-                            //    polyVertexes[polyVertexes.Count - 1].Bulge = -Math.Tan(MathHelper.HalfPI / 4);
-                            //}
-
-                            //polyVertexes.Add(new LwPolylineVertex(pr2s.X, pr2s.Y));
-                            //polyVertexes.Add(new LwPolylineVertex(pr2e.X, pr2e.Y));
-                            //if (filletradius2 >= 0)
-                            //{
-                            //    polyVertexes[polyVertexes.Count - 1].Bulge = Math.Tan(MathHelper.HalfPI / 4);
-
-                            //}
-                            //else
-                            //{
-                            //    polyVertexes[polyVertexes.Count - 1].Bulge = -Math.Tan(MathHelper.HalfPI / 4);
-                            //}
-
-                            //polyVertexes.Add(new LwPolylineVertex(pr3s.X, pr3s.Y));
-                            //polyVertexes.Add(new LwPolylineVertex(pr3e.X, pr3e.Y));
-                            //if (filletradius2 >= 0)
-                            //{
-                            //    polyVertexes[polyVertexes.Count - 1].Bulge = Math.Tan(MathHelper.HalfPI / 4);
-
-                            //}
-                            //else
-                            //{
-                            //    polyVertexes[polyVertexes.Count - 1].Bulge = -Math.Tan(MathHelper.HalfPI / 4);
-                            //}
-
-                            //polyVertexes.Add(new LwPolylineVertex(pr4s.X, pr4s.Y));
-                            //polyVertexes.Add(new LwPolylineVertex(pr4e.X, pr4e.Y));
-                            //if (filletradius2 >= 0)
-                            //{
-                            //    polyVertexes[polyVertexes.Count - 1].Bulge = Math.Tan(MathHelper.HalfPI / 4);
-
-                            //}
-                            //else
-                            //{
-                            //    polyVertexes[polyVertexes.Count - 1].Bulge = -Math.Tan(MathHelper.HalfPI / 4);
-                            //}
-
-                            //m_LastAddedEntity = dxfReaderNETControl1.AddLightWeightPolyline(polyVertexes, true, 0, dxfReaderNETControl1.DXF.CurrentColor.Index);
-
-                            //string groupNameR = newGroupName(dxfReaderNETControl1, "RECTANGLE");
-                            //DXFReaderNET.Objects.Group newGgroupR = new DXFReaderNET.Objects.Group(groupNameR);
                             //newGgroupR.Entities.Add(m_LastAddedEntity);
                             //dxfReaderNETControl1.DXF.Groups.Add(newGgroupR);
+                            //addedMultipleEntities = true;
+
+
+                            //salto:
+                            //double tan90 = Math.Tan(MathHelper.HalfPI / 4);
+                            //if (m_RectangleFilletRadius < 0) tan90 = -tan90;
+                            //List<LwPolylineVertex> polyVertexes = new List<LwPolylineVertex>();
+                            //polyVertexes.Add(new LwPolylineVertex(pr1s.X, pr1s.Y, 0));
+                            //polyVertexes.Add(new LwPolylineVertex(pr1e.X, pr1e.Y, tan90));
+
+                            //polyVertexes.Add(new LwPolylineVertex(pr2s.X, pr2s.Y, 0));
+                            //polyVertexes.Add(new LwPolylineVertex(pr2e.X, pr2e.Y, tan90));
+
+                            //polyVertexes.Add(new LwPolylineVertex(pr3s.X, pr3s.Y, 0));
+                            //polyVertexes.Add(new LwPolylineVertex(pr3e.X, pr3e.Y, tan90));
+
+                            //polyVertexes.Add(new LwPolylineVertex(pr4s.X, pr4s.Y, 0));
+                            //polyVertexes.Add(new LwPolylineVertex(pr4e.X, pr4e.Y, tan90));
+
+
+                            //m_LastAddedEntity = dxfReaderNETControl1.AddLightWeightPolyline(polyVertexes, true, 0, dxfReaderNETControl1.DXF.CurrentColor.Index);
 
                         }
                     }
@@ -7676,6 +8567,7 @@ namespace DXFReaderNETDemoProgram
                         System.Drawing.Image bitmap = System.Drawing.Image.FromFile(m_ImageFileName);
                         m_LastAddedEntity = dxfReaderNETControl1.AddOle2Frame(bitmap, new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p1.X + actualWidth, p1.Y + actualHeight, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index);
                     }
+
                     break;
 
                 case FunctionsEnum.Image1:
@@ -7741,7 +8633,7 @@ namespace DXFReaderNETDemoProgram
                     break;
 
                 case FunctionsEnum.DrawText:
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     StatusLabel.Text = "";
                     CurrentFunction = FunctionsEnum.None;
 
@@ -7752,7 +8644,7 @@ namespace DXFReaderNETDemoProgram
 
                 case FunctionsEnum.DrawLine2:
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     StatusLabel.Text = "";
                     p2 = p;
 
@@ -7769,7 +8661,7 @@ namespace DXFReaderNETDemoProgram
 
                 case FunctionsEnum.DrawCircle2:
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     StatusLabel.Text = "";
                     p2 = p;
                     dxfReaderNETControl1.DrawCircle(DrawPen, p1, Vector2.Distance(p1, p2), ribbonButtonDrawMethodsFill.Checked, ribbonButtonDrawMethodsStore.Checked);
@@ -7782,9 +8674,8 @@ namespace DXFReaderNETDemoProgram
                     p1 = p;
                     break;
                 case FunctionsEnum.Arc3:
-                    CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                    StatusLabel.Text = "";
+                    InitStatus();
+
                     p3 = p;
                     m_LastAddedEntity = dxfReaderNETControl1.AddArc(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), Vector2.Distance(p1, p2), Vector2.Angle(p1, p2) * MathHelper.RadToDeg, Vector2.Angle(p1, p3) * MathHelper.RadToDeg, dxfReaderNETControl1.DXF.CurrentColor.Index);
 
@@ -7803,10 +8694,31 @@ namespace DXFReaderNETDemoProgram
 
                     break;
 
+
+
+                case FunctionsEnum.ArcCenterPStartPEnd3:
+                    InitStatus();
+
+                    p3 = p;
+                    m_LastAddedEntity = dxfReaderNETControl1.AddArc(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), Vector2.Distance(p1, p2), p2.ToVector3(), p3.ToVector3(), dxfReaderNETControl1.DXF.CurrentColor.Index);
+
+                    break;
+                case FunctionsEnum.ArcCenterPStartPEnd2:
+                    CurrentFunction = FunctionsEnum.ArcCenterPStartPEnd3;
+                    StatusLabel.Text = "Select end Point";
+                    p2 = p;
+
+                    break;
+
+                case FunctionsEnum.ArcCenterPStartPEnd1:
+                    CurrentFunction = FunctionsEnum.ArcCenterPStartPEnd2;
+                    StatusLabel.Text = "Select start point";
+                    p1 = p;
+
+                    break;
+
                 case FunctionsEnum.ArcStartMiddleEnd3:
-                    CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                    StatusLabel.Text = "";
+                    InitStatus();
                     p3 = p;
                     m_LastAddedEntity = dxfReaderNETControl1.AddArc(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p2.X, p2.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p3.X, p3.Y, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index);
 
@@ -7826,9 +8738,7 @@ namespace DXFReaderNETDemoProgram
 
 
                 case FunctionsEnum.ArcStartEndMiddle3:
-                    CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                    StatusLabel.Text = "";
+                    InitStatus();
                     p3 = p;
                     m_LastAddedEntity = dxfReaderNETControl1.AddArc(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p3.X, p3.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p2.X, p2.Y, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index);
 
@@ -7849,7 +8759,7 @@ namespace DXFReaderNETDemoProgram
 
                 case FunctionsEnum.DrawArc3:
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     StatusLabel.Text = "";
                     p3 = p;
 
@@ -7869,7 +8779,7 @@ namespace DXFReaderNETDemoProgram
                     break;
                 case FunctionsEnum.DrawPoint:
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     StatusLabel.Text = "";
                     p1 = p;
                     dxfReaderNETControl1.DrawPoint(DrawPen, p1, ribbonButtonDrawMethodsStore.Checked);
@@ -7877,7 +8787,7 @@ namespace DXFReaderNETDemoProgram
 
                 case FunctionsEnum.DrawImageFixedSize:
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     StatusLabel.Text = "";
                     p2 = p;
                     dxfReaderNETControl1.DrawImage(System.Drawing.Image.FromFile(m_ImageFileName), new Vector2(p2.X, p2.Y), m_ImageWidth, m_ImageHeight, float.Parse(m_ImageRotation, System.Globalization.CultureInfo.CurrentCulture), short.Parse(m_ImageTransparency, System.Globalization.CultureInfo.CurrentCulture), ribbonButtonDrawMethodsStore.Checked);
@@ -7887,7 +8797,7 @@ namespace DXFReaderNETDemoProgram
 
                 case FunctionsEnum.DrawImage2:
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     StatusLabel.Text = "";
                     p2 = p;
 
@@ -7902,23 +8812,23 @@ namespace DXFReaderNETDemoProgram
 
 
                 case FunctionsEnum.GetEntities2:
-                    CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+
                     StatusLabel.Text = "";
                     p2 = p;
 
                     foreach (EntityObject entity in dxfReaderNETControl1.GetEntities(p1, p2))
                     {
 
-                        if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(entity))
+                        if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(entity) && entity.Layer.Name.ToUpper() != "AUXILIARY")
                         {
                             dxfReaderNETControl1.DXF.SelectedEntities.Add(entity);
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
                         }
                     }
 
 
                     dxfReaderNETControl1.HighLight(dxfReaderNETControl1.DXF.SelectedEntities);
-
+                    CheckContinuousSelection();
                     break;
 
 
@@ -7931,22 +8841,26 @@ namespace DXFReaderNETDemoProgram
 
 
                 case FunctionsEnum.HatchRecangle2:
-                    CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                    StatusLabel.Text = "";
+                    InitStatus();
                     p2 = p;
 
-                    foreach (EntityObject entity in dxfReaderNETControl1.GetEntities(p1, p2))
-                    {
+                    List<EntityObject> selectedEntities = dxfReaderNETControl1.GetEntities(p1, p2);
 
-                        if (!Boundary.Contains(entity))
-                        {
-                            Boundary.Add(entity);
-                        }
+                    if (selectedEntities.Count() > 0)
+                    {
+                        List<EntityObject> externalContour = new List<EntityObject>();
+                        List<EntityObject> innerEntities = new List<EntityObject>();
+                        FindBoundaries(selectedEntities, out externalContour, out innerEntities);
+
+
+
+
+                        m_LastAddedEntity = dxfReaderNETControl1.AddHatch(m_PatternName, externalContour, innerEntities, double.Parse(m_HatchRotation, System.Globalization.CultureInfo.CurrentCulture), double.Parse(m_HatchScale, System.Globalization.CultureInfo.CurrentCulture), dxfReaderNETControl1.DXF.CurrentColor.Index);
+
                     }
 
 
-                    m_LastAddedEntity = dxfReaderNETControl1.AddHatch(m_PatternName, Boundary, null, double.Parse(m_HatchRotation, System.Globalization.CultureInfo.CurrentCulture), double.Parse(m_HatchScale, System.Globalization.CultureInfo.CurrentCulture), dxfReaderNETControl1.DXF.CurrentColor.Index);
+                    //m_LastAddedEntity = dxfReaderNETControl1.AddHatch(m_PatternName, Boundary, null, double.Parse(m_HatchRotation, System.Globalization.CultureInfo.CurrentCulture), double.Parse(m_HatchScale, System.Globalization.CultureInfo.CurrentCulture), dxfReaderNETControl1.DXF.CurrentColor.Index);
 
 
 
@@ -7960,22 +8874,35 @@ namespace DXFReaderNETDemoProgram
                     p1 = p;
                     break;
 
-                case FunctionsEnum.GradientHatchRecangle2:
-                    CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
-                    StatusLabel.Text = "";
+                case FunctionsEnum.GradientHatchRectangle2:
+                    InitStatus();
                     p2 = p;
+                    selectedEntities = dxfReaderNETControl1.GetEntities(p1, p2);
 
-                    foreach (EntityObject entity in dxfReaderNETControl1.GetEntities(p1, p2))
+                    if (selectedEntities.Count() > 0)
                     {
+                        List<EntityObject> externalContour = new List<EntityObject>();
+                        List<EntityObject> innerEntities = new List<EntityObject>();
+                        FindBoundaries(selectedEntities, out externalContour, out innerEntities);
 
-                        if (!Boundary.Contains(entity))
+
+
+
+                        m_LastAddedEntity = dxfReaderNETControl1.AddGradientHatch((HatchGradientPatternType)Enum.Parse(typeof(HatchGradientPatternType), m_GradientPatternName), externalContour, innerEntities, m_GradientAciColor1, m_GradientAciColor2, double.Parse(m_GradientHatchRotation, System.Globalization.CultureInfo.CurrentCulture), m_GradientHatchCentered);
+
+                        if (m_GradientHatchTransparency != "0")
                         {
-                            Boundary.Add(entity);
+                            if (m_LastAddedEntity != null)
+                            {
+                                Hatch myHatch = dxfReaderNETControl1.DXF.Hatches[dxfReaderNETControl1.DXF.Hatches.Count - 1];
+                                myHatch.Transparency = new Transparency(short.Parse(m_GradientHatchTransparency));
+                            }
                         }
                     }
 
-                    m_LastAddedEntity = dxfReaderNETControl1.AddGradientHatch((HatchGradientPatternType)Enum.Parse(typeof(HatchGradientPatternType), m_GradientPatternName), Boundary, null, m_GradientAciColor1, m_GradientAciColor2, double.Parse(m_GradientHatchRotation, System.Globalization.CultureInfo.CurrentCulture), m_GradientHatchCentered);
+
+
+                    //m_LastAddedEntity = dxfReaderNETControl1.AddGradientHatch((HatchGradientPatternType)Enum.Parse(typeof(HatchGradientPatternType), m_GradientPatternName), Boundary, null, m_GradientAciColor1, m_GradientAciColor2, double.Parse(m_GradientHatchRotation, System.Globalization.CultureInfo.CurrentCulture), m_GradientHatchCentered);
 
 
 
@@ -7984,8 +8911,8 @@ namespace DXFReaderNETDemoProgram
 
 
 
-                case FunctionsEnum.GradientHatchRecangle1:
-                    CurrentFunction = FunctionsEnum.GradientHatchRecangle2;
+                case FunctionsEnum.GradientHatchRectangle1:
+                    CurrentFunction = FunctionsEnum.GradientHatchRectangle2;
                     StatusLabel.Text = "Select end point of selection rectangle";
                     p1 = p;
                     break;
@@ -7994,15 +8921,20 @@ namespace DXFReaderNETDemoProgram
                     InitStatus();
                     p2 = p;
                     long n_splines = 0;
-                    foreach (EntityObject myEnt in dxfReaderNETControl1.GetEntities(p1, p2))
+                    List<EntityObject> splines = dxfReaderNETControl1.GetEntities(p1, p2);
+                    foreach (EntityObject myEnt in splines)
 
 
                     {
                         if (myEnt.Type == EntityType.Spline)
                         {
-                            int precision = (int)(((Spline)myEnt).CtrlPointTolerance / ((Spline)myEnt).FitTolerance / 10);
-                            if (precision == 0) precision = 100;
+                            //int precision = (int)(((Spline)myEnt).CtrlPointTolerance / ((Spline)myEnt).FitTolerance / 10);
+                            //if (precision == 0) precision = 100;
 
+
+                            int precision = ((Spline)myEnt).ControlPoints.Count;
+                            if (precision < 40) precision = 40;
+                            //if (precision < m_precision) precision = m_precision;
                             dxfReaderNETControl1.DXF.AddEntity(((Spline)myEnt).ToPolyline(precision));
                             dxfReaderNETControl1.DXF.RemoveEntity(myEnt);
                             n_splines++;
@@ -8017,19 +8949,97 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.ExplodeSplineRect1:
                     CurrentFunction = FunctionsEnum.ExplodeSplineRect2;
                     StatusLabel.Text = "Select end point of selection rectangle";
+
                     p1 = p;
                     break;
 
-                case FunctionsEnum.ExplodePoly2:
+                case FunctionsEnum.ExplodePoly:
+                    CheckContinuousSelection();
+                    ent = dxfReaderNETControl1.GetEntity(pNoSnap);
+                    int nLines = 0;
+                    int nArcs = 0;
+                    string eType = "Lightweight polyline";
+                    if (ent != null)
+                    {
+                        InitStatus();
 
+
+                        switch (ent.Type)
+                        {
+                            case EntityType.LightWeightPolyline:
+
+                                List<EntityObject> newLines = new List<EntityObject>();
+                                newLines = ((LwPolyline)ent).Explode();
+
+                                foreach (EntityObject lEnt in newLines)
+                                {
+                                    switch (lEnt.Type)
+                                    {
+                                        case EntityType.Line:
+                                            nLines++;
+                                            break;
+                                        case EntityType.Arc:
+                                            nArcs++;
+                                            break;
+                                    }
+
+                                }
+
+                                dxfReaderNETControl1.DXF.AddEntities(newLines);
+                                dxfReaderNETControl1.DXF.RemoveEntity(ent);
+
+                                break;
+
+
+
+                            case EntityType.Polyline:
+                                newLines = new List<EntityObject>();
+                                newLines = ((Polyline)ent).Explode();
+
+                                eType = "Polyline";
+                                foreach (EntityObject lEnt in newLines)
+                                {
+                                    switch (lEnt.Type)
+                                    {
+                                        case EntityType.Line:
+                                            nLines++;
+                                            break;
+                                        case EntityType.Arc:
+                                            nArcs++;
+                                            break;
+                                    }
+
+                                }
+                                dxfReaderNETControl1.DXF.AddEntities(newLines);
+                                dxfReaderNETControl1.DXF.RemoveEntity(ent);
+                                break;
+                        }
+
+                        dxfReaderNETControl1.Refresh();
+
+                        StatusLabel.Text = eType + " entity exploded into " + nLines.ToString() + " new line(s) and " + nArcs.ToString() + " new arc(s)";
+
+                    }
+                    else
+                    {
+                        StatusLabel.Text = "No entity found";
+
+                    }
+                    break;
+
+                case FunctionsEnum.ExplodePoly2:
+                    Cursor.Current = Cursors.WaitCursor;
+                    StatusLabel.Text = "Exploding polylines...";
+                    Application.DoEvents();
 
                     InitStatus();
                     p2 = p;
                     int n_polylines = 0;
                     int n_lwpolylines = 0;
-                    int nLines = 0;
-                    int nArcs = 0;
-                    foreach (EntityObject Pent in dxfReaderNETControl1.GetEntities(p1, p2))
+                    nLines = 0;
+                    nArcs = 0;
+                    List<EntityObject> polys = dxfReaderNETControl1.GetEntities(p1, p2);
+                    foreach (EntityObject Pent in polys)
                     {
 
                         switch (Pent.Type)
@@ -8083,13 +9093,59 @@ namespace DXFReaderNETDemoProgram
                                 break;
                         }
 
-                        dxfReaderNETControl1.Refresh();
 
-                        StatusLabel.Text = n_lwpolylines.ToString() + " LwPolyline entities " + n_polylines.ToString() + " Polyline entities exploded into " + nLines.ToString() + " new line(s) and " + nArcs.ToString() + " new arc(s)";
                     }
+                    dxfReaderNETControl1.Refresh();
+
+                    StatusLabel.Text = n_lwpolylines.ToString() + " LwPolyline entities " + n_polylines.ToString() + " Polyline entities exploded into " + nLines.ToString() + " new line(s) and " + nArcs.ToString() + " new arc(s)";
+
+                    Cursor.Current = Cursors.Default;
                     break;
                 case FunctionsEnum.ExplodePoly1:
                     CurrentFunction = FunctionsEnum.ExplodePoly2;
+                    StatusLabel.Text = "Select end point of selection rectangle";
+                    p1 = p;
+                    break;
+
+                case FunctionsEnum.ExplodeInsert2:
+                    Cursor.Current = Cursors.WaitCursor;
+                    StatusLabel.Text = "Exploding inserts...";
+                    Application.DoEvents();
+
+                    InitStatus();
+                    p2 = p;
+                    int n_inserts = 0;
+                    int n_entities = 0;
+                    nLines = 0;
+                    nArcs = 0;
+                    List<EntityObject> insS = dxfReaderNETControl1.GetEntities(p1, p2);
+                    foreach (EntityObject Ient in insS)
+                    {
+                        if (Ient.Type == EntityType.Insert)
+                        {
+                            List<EntityObject> insertEntities = new List<EntityObject>();
+                            insertEntities = ((Insert)Ient).Explode();
+                            n_inserts++;
+                            dxfReaderNETControl1.DXF.AddEntities(insertEntities);
+                            dxfReaderNETControl1.DXF.ModifyEntities(insertEntities, Vector2.Zero);
+
+                            dxfReaderNETControl1.DXF.RemoveEntity(Ient);
+
+                            n_entities += insertEntities.Count;
+
+                        }
+
+
+                    }
+                    dxfReaderNETControl1.Refresh();
+
+                    StatusLabel.Text = n_inserts.ToString() + " Insert entities exploded into " + n_entities.ToString() + " new entity(s)";
+
+                    Cursor.Current = Cursors.Default;
+                    break;
+
+                case FunctionsEnum.ExplodeInsert1:
+                    CurrentFunction = FunctionsEnum.ExplodeInsert2;
                     StatusLabel.Text = "Select end point of selection rectangle";
                     p1 = p;
                     break;
@@ -8103,6 +9159,7 @@ namespace DXFReaderNETDemoProgram
                     dxfReaderNETControl1.DXF.ModifyEntities(dxfReaderNETControl1.DXF.SelectedEntities, p1, p3 - p2);
                     dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
 
                     break;
                 case FunctionsEnum.MoveEntitiesRubber2:
@@ -8117,6 +9174,7 @@ namespace DXFReaderNETDemoProgram
                         if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(entity))
                         {
                             dxfReaderNETControl1.DXF.SelectedEntities.Add(entity);
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
                         }
                     }
 
@@ -8142,6 +9200,7 @@ namespace DXFReaderNETDemoProgram
                     dxfReaderNETControl1.DXF.AddEntities(newEntities);
                     dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
 
                     break;
 
@@ -8170,9 +9229,9 @@ namespace DXFReaderNETDemoProgram
                     p2 = p;
 
                     dxfReaderNETControl1.DXF.ModifyEntities(dxfReaderNETControl1.DXF.SelectedEntities, p1, p2 - p1);
-
-                    dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                    dxfReaderNETControl1.Refresh();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
 
                     break;
 
@@ -8182,14 +9241,31 @@ namespace DXFReaderNETDemoProgram
                     p1 = p;
                     break;
 
-                case FunctionsEnum.RotateEntities2:
+
+                case FunctionsEnum.RotateEntities:
                     InitStatus();
+                    p1 = p;
+
+                    dxfReaderNETControl1.DXF.ModifyEntities(dxfReaderNETControl1.DXF.SelectedEntities, p1, Vector2.Zero, 1, m_rotation);
+
+                    dxfReaderNETControl1.Refresh();
+                    dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+
+                    break;
+                case FunctionsEnum.RotateEntities2:
+
+                    double angleRad = Vector2.Angle(p1, p);
+                    m_rotation = angleRad * MathHelper.RadToDeg;
 
 
                     dxfReaderNETControl1.DXF.ModifyEntities(dxfReaderNETControl1.DXF.SelectedEntities, p1, Vector2.Zero, 1, m_rotation);
 
                     dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                    InitStatus();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+
 
                     break;
                 case FunctionsEnum.RotateEntities1:
@@ -8197,7 +9273,11 @@ namespace DXFReaderNETDemoProgram
                     StatusLabel.Text = "Select rotation";
                     p1 = p;
                     break;
-                case FunctionsEnum.ScaleEntities2:
+
+                case FunctionsEnum.ScaleEntities:
+
+                    p1 = p;
+
                     InitStatus();
 
 
@@ -8205,6 +9285,20 @@ namespace DXFReaderNETDemoProgram
 
                     dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+
+                    break;
+                case FunctionsEnum.ScaleEntities2:
+
+
+
+                    m_scale = Vector2.Distance(p1, p) / 100;
+                    InitStatus();
+                    dxfReaderNETControl1.DXF.ModifyEntities(dxfReaderNETControl1.DXF.SelectedEntities, p1, Vector2.Zero, m_scale, 0);
+
+                    dxfReaderNETControl1.Refresh();
+                    dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
 
                     break;
                 case FunctionsEnum.ScaleEntities1:
@@ -8215,7 +9309,7 @@ namespace DXFReaderNETDemoProgram
 
                 case FunctionsEnum.PointInsidePolygon:
                     CurrentFunction = FunctionsEnum.None;
-                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CheckContinuousSelection();
                     StatusLabel.Text = "";
 
                     if (MathHelper.PointInPolygon(dxfReaderNETControl1.DXF.SelectedEntities, p))
@@ -8235,6 +9329,8 @@ namespace DXFReaderNETDemoProgram
 
 
             }
+
+
         }
 
         private void ribbonButtonModPropColor_Click(object sender, EventArgs e)
@@ -8255,7 +9351,8 @@ namespace DXFReaderNETDemoProgram
 
                 }
                 dxfReaderNETControl1.Refresh();
-                dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+
+                ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
                 dxfReaderNETControl1.DXF.Modified = true;
             }
         }
@@ -8267,16 +9364,37 @@ namespace DXFReaderNETDemoProgram
                 ribbonButtonModPropColor.Enabled = false;
                 ribbonButtonModPropLayer.Enabled = false;
                 ribbonButtonModPropLineType.Enabled = false;
+                ribbonButtonModPropLineWeight.Enabled = false;
                 ribbonButtonModPropGroup.Enabled = false;
+                ribbonButtonModElev.Enabled = false;
+                ribbonButtonModVisibilityOff.Enabled = false;
+
             }
             else
             {
                 ribbonButtonModPropColor.Enabled = true;
                 ribbonButtonModPropLayer.Enabled = true;
                 ribbonButtonModPropLineType.Enabled = true;
+                ribbonButtonModPropLineWeight.Enabled = true;
                 ribbonButtonModPropGroup.Enabled = true;
+                ribbonButtonModElev.Enabled = true;
+                ribbonButtonModVisibilityOff.Enabled = true;
 
             }
+            if (dxfReaderNETControl1.DXF.Entities.Count == 0)
+            {
+                ribbonButtonModVisibility.Enabled = false;
+
+
+            }
+            else
+            {
+                ribbonButtonModVisibility.Enabled = true;
+
+
+            }
+
+
         }
 
         private void ribbonButtonModPropLayer_DropDownItemClicked(object sender, RibbonItemEventArgs e)
@@ -8291,7 +9409,9 @@ namespace DXFReaderNETDemoProgram
 
             }
             dxfReaderNETControl1.Refresh();
-            dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+
+
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
             dxfReaderNETControl1.DXF.Modified = true;
         }
 
@@ -8337,20 +9457,7 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonModPropLineType_DropDownShowing(object sender, EventArgs e)
         {
-            //if (dxfReaderNETControl1.DXF.SelectedEntities.Count == 1)
-            //{
 
-            //    foreach (RibbonButton ltineItem in ribbonButtonModPropLineType.DropDownItems)
-            //    {
-            //        ltineItem.Checked = false;
-            //        if (ltineItem.Text == dxfReaderNETControl1.DXF.SelectedEntities[0].Linetype.Name)
-            //        {
-            //            ltineItem.Checked = true;
-            //        }
-
-
-            //    }
-            //}
 
             foreach (RibbonButton ltineItem in ribbonButtonModPropLineType.DropDownItems)
             {
@@ -8402,9 +9509,73 @@ namespace DXFReaderNETDemoProgram
 
             }
             dxfReaderNETControl1.Refresh();
-            dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
             dxfReaderNETControl1.DXF.Modified = true;
         }
+
+
+        private void ribbonButtonModPropLineWeight_DropDownShowing(object sender, EventArgs e)
+        {
+
+
+            foreach (RibbonButton ltineItem in ribbonButtonModPropLineWeight.DropDownItems)
+            {
+                ltineItem.Checked = false;
+
+            }
+            bool onlyOneLtype = true;
+
+            Lineweight lw;
+            if (dxfReaderNETControl1.DXF.SelectedEntities.Count == 1)
+            {
+
+                lw = dxfReaderNETControl1.DXF.SelectedEntities[0].Lineweight;
+
+            }
+            else
+            {
+                lw = dxfReaderNETControl1.DXF.SelectedEntities[0].Lineweight;
+                for (int k = 1; k < dxfReaderNETControl1.DXF.SelectedEntities.Count; k++)
+                {
+                    if (dxfReaderNETControl1.DXF.SelectedEntities[k].Lineweight != lw)
+                    {
+                        onlyOneLtype = false;
+                    }
+                }
+            }
+
+            if (onlyOneLtype)
+            {
+                foreach (RibbonButton ltineItem in ribbonButtonModPropLineWeight.DropDownItems)
+                {
+
+                    if (ltineItem.Text == lw.ToString())
+                    {
+                        ltineItem.Checked = true;
+                    }
+                }
+            }
+        }
+
+        private void ribbonButtonModPropLineWeight_DropDownItemClicked(object sender, RibbonItemEventArgs e)
+        {
+            Lineweight newLweght;
+            Enum.TryParse(e.Item.Text, out newLweght);
+            foreach (EntityObject ent in dxfReaderNETControl1.DXF.SelectedEntities)
+            {
+
+                ent.Lineweight = newLweght;
+
+
+            }
+            dxfReaderNETControl1.Refresh();
+
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+            dxfReaderNETControl1.DXF.Modified = true;
+        }
+
+
 
         private void dxfReaderNETControl1_MouseDown(object sender, MouseEventArgs e)
         {
@@ -8418,7 +9589,20 @@ namespace DXFReaderNETDemoProgram
                 dxfReaderNETControl1.Cursor = Cursors.Hand;
                 panPointStart = dxfReaderNETControl1.CurrentWCSpoint;
             }
+
+            if (e.Button == MouseButtons.Right)
+            {
+                if (CurrentFunction == FunctionsEnum.Orbit3D)
+                {
+                    CurrentFunction = FunctionsEnum.None;
+                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    StatusLabel.Text = "";
+                    CheckContinuousSelection();
+                }
+            }
         }
+
+
 
         private void ribbonButtonInquiryXdata_Click(object sender, EventArgs e)
         {
@@ -8438,47 +9622,65 @@ namespace DXFReaderNETDemoProgram
 
         private void dxfReaderNETControl1_ReadStatus(object sender, ReadStatusEventArgs e)
         {
-            StatusLabel.Text = "Reading DXF file " + e.Progress.ToString() + "%";
-            Application.DoEvents();
+            //StatusLabel.Text = "Reading DXF file " + e.Progress.ToString() + "%";
+
+            toolStripProgressBar1.Value = e.Progress;
+            //toolStripProgressBar1.Invalidate();
+            //Application.DoEvents();
 
         }
 
         private void dxfReaderNETControl1_StartPlot(object sender, StartPlotEventArgs e)
         {
             StatusLabel.Text = "Plotting DXF file...";
+            toolStripProgressBar1.Value = 0;
             Application.DoEvents();
         }
 
         private void dxfReaderNETControl1_EndPlot(object sender, EndPlotEventArgs e)
         {
 
+            toolStripProgressBar1.Value = 0;
             StatusLabel.Text = "DXF file plotted";
             Application.DoEvents();
         }
 
         private void dxfReaderNETControl1_PlotStatus(object sender, PlotStatusEventArgs e)
         {
-            StatusLabel.Text = "Plotting DXF file " + e.Progress.ToString() + "%";
-            Application.DoEvents();
+            //StatusLabel.Text = "Plotting DXF file " + e.Progress.ToString() + "%";
+            //Application.DoEvents();
+
+            toolStripProgressBar1.Value = e.Progress;
         }
 
         private void dxfReaderNETControl1_StartWrite(object sender, StartWriteEventArgs e)
         {
             StatusLabel.Text = "Saving DXF file...";
+            toolStripProgressBar1.Value = 0;
             Application.DoEvents();
         }
 
         private void dxfReaderNETControl1_EndWrite(object sender, EndWriteEventArgs e)
         {
 
-            StatusLabel.Text = "DXF file saved";
+            if (ErrorLabel.Text.Trim() == "")
+            {
+                StatusLabel.Text = "DXF file saved";
+            }
+            else
+            {
+                StatusLabel.Text = "DXF file NOT saved";
+            }
+            toolStripProgressBar1.Value = 0;
             Application.DoEvents();
         }
 
         private void dxfReaderNETControl1_WriteStatus(object sender, WriteStatusEventArgs e)
         {
-            StatusLabel.Text = "Saving DXF file " + e.Progress.ToString() + "%";
-            Application.DoEvents();
+            //StatusLabel.Text = "Saving DXF file " + e.Progress.ToString() + "%";
+            //Application.DoEvents();
+
+            toolStripProgressBar1.Value = e.Progress;
         }
 
         private void dxfReaderNETControl1_StartDrawing(object sender, StartDrawingEventArgs e)
@@ -8491,16 +9693,23 @@ namespace DXFReaderNETDemoProgram
 
         private void dxfReaderNETControl1_StartRead(object sender, StartReadEventArgs e)
         {
+
             StatusLabel.Text = "Loading DXF file...";
+            StatusLabel.Text = "Loading DXF file...";
+            toolStripProgressBar1.Value = 0;
             Application.DoEvents();
+
         }
 
         private void dxfReaderNETControl1_Error(object sender, DXFReaderNET.ErrorEventArgs e)
         {
+            ErrorLabel.Text = "";
             if (e.ErrorCode != 0)
             {
+                toolStripProgressBar1.Value = 0;
+                ErrorLabel.Text = "Error: " + e.ErrorCode.ToString() + " - " + e.ErrorString;
+                Console.Beep(1000, 100);
 
-                MessageBox.Show("Error: " + e.ErrorCode.ToString() + " - " + e.ErrorString, "DXFReader.NET Demo Program", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -8587,7 +9796,11 @@ namespace DXFReaderNETDemoProgram
                     if (ent != null)
                     {
                         if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
+                        {
                             dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                        }
+
                         dxfReaderNETControl1.HighLight(ent);
                     }
                     else
@@ -8623,18 +9836,7 @@ namespace DXFReaderNETDemoProgram
             }
         }
 
-        private void dxfReaderNETControl1_MouseWheel(object sender, MouseEventArgs e)
-        {
-            Vector2 p = dxfReaderNETControl1.CoordsToWorld(e.X, e.Y);
-            if (e.Delta > 0)
-            {
-                dxfReaderNETControl1.ZoomSpotIn(p);
-            }
-            else
-            {
-                dxfReaderNETControl1.ZoomSpotOut(p);
-            }
-        }
+
 
         private void ribbonUpDownPickBoxSize_DownButtonClicked(object sender, MouseEventArgs e)
         {
@@ -8657,7 +9859,10 @@ namespace DXFReaderNETDemoProgram
 
         private void ReadDXF(string dxfFileName)
         {
+            //_ = dxfReaderNETControl1.ReadDXFAsync(dxfFileName);
+            ErrorLabel.Text = "";
             if (dxfReaderNETControl1.ReadDXF(dxfFileName))
+            //if (1==1)
             {
 
                 InitDrawing();
@@ -8667,11 +9872,13 @@ namespace DXFReaderNETDemoProgram
                 CurrentLoadDXFPath = Path.GetDirectoryName(dxfFileName);
                 SaveRegistry();
 
-                if (ribbonButtonTreeView.Checked)
+                if (ribbonButtonViewTreeView.Checked)
                 {
 
                     RefreshTree();
                 }
+                //dxfReaderNETControl1.ZoomExtents();
+                CheckContinuousSelection();
             }
             else
             {
@@ -8684,7 +9891,7 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonModifyRemoveBlocks_Click(object sender, EventArgs e)
         {
-            RemoveUnusedBlocks();
+            RemoveUnUsedBlocks(dxfReaderNETControl1);
 
         }
 
@@ -8698,8 +9905,10 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonModifyTrim_Click(object sender, EventArgs e)
         {
+            SaveUndo();
             CurrentFunction = FunctionsEnum.Trim1;
             m_entTrimBoundaries = new List<EntityObject>();
+            dxfReaderNETControl1.DXF.SelectedEntities.Clear();
             dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
             StatusLabel.Text = "Select boundary objects. ESC or right click to end boundaries selection.";
         }
@@ -8724,13 +9933,10 @@ namespace DXFReaderNETDemoProgram
                     dxfReaderNETControl1.DXF.DrawingVariables.FilletRad = FilletRad;
                     CurrentFunction = FunctionsEnum.Fillet1;
                     dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
-                    StatusLabel.Text = "Select first line or polyline";
+                    StatusLabel.Text = "Select first object";
                 }
             }
         }
-
-
-
 
         private void ribbonButtonDrawingLimits_Click(object sender, EventArgs e)
         {
@@ -8873,13 +10079,14 @@ namespace DXFReaderNETDemoProgram
         }
         private void SaveUndo()
         {
-            if (UnDoStack.Count >= 10)
-            {
-                UnDoStack.RemoveAt(0);
-            }
-            UnDoStack.Add(dxfReaderNETControl1.DXF.ToString());
-        }
 
+            UnDoStack.Push(dxfReaderNETControl1.DXF.ToString());
+
+
+            ribbonButtonUndo.Enabled = (UnDoStack.Count > 0);
+            ribbonButtonRedo.Enabled = (ReDoStack.Count > 0);
+
+        }
 
 
         private void UnDo()
@@ -8887,17 +10094,28 @@ namespace DXFReaderNETDemoProgram
             if (UnDoStack.Count > 0)
             {
 
-                byte[] byteArray = System.Text.Encoding.ASCII.GetBytes(UnDoStack[UnDoStack.Count - 1]);
-                System.IO.MemoryStream stream = new System.IO.MemoryStream(byteArray);
-                dxfReaderNETControl1.DXF = dxfReaderNETControl1.DXF.Load(stream);
-
-
-
-                UnDoStack.RemoveAt(UnDoStack.Count - 1);
+                ReDoStack.Push(dxfReaderNETControl1.DXF.ToString());
+                dxfReaderNETControl1.DXF = dxfReaderNETControl1.DXF.FromString(UnDoStack.Pop());
                 Refresh();
             }
-        }
+            ribbonButtonUndo.Enabled = (UnDoStack.Count > 0);
+            ribbonButtonRedo.Enabled = (ReDoStack.Count > 0);
 
+
+        }
+        private void ReDo()
+        {
+            if (ReDoStack.Count > 0)
+            {
+                UnDoStack.Push(dxfReaderNETControl1.DXF.ToString());
+                dxfReaderNETControl1.DXF = dxfReaderNETControl1.DXF.FromString(ReDoStack.Pop());
+
+                Refresh();
+            }
+            ribbonButtonUndo.Enabled = (UnDoStack.Count > 0);
+            ribbonButtonRedo.Enabled = (ReDoStack.Count > 0);
+
+        }
         private void ribbonButtonModifyArray_Click(object sender, EventArgs e)
         {
             string inputValue = m_ArrayColumns.ToString();
@@ -8947,7 +10165,18 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonShowFilledAreas_Click(object sender, EventArgs e)
         {
+            SaveUndo();
+            StatusLabel.Text = "";
             DateTime StartTime = DateTime.Now;
+            //explode all inserts
+            foreach (Insert i in dxfReaderNETControl1.DXF.Inserts)
+            {
+                List<EntityObject> insertEntities = i.Explode();
+                dxfReaderNETControl1.DXF.AddEntities(insertEntities);
+                dxfReaderNETControl1.DXF.ModifyEntities(insertEntities, Vector2.Zero);
+
+            }
+
             List<EntityObject> entitesToDelete = new List<EntityObject>();
             List<EntityObject> allEntities = new List<EntityObject>();
 
@@ -8971,27 +10200,57 @@ namespace DXFReaderNETDemoProgram
                         break;
                 }
             }
+
+            //if (dxfReaderNETControl1.DXF.NotConnectedPoints(allEntities).Count == 0)
+            //{
+
+
             dxfReaderNETControl1.DXF.RemoveEntities(entitesToDelete);
 
-            RemoveUnusedBlocks(dxfReaderNETControl1);
+            RemoveUnUsedBlocks(dxfReaderNETControl1);
             ChangeNormalVector(dxfReaderNETControl1);
 
-            //List<EntityObject> externalContour = MathHelper.ExternalContour(allEntities);
-            //foreach (EntityObject entity in externalContour)
-            //{
-            //    dxfReaderNETControl1.DXF.Entities.Add(entity);
-            //}
-            ShowFilledAreas(dxfReaderNETControl1, allEntities, true);
+
+            ShowFilledAreas(dxfReaderNETControl1, allEntities);
+
+
+
+            int InternalCountoursNumber = 0;
+            double ExternalLenght = 0;
+            double ExternalArea = 0;
+            double InternalLenght = 0;
+            double InternalArea = 0;
+            bool ret = MathHelper.FindClosedAreaData(allEntities, out ExternalLenght, out ExternalArea, out InternalLenght, out InternalArea, out InternalCountoursNumber);
+
+
             dxfReaderNETControl1.Refresh();
             dxfReaderNETControl1.DXF.Modified = false;
 
-            TimeSpan ElapsedTime = DateTime.Now.Subtract(StartTime);
+            if (ret)
+            {
+                TimeSpan ElapsedTime = DateTime.Now.Subtract(StartTime);
+                StatusLabel.Text = "Time: " + ElapsedTime.ToString(@"s\.fff\s");
+                StatusLabel.Text += " Ext. lenght: " + dxfReaderNETControl1.DXF.ToFormattedUnit(ExternalLenght);
+                StatusLabel.Text += " Ext. area: " + dxfReaderNETControl1.DXF.ToFormattedUnit(ExternalArea);
+                StatusLabel.Text += " Int. lenght: " + dxfReaderNETControl1.DXF.ToFormattedUnit(InternalLenght);
+                StatusLabel.Text += " Int. area: " + dxfReaderNETControl1.DXF.ToFormattedUnit(InternalArea);
+                StatusLabel.Text += " Filled area: " + dxfReaderNETControl1.DXF.ToFormattedUnit(ExternalArea - InternalArea);
+                StatusLabel.Text += " Int. countours #: " + InternalCountoursNumber.ToString();
 
+            }
 
-            StatusLabel.Text = "Time: " + ElapsedTime.ToString(@"s\.fff\s");
+            else
+            {
+                StatusLabel.Text = "Closed area not found";
+            }
+            //}
 
+            //else
+            //{
+            //    StatusLabel.Text = "There are not connected points";
+            //}
         }
-        private void RemoveUnusedBlocks(DXFReaderNETControl myDXF)
+        private void RemoveUnUsedBlocks(DXFReaderNETControl myDXF)
         {
             List<DXFReaderNET.Blocks.Block> usedBlocks = new List<DXFReaderNET.Blocks.Block>();
             foreach (Insert insert in myDXF.DXF.Inserts)
@@ -9011,23 +10270,49 @@ namespace DXFReaderNETDemoProgram
                     unUsedBlocks.Add(block);
             }
 
-
+            bool AtLeastOneBlockRemoved = false;
             foreach (DXFReaderNET.Blocks.Block block in unUsedBlocks)
             {
                 if (!block.Name.Contains("*Model_Space") && !block.Name.Contains("*Paper_Space"))
+                {
                     myDXF.DXF.RemoveBlock(block);
+                    AtLeastOneBlockRemoved = true;
+                }
 
             }
+            if (AtLeastOneBlockRemoved)
+            {
+                myDXF.DXF.Modified = true;
+            }
+        }
+        private void ExplodeAllInserts(DXFReaderNETControl myDXF)
+        {
+            do
+            {
+                List<EntityObject> insertEntities = new List<EntityObject>();
+                List<EntityObject> entitesToDelete = new List<EntityObject>();
+                foreach (Insert insert in myDXF.DXF.Inserts)
+                {
+                    insertEntities.AddRange(insert.Explode());
+                    entitesToDelete.Add(insert);
+
+                }
+                dxfReaderNETControl1.DXF.AddEntities(insertEntities);
+                dxfReaderNETControl1.DXF.RemoveEntities(entitesToDelete);
+            } while (myDXF.DXF.Inserts.Count() > 0);
         }
         private void ChangeNormalVector(DXFReaderNETControl myDXF)
         {
+
             List<EntityObject> allEntities = new List<EntityObject>();
             foreach (EntityObject entity in myDXF.DXF.Entities)
             {
-                if (entity.Normal != Vector3.UnitZ)
+                //if (entity.Normal == new Vector3(0,0,-1))
+                if (entity.Normal != new Vector3(0, 0, 1))
                 {
-
-
+                    bool uniVector = false;
+                    if (Math.Abs(entity.Normal.X) == 1 || Math.Abs(entity.Normal.Y) == 1 || Math.Abs(entity.Normal.Z) == 1)
+                        uniVector = true;
                     switch (entity.Type)
                     {
                         case EntityType.Polyline:
@@ -9035,7 +10320,9 @@ namespace DXFReaderNETDemoProgram
                             foreach (PolylineVertex v in ((Polyline)entity).Vertexes)
                             {
                                 Vector3 vp = MathHelper.Transform(v.Position, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                                polyvertexes.Add(new PolylineVertex(vp));
+                                PolylineVertex vpv = new PolylineVertex(vp);
+                                vpv.Bulge = v.Bulge;
+                                polyvertexes.Add(vpv);
                             }
                             myDXF.AddPolyline(polyvertexes, ((Polyline)entity).IsClosed, ((Polyline)entity).StartWidth, entity.Color.Index, entity.Layer.Name);
                             allEntities.Add(entity);
@@ -9045,39 +10332,135 @@ namespace DXFReaderNETDemoProgram
                             foreach (LwPolylineVertex v in ((LwPolyline)entity).Vertexes)
                             {
                                 Vector3 vp = MathHelper.Transform(v.Position.ToVector3(), entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                                lwpolyvertexes.Add(new LwPolylineVertex(vp.X, vp.Y));
+                                lwpolyvertexes.Add(new LwPolylineVertex(vp.X, vp.Y, v.Bulge));
                             }
                             myDXF.AddLightWeightPolyline(lwpolyvertexes, ((LwPolyline)entity).IsClosed, ((LwPolyline)entity).StartWidth, entity.Color.Index, entity.Layer.Name);
                             allEntities.Add(entity);
                             break;
                         case EntityType.Arc:
-                            Vector3 sp = MathHelper.Transform(((Arc)entity).StartPoint, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                            Vector3 mp = MathHelper.Transform(((Arc)entity).MidPoint, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                            Vector3 ep = MathHelper.Transform(((Arc)entity).EndPoint, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+
+                            if (uniVector)
+                            {
+                                Vector3 sp = MathHelper.Transform(((Arc)entity).StartPoint, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+                                Vector3 mp = MathHelper.Transform(((Arc)entity).MidPoint, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+                                Vector3 ep = MathHelper.Transform(((Arc)entity).EndPoint, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+                                //Vector3 cp = MathHelper.Transform(((Arc)entity).Center, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+
+                                //double r1 = 0.001;
+                                //myDXF.DrawCircle(new Pen(Color.Red), sp.ToVector2(), r1, false, true);
+                                //myDXF.DrawCircle(new Pen(Color.Red), mp.ToVector2(), r1, false, true);
+                                //myDXF.DrawCircle(new Pen(Color.Red), ep.ToVector2(), r1, false, true);
+                                //myDXF.DrawCircle(new Pen(Color.Magenta ), cp.ToVector2(), r1, false, true);
 
 
-                            myDXF.AddArc(sp, mp, ep, entity.Color.Index, entity.Layer.Name);
+                                //myDXF.AddArc(cp, Vector3.Distance(cp, sp), Vector2.Angle(cp.ToVector2(), sp.ToVector2()) * MathHelper.RadToDeg, Vector2.Angle(cp.ToVector2(), ep.ToVector2()) * MathHelper.RadToDeg, dxfReaderNETControl1.DXF.CurrentColor.Index);
+
+
+                                myDXF.AddArc(sp, mp, ep, entity.Color.Index, entity.Layer.Name);
+
+                            }
+                            else
+                            {
+                                LwPolyline ArcoPoly = ((Arc)entity).ToPolyline(36);
+                                lwpolyvertexes = new List<LwPolylineVertex>();
+                                foreach (LwPolylineVertex v in ArcoPoly.Vertexes)
+                                {
+                                    Vector3 vp = MathHelper.Transform(v.Position.ToVector3(), entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+                                    lwpolyvertexes.Add(new LwPolylineVertex(vp.X, vp.Y));
+                                }
+                                myDXF.AddLightWeightPolyline(lwpolyvertexes, false, 0, entity.Color.Index, entity.Layer.Name);
+                            }
+
+                            allEntities.Add(entity);
+                            break;
+                        case EntityType.Line:
+                            //Vector3 spL = MathHelper.Transform(((Line)entity).StartPoint, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+
+                            //Vector3 epL = MathHelper.Transform(((Line)entity).EndPoint, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+                            //myDXF.AddLine(spL, epL, entity.Color.Index, entity.Layer.Name);
+                            //allEntities.Add(entity);
+                            break;
+                        case EntityType.Point:
+                            Vector3 spP = MathHelper.Transform(((DXFReaderNET.Entities.Point)entity).Position, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+
+                            myDXF.AddPoint(spP, entity.Color.Index, entity.Layer.Name);
                             allEntities.Add(entity);
                             break;
                         case EntityType.Circle:
-                            Vector3 c = MathHelper.Transform(((Circle)entity).Center, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                            double r = ((Circle)entity).Radius;
+                            if (uniVector)
+                            {
+                                Vector3 c = MathHelper.Transform(((Circle)entity).Center, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+                                double r = ((Circle)entity).Radius;
 
 
-                            myDXF.AddCircle(c, r, entity.Color.Index, entity.Layer.Name);
+                                myDXF.AddCircle(c, r, entity.Color.Index, entity.Layer.Name);
+                            }
+                            else
+                            {
+                                LwPolyline cerchioPoly = ((Circle)entity).ToPolyline(36);
+
+
+                                lwpolyvertexes = new List<LwPolylineVertex>();
+                                foreach (LwPolylineVertex v in cerchioPoly.Vertexes)
+                                {
+                                    Vector3 vp = MathHelper.Transform(v.Position.ToVector3(), entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+                                    lwpolyvertexes.Add(new LwPolylineVertex(vp.X, vp.Y));
+                                }
+                                myDXF.AddLightWeightPolyline(lwpolyvertexes, true, 0, entity.Color.Index, entity.Layer.Name);
+
+                            }
+
                             allEntities.Add(entity);
                             break;
 
                         case EntityType.Ellipse:
-                            c = MathHelper.Transform(((Ellipse)entity).Center, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                            //double r = ((Circle)entity).Radius;
-                            Vector3 mjp = ((Ellipse)entity).Center + new Vector3(((Ellipse)entity).MinorAxis / 2 * Math.Cos(((Ellipse)entity).Rotation * MathHelper.DegToRad), ((Ellipse)entity).MinorAxis / 2 * Math.Sin(((Ellipse)entity).Rotation * MathHelper.DegToRad), 0);
-                            Vector3 mjpr = MathHelper.Transform(mjp, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                            double newrot = 90 - Vector2.Angle(((Ellipse)entity).Center.ToVector2(), mjpr.ToVector2()) * MathHelper.RadToDeg;
-                            myDXF.AddEllipse(((Ellipse)entity).Center, ((Ellipse)entity).MajorAxis, ((Ellipse)entity).MinorAxis, newrot, entity.Color.Index, entity.Layer.Name);
+                            if (uniVector)
+                            {
+                                Vector3 c = MathHelper.Transform(((Ellipse)entity).Center, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+                                //double r = ((Circle)entity).Radius;
+                                Vector3 mjp = ((Ellipse)entity).Center + new Vector3(((Ellipse)entity).MinorAxis / 2 * Math.Cos(((Ellipse)entity).Rotation * MathHelper.DegToRad), ((Ellipse)entity).MinorAxis / 2 * Math.Sin(((Ellipse)entity).Rotation * MathHelper.DegToRad), 0);
+                                Vector3 mjpr = MathHelper.Transform(mjp, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+                                double newrot = 90 - Vector2.Angle(((Ellipse)entity).Center.ToVector2(), mjpr.ToVector2()) * MathHelper.RadToDeg;
+                                myDXF.AddEllipse(((Ellipse)entity).Center, ((Ellipse)entity).MajorAxis, ((Ellipse)entity).MinorAxis, newrot, entity.Color.Index, entity.Layer.Name);
+
+                            }
+                            else
+                            {
+                                LwPolyline myPoly = new LwPolyline();
+                                myPoly = ((Ellipse)entity).ToPolyline(36);
 
 
+
+
+                                lwpolyvertexes = new List<LwPolylineVertex>();
+                                foreach (LwPolylineVertex v in myPoly.Vertexes)
+                                {
+                                    Vector3 vp = MathHelper.Transform(v.Position.ToVector3(), entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+                                    lwpolyvertexes.Add(new LwPolylineVertex(vp.X, vp.Y));
+                                }
+                                myDXF.AddLightWeightPolyline(lwpolyvertexes, true, 0, entity.Color.Index, entity.Layer.Name);
+                            }
                             allEntities.Add(entity);
+                            break;
+                        case EntityType.Spline:
+                            Polyline spliPoly = ((Spline)entity).ToPolyline(36);
+                            polyvertexes = new List<PolylineVertex>();
+                            foreach (PolylineVertex v in spliPoly.Vertexes)
+                            {
+                                Vector3 vp = MathHelper.Transform(v.Position, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+                                polyvertexes.Add(new PolylineVertex(vp));
+                            }
+                            myDXF.AddPolyline(polyvertexes, ((Spline)entity).IsClosed, 0, entity.Color.Index, entity.Layer.Name);
+                            allEntities.Add(entity);
+                            break;
+                        case EntityType.Leader:
+
+                            for (int k = 0; k < ((Leader)entity).Vertexes.Count; k++)
+                            {
+                                Vector3 vp = MathHelper.Transform(((Leader)entity).Vertexes[k].ToVector3(), entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
+                                ((Leader)entity).Vertexes[k] = vp.ToVector2();
+                            }
+                            entity.Normal = Vector3.UnitZ;
                             break;
                         default:
                             entity.Normal = Vector3.UnitZ;
@@ -9092,27 +10475,19 @@ namespace DXFReaderNETDemoProgram
             myDXF.DXF.RemoveEntities(allEntities);
         }
 
-        private void ShowFilledAreas(DXFReaderNETControl myDXF, List<EntityObject> entities, bool useGradient = false)
+
+        private void ShowFilledAreas(DXFReaderNETControl myDXF, List<EntityObject> entities)
         {
 
-            AddLayerIfNotPresent("EMPTYAREAS");
-            AddLayerIfNotPresent("FILLEDAREAS");
+
             AddLayerIfNotPresent("SERVICE");
+
+
+
 
             DeleteAllEntitiesInServiceLayer(myDXF);
             List<EntityObject> externalContour = MathHelper.ExternalContour(entities);
-            //List<EntityObject> BoundaryOutermost = new List<EntityObject>();
 
-            foreach (EntityObject ent in entities)
-            {
-                ent.Layer = myDXF.DXF.Layers["EMPTYAREAS"];
-                if (externalContour.Contains(ent))
-                {
-                    ent.Layer = myDXF.DXF.Layers["FILLEDAREAS"];
-                }
-
-
-            }
             List<EntityObject> allEntities = new List<EntityObject>();
             foreach (EntityObject entity in dxfReaderNETControl1.DXF.Entities)
             {
@@ -9129,334 +10504,18 @@ namespace DXFReaderNETDemoProgram
                 BoundaryOutermost.Add(l);
             }
 
-            myDXF.AddHatch("SOLID", externalContour, BoundaryOutermost, 0, 1, AciColor.Red.Index, "SERVICE");
-            Hatch myHatch = myDXF.DXF.Hatches[myDXF.DXF.Hatches.Count - 1];
-            myHatch.Transparency = new Transparency(90);
+            // EntityObject myEnt = myDXF.AddHatch("SOLID", externalContour, BoundaryOutermost, 0, 1, AciColor.Red.Index, "SERVICE");
 
+            EntityObject myEnt = myDXF.AddGradientHatch(HatchGradientPatternType.Cylinder, externalContour, BoundaryOutermost, 140, 180, 30, true, "SERVICE");
 
-            //List<EntityObject> allEntities = entities;
-            ////foreach (EntityObject entity in dxfReaderNETControl1.DXF.SelectedEntities)
-            ////{
-            ////    allEntities.Add(entity);
-            ////}
+            if (myEnt != null)
+            {
+                Hatch myHatch = myDXF.DXF.Hatches[myDXF.DXF.Hatches.Count - 1];
+                myHatch.Transparency = new Transparency(20);
+            }
 
-            //List<Vector2> pointsNotConnected = myDXF.DXF.NotConnectedPoints();
-
-
-
-
-            //myDXF.DXF.Layers["SERVICE"].IsLocked = true;
-
-            //List<EntityObject> Boundary = new List<EntityObject>();
-            //List<EntityObject> BoundaryOutermost = new List<EntityObject>();
-
-            //List<EntityObject> arcsLinesFilled = new List<EntityObject>();
-            //List<EntityObject> arcsLinesEmpty = new List<EntityObject>();
-            //int nAreas = 0;
-            //int n = 0;
-
-            //foreach (EntityObject entity in allEntities)
-            //{
-            //    switch (entity.Type)
-            //    {
-            //        case EntityType.LightWeightPolyline:
-
-            //            LwPolyline lw = (LwPolyline)entity;
-
-            //            if (lw.Vertexes[lw.Vertexes.Count - 1].Position == lw.Vertexes[0].Position)
-            //            {
-            //                lw.IsClosed = true;
-            //            }
-
-            //            if (lw.Vertexes.Count > 2 && lw.IsClosed)
-            //            {
-            //                if (entity.Layer.Name == "FILLEDAREAS")
-            //                {
-            //                    Boundary.Add(entity);
-            //                    nAreas++;
-            //                }
-
-            //                if (entity.Layer.Name == "EMPTYAREAS")
-            //                {
-            //                    BoundaryOutermost.Add(entity);
-            //                    nAreas++;
-            //                }
-            //            }
-            //            else
-            //            {
-            //                //if (entity.Layer.Name == "FILLEDAREAS")
-            //                //{
-            //                //    arcsLinesFilled.AddRange(lw.Explode());
-            //                //    n++;
-            //                //}
-
-            //                //if (entity.Layer.Name == "EMPTYAREAS")
-            //                //{
-            //                //    arcsLinesEmpty.AddRange(lw.Explode());
-            //                //}
-
-
-            //                if (entity.Layer.Name == "FILLEDAREAS")
-            //                {
-            //                    arcsLinesFilled.Add(lw);
-            //                    n++;
-            //                }
-
-            //                if (entity.Layer.Name == "EMPTYAREAS")
-            //                {
-            //                    arcsLinesEmpty.Add(lw);
-            //                }
-            //            }
-            //            break;
-
-
-            //        case EntityType.Polyline:
-            //        case EntityType.Spline:
-            //            Polyline pl = new Polyline();
-            //            if (entity.Type == EntityType.Polyline)
-            //            {
-            //                pl = (Polyline)entity;
-            //            }
-            //            else
-            //            {
-            //                int precision = (int)(((Spline)entity).CtrlPointTolerance / ((Spline)entity).FitTolerance / 10);
-            //                if (precision == 0) precision = 100;
-            //                pl = ((Spline)entity).ToPolyline(precision);
-            //            }
-            //            if (pl.Vertexes.Count > 2 && pl.IsClosed)
-            //            {
-            //                if (entity.Layer.Name == "FILLEDAREAS")
-            //                {
-            //                    Boundary.Add(entity);
-            //                    //Boundary.AddRange(((Polyline)entity).Explode());
-            //                    nAreas++;
-            //                }
-
-            //                if (entity.Layer.Name == "EMPTYAREAS")
-            //                {
-            //                    BoundaryOutermost.Add(entity);
-            //                    //BoundaryOutermost.AddRange(((Polyline)entity).Explode());
-            //                    nAreas++;
-            //                }
-            //            }
-            //            else
-            //            {
-
-            //                if (entity.Layer.Name == "FILLEDAREAS")
-            //                {
-            //                    arcsLinesFilled.Add(entity);
-            //                    n++;
-            //                }
-
-            //                if (entity.Layer.Name == "EMPTYAREAS")
-            //                {
-            //                    arcsLinesEmpty.Add(entity);
-            //                }
-
-            //            }
-            //            break;
-
-            //        //case EntityType.Polyline:
-            //        //    Polyline po = (Polyline)entity;
-            //        //    if (po.Vertexes.Count > 2 && po.IsClosed)
-            //        //    {
-            //        //        if (entity.Layer.Name == "FILLEDAREAS")
-            //        //        {
-            //        //            Boundary.Add(entity);
-            //        //            nAreas++;
-            //        //        }
-
-            //        //        if (entity.Layer.Name == "EMPTYAREAS")
-            //        //        {
-            //        //            BoundaryOutermost.Add(entity);
-            //        //            nAreas++;
-            //        //        }
-            //        //    }
-            //        //    else
-            //        //    {
-            //        //        //if (entity.Layer.Name == "FILLEDAREAS")
-            //        //        //{
-            //        //        //    arcsLinesFilled.AddRange(po.Explode());
-            //        //        //}
-
-            //        //        //if (entity.Layer.Name == "EMPTYAREAS")
-            //        //        //{
-            //        //        //    arcsLinesEmpty.AddRange(po.Explode());
-            //        //        //}
-
-            //        //        if (entity.Layer.Name == "FILLEDAREAS")
-            //        //        {
-            //        //            arcsLinesFilled.Add(entity);
-            //        //            n++;
-            //        //        }
-
-            //        //        if (entity.Layer.Name == "EMPTYAREAS")
-            //        //        {
-            //        //            arcsLinesEmpty.Add(entity);
-            //        //        }
-
-            //        //    }
-            //        //    break;
-            //        //case EntityType.Spline:
-            //        //    Spline s = (Spline)entity;
-            //        //    int precision = (int)(s.CtrlPointTolerance / s.FitTolerance / 10);
-
-            //        //    if (precision == 0) precision = 100;
-
-            //        //    Polyline spo = s.ToPolyline(precision);
-            //        //    if (spo.Vertexes.Count > 2 && spo.IsClosed)
-            //        //    {
-            //        //        if (entity.Layer.Name == "FILLEDAREAS")
-            //        //        {
-            //        //            Boundary.Add(entity);
-            //        //            nAreas++;
-            //        //        }
-
-            //        //        if (entity.Layer.Name == "EMPTYAREAS")
-            //        //        {
-            //        //            BoundaryOutermost.Add(entity);
-            //        //            nAreas++;
-            //        //        }
-            //        //    }
-            //        //    else
-            //        //    {
-            //        //        //if (entity.Layer.Name == "FILLEDAREAS")
-            //        //        //{
-            //        //        //    arcsLinesFilled.AddRange(spo.Explode());
-            //        //        //}
-
-            //        //        //if (entity.Layer.Name == "EMPTYAREAS")
-            //        //        //{
-            //        //        //    arcsLinesEmpty.AddRange(spo.Explode());
-            //        //        //}
-
-            //        //        if (entity.Layer.Name == "FILLEDAREAS")
-            //        //        {
-            //        //            arcsLinesFilled.Add(spo);
-            //        //            n++;
-            //        //        }
-
-            //        //        if (entity.Layer.Name == "EMPTYAREAS")
-            //        //        {
-            //        //            arcsLinesEmpty.Add(spo);
-            //        //        }
-
-            //        //    }
-            //        //    break;
-
-            //        default:
-            //            if (entity.Type == EntityType.Line || entity.Type == EntityType.Arc)
-            //            {
-            //                if (entity.Layer.Name == "FILLEDAREAS")
-            //                {
-            //                    arcsLinesFilled.Add(entity);
-            //                    //Boundary.Add(entity);
-
-            //                }
-
-            //                if (entity.Layer.Name == "EMPTYAREAS")
-            //                {
-            //                    arcsLinesEmpty.Add(entity);
-
-            //                }
-            //            }
-            //            else
-            //            {
-            //                if (entity.Type != EntityType.Dimension && entity.Type != EntityType.Insert && entity.Type != EntityType.XLine && entity.Type != EntityType.Text && entity.Type != EntityType.Ray && entity.Type != EntityType.MText)
-            //                {
-            //                    if (entity.Layer.Name == "FILLEDAREAS")
-            //                    {
-            //                        Boundary.Add(entity);
-
-            //                        nAreas++;
-            //                    }
-
-            //                    if (entity.Layer.Name == "EMPTYAREAS")
-            //                    {
-            //                        BoundaryOutermost.Add(entity);
-            //                        nAreas++;
-            //                    }
-            //                }
-            //            }
-            //            break;
-            //    }
-            //}
-
-
-
-            //if (nAreas < 1000)
-            //{
-            //    //int precision = 78;
-            //    if (arcsLinesFilled.Count > 0)
-            //    {
-            //        List<LwPolyline> lws = MathHelper.EntitiesToLwPolylines(arcsLinesFilled);
-            //        foreach (LwPolyline lw in lws)
-            //        {
-            //            bool isClosed = true;
-            //            foreach (LwPolylineVertex v in lw.Vertexes)
-            //            {
-            //                foreach (Vector2 pnc in pointsNotConnected)
-            //                {
-            //                    if (pnc == v.ToVector2())
-            //                    {
-            //                        isClosed = false;
-            //                        break;
-            //                    }
-            //                }
-
-            //            }
-
-            //            if (isClosed)
-            //                Boundary.Add(lw);
-            //        }
-
-            //    }
-            //    if (arcsLinesEmpty.Count > 0)
-            //    {
-            //        List<LwPolyline> lws = MathHelper.EntitiesToLwPolylines(arcsLinesEmpty);
-            //        foreach (LwPolyline lw in lws)
-            //        {
-            //            bool isClosed = true;
-            //            foreach (LwPolylineVertex v in lw.Vertexes)
-            //            {
-            //                foreach (Vector2 pnc in pointsNotConnected)
-            //                {
-            //                    if (pnc == v.ToVector2())
-            //                    {
-            //                        isClosed = false;
-            //                        break;
-            //                    }
-            //                }
-
-            //            }
-            //            if (isClosed)
-            //                BoundaryOutermost.Add(lw);
-            //        }
-
-            //    }
-
-            //    //if (useGradient)
-            //    //{
-            //    //    myDXF.AddGradientHatch((HatchGradientPatternType)Enum.Parse(typeof(HatchGradientPatternType), "Linear"), Boundary, BoundaryOutermost, 138, 131, 0, true, "SERVICE");
-
-            //    //    Hatch myHatch = myDXF.DXF.Hatches[myDXF.DXF.Hatches.Count - 1];
-            //    //    myHatch.Transparency = Transparency.FromAlphaValue(200);
-            //    //}
-            //    //else
-            //    //{
-            //    //    myDXF.AddHatch("SOLID", Boundary, BoundaryOutermost, 0, 1, 5, "SERVICE");
-            //    //}
-            //    myDXF.AddHatch("SOLID", Boundary, BoundaryOutermost, 0, 1, 131, "SERVICE");
-            //    Hatch myHatch = myDXF.DXF.Hatches[myDXF.DXF.Hatches.Count - 1];
-            //    myHatch.Transparency = Transparency.FromAlphaValue(240);
-
-
-            //}
 
         }
-
-
-
 
         private static void DeleteAllEntitiesInServiceLayer(DXFReaderNETControl myDXF)
         {
@@ -9543,7 +10602,8 @@ namespace DXFReaderNETDemoProgram
 
                     }
                     dxfReaderNETControl1.Refresh();
-                    dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
                     dxfReaderNETControl1.DXF.Modified = true;
                 }
             }
@@ -9555,187 +10615,6 @@ namespace DXFReaderNETDemoProgram
             //dxfReaderNETControl1.Refresh();
         }
 
-        private void barButtonItemGrabPoints_Click(object sender, EventArgs e)
-        {
-            if (dxfReaderNETControl1.ObjectOsnapMode == ObjectOsnapTypeFlags.None) return;
-
-            List<EntityObject> allEntities = new List<EntityObject>();
-            foreach (EntityObject entity in dxfReaderNETControl1.DXF.Entities)
-            {
-                allEntities.Add(entity);
-                switch (entity.Type)
-                {
-                    case EntityType.Line:
-                        if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Endpoint))
-                        {
-                            HighlightPoint(Color.Magenta, ((Line)entity).StartPoint.ToVector2(), 8);
-                            HighlightPoint(Color.Magenta, ((Line)entity).EndPoint.ToVector2(), 8);
-                        }
-                        if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Midpoint))
-                        {
-                            HighlightPoint(Color.Magenta, Vector2.MidPoint(((Line)entity).StartPoint.ToVector2(), ((Line)entity).EndPoint.ToVector2()), 8, PointShapeEnum.Triangle);
-                        }
-                        break;
-                    case EntityType.Arc:
-                        if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Endpoint))
-                        {
-                            HighlightPoint(Color.Magenta, ((Arc)entity).StartPoint.ToVector2(), 8);
-                            HighlightPoint(Color.Magenta, ((Arc)entity).EndPoint.ToVector2(), 8);
-                        }
-                        if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Center))
-                        {
-                            HighlightPoint(Color.Yellow, ((Arc)entity).Center.ToVector2(), 8, PointShapeEnum.Circle);
-
-                        }
-
-                        if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Midpoint))
-                        {
-                            HighlightPoint(Color.Magenta, ((Arc)entity).MidPoint.ToVector2(), 8, PointShapeEnum.Triangle);
-                        }
-                        break;
-                    case EntityType.Circle:
-                        if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Center))
-                        {
-                            HighlightPoint(Color.Yellow, ((Circle)entity).Center.ToVector2(), 8, PointShapeEnum.Circle);
-
-                        }
-                        if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Quadrant))
-                        {
-                            HighlightPoint(Color.Magenta, ((Circle)entity).Center.ToVector2() - new Vector2(((Circle)entity).Radius, 0), 8);
-                            HighlightPoint(Color.Magenta, ((Circle)entity).Center.ToVector2() + new Vector2(((Circle)entity).Radius, 0), 8);
-                            HighlightPoint(Color.Magenta, ((Circle)entity).Center.ToVector2() - new Vector2(0, ((Circle)entity).Radius), 8);
-                            HighlightPoint(Color.Magenta, ((Circle)entity).Center.ToVector2() + new Vector2(0, ((Circle)entity).Radius), 8);
-                        }
-                        break;
-                    case EntityType.Ellipse:
-                        if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Center))
-                        {
-                            HighlightPoint(Color.Yellow, ((Ellipse)entity).Center.ToVector2(), 8, PointShapeEnum.Circle);
-
-                        }
-                        if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Quadrant))
-                        {
-                            Ellipse ellipse = ((Ellipse)entity);
-
-                            for (double ang = 0; ang < 360; ang += 90)
-                            {
-                                Vector3 pe = new Vector3(ellipse.MajorAxis / 2 * Math.Cos(ang * MathHelper.DegToRad), ellipse.MinorAxis / 2 * Math.Sin(ang * MathHelper.DegToRad), 0);
-                                Vector3 pR = MathHelper.RotateAboutAxis(pe, Vector3.UnitZ, ellipse.Rotation * MathHelper.DegToRad);
-                                HighlightPoint(Color.Magenta, (pR + ellipse.Center).ToVector2(), 8);
-                            }
-
-                        }
-                        break;
-                    case EntityType.LightWeightPolyline:
-                        LwPolyline lw = (LwPolyline)entity;
-                        for (int k = 0; k < lw.Vertexes.Count; k++)
-                        {
-                            if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Endpoint))
-                            {
-                                HighlightPoint(Color.Magenta, lw.Vertexes[k].ToVector2(), 8);
-                            }
-                            if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Midpoint))
-                            {
-                                if (k < lw.Vertexes.Count - 1)
-                                {
-                                    HighlightPoint(Color.Magenta, Vector2.MidPoint(lw.Vertexes[k].ToVector2(), lw.Vertexes[k + 1].ToVector2()), 8, PointShapeEnum.Triangle);
-
-                                }
-
-                            }
-                        }
-                        if (lw.IsClosed)
-                        {
-                            if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Midpoint))
-                            {
-                                HighlightPoint(Color.Magenta, Vector2.MidPoint(lw.Vertexes[lw.Vertexes.Count - 1].ToVector2(), lw.Vertexes[0].ToVector2()), 8, PointShapeEnum.Triangle);
-
-                            }
-                        }
-
-
-                        break;
-                    case EntityType.Polyline:
-
-                        Polyline pl = (Polyline)entity;
-                        for (int k = 0; k < pl.Vertexes.Count; k++)
-                        {
-                            if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Endpoint))
-                            {
-                                HighlightPoint(Color.Magenta, pl.Vertexes[k].Position.ToVector2(), 8);
-                            }
-                            if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Midpoint))
-                            {
-                                if (k < pl.Vertexes.Count - 1)
-                                {
-                                    HighlightPoint(Color.Magenta, Vector2.MidPoint(pl.Vertexes[k].Position.ToVector2(), pl.Vertexes[k + 1].Position.ToVector2()), 8, PointShapeEnum.Triangle);
-
-                                }
-
-                            }
-                        }
-                        if (pl.IsClosed)
-                        {
-                            if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Midpoint))
-                            {
-                                HighlightPoint(Color.Magenta, Vector2.MidPoint(pl.Vertexes[pl.Vertexes.Count - 1].Position.ToVector2(), pl.Vertexes[0].Position.ToVector2()), 8, PointShapeEnum.Triangle);
-
-                            }
-                        }
-
-                        break;
-
-                    case EntityType.Spline:
-                        Spline spli = (Spline)entity;
-                        if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Endpoint))
-                        {
-                            if (!spli.IsClosed)
-                            {
-                                HighlightPoint(Color.Magenta, spli.ControlPoints[0].Position.ToVector2(), 8);
-                                HighlightPoint(Color.Magenta, spli.ControlPoints[spli.ControlPoints.Count - 1].Position.ToVector2(), 8);
-                            }
-                        }
-                        break;
-
-                }
-
-
-
-            }
-            if (dxfReaderNETControl1.ObjectOsnapMode.HasFlag(ObjectOsnapTypeFlags.Intersection))
-            {
-                List<Vector2> Intersections = IntersectionPoints(allEntities);
-                foreach (Vector2 v in Intersections)
-                {
-                    HighlightPoint(Color.Magenta, v, 8, PointShapeEnum.Cross);
-
-
-                }
-            }
-
-            // dxfReaderNETControl1.HighLight(allEntities);
-        }
-
-        private List<Vector2> IntersectionPoints(List<EntityObject> entities)
-        {
-            List<Vector2> Intersections = new List<Vector2>();
-            MathHelper.Epsilon = 0.01;
-            List<EntityObject> checkedEntities = new List<EntityObject>();
-
-            foreach (EntityObject ent1 in entities)
-            {
-                foreach (EntityObject ent2 in entities)
-                {
-                    if (ent1.Handle != ent2.Handle)
-                    {
-                        Intersections.AddRange(MathHelper.FindIntersections(ent1, ent2));
-
-                    }
-                }
-            }
-            MathHelper.Epsilon = 1e-6;
-            return Intersections;
-        }
 
 
         private void DeleteTypedEntities(string entityType)
@@ -9772,97 +10651,6 @@ namespace DXFReaderNETDemoProgram
                 dxfReaderNETControl1.AddLayer(layername);
         }
 
-        private void ChangeNormalVector()
-        {
-            List<EntityObject> allEntities = new List<EntityObject>();
-            foreach (EntityObject entity in dxfReaderNETControl1.DXF.Entities)
-            {
-                if (entity.Normal != Vector3.UnitZ)
-                {
-
-
-                    switch (entity.Type)
-                    {
-                        case EntityType.Polyline:
-                            List<PolylineVertex> polyvertexes = new List<PolylineVertex>();
-                            foreach (PolylineVertex v in ((Polyline)entity).Vertexes)
-                            {
-                                Vector3 vp = MathHelper.Transform(v.Position, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                                polyvertexes.Add(new PolylineVertex(vp));
-                            }
-                            dxfReaderNETControl1.AddPolyline(polyvertexes, ((Polyline)entity).IsClosed, ((Polyline)entity).StartWidth, entity.Color.Index, entity.Layer.Name);
-                            allEntities.Add(entity);
-                            break;
-                        case EntityType.LightWeightPolyline:
-                            List<LwPolylineVertex> lwpolyvertexes = new List<LwPolylineVertex>();
-                            foreach (LwPolylineVertex v in ((LwPolyline)entity).Vertexes)
-                            {
-                                Vector3 vp = MathHelper.Transform(v.Position.ToVector3(), entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                                lwpolyvertexes.Add(new LwPolylineVertex(vp.X, vp.Y));
-                            }
-                            dxfReaderNETControl1.AddLightWeightPolyline(lwpolyvertexes, ((LwPolyline)entity).IsClosed, ((LwPolyline)entity).StartWidth, entity.Color.Index, entity.Layer.Name);
-                            allEntities.Add(entity);
-                            break;
-                        case EntityType.Arc:
-                            Vector3 sp = MathHelper.Transform(((Arc)entity).StartPoint, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                            Vector3 mp = MathHelper.Transform(((Arc)entity).MidPoint, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                            Vector3 ep = MathHelper.Transform(((Arc)entity).EndPoint, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-
-
-                            dxfReaderNETControl1.AddArc(sp, mp, ep, entity.Color.Index, entity.Layer.Name);
-                            allEntities.Add(entity);
-                            break;
-                        case EntityType.Circle:
-                            Vector3 c = MathHelper.Transform(((Circle)entity).Center, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                            double r = ((Circle)entity).Radius;
-
-
-                            dxfReaderNETControl1.AddCircle(c, r, entity.Color.Index, entity.Layer.Name);
-                            allEntities.Add(entity);
-                            break;
-
-                        case EntityType.Ellipse:
-                            c = MathHelper.Transform(((Ellipse)entity).Center, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                            //double r = ((Circle)entity).Radius;
-                            Vector3 mjp = ((Ellipse)entity).Center + new Vector3(((Ellipse)entity).MinorAxis / 2 * Math.Cos(((Ellipse)entity).Rotation * MathHelper.DegToRad), ((Ellipse)entity).MinorAxis / 2 * Math.Sin(((Ellipse)entity).Rotation * MathHelper.DegToRad), 0);
-                            Vector3 mjpr = MathHelper.Transform(mjp, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-                            double newrot = 90 - Vector2.Angle(((Ellipse)entity).Center.ToVector2(), mjpr.ToVector2()) * MathHelper.RadToDeg;
-                            dxfReaderNETControl1.AddEllipse(((Ellipse)entity).Center, ((Ellipse)entity).MajorAxis, ((Ellipse)entity).MinorAxis, newrot, entity.Color.Index, entity.Layer.Name);
-
-
-                            allEntities.Add(entity);
-                            break;
-
-                        case EntityType.MText:
-
-                            ((MText)entity).Position = MathHelper.Transform(((MText)entity).Position, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
-
-                            break;
-                        case EntityType.Leader:
-
-                            //((Leader)entity).Hook = MathHelper.Transform(((Leader)entity).Hook.ToVector3(), entity.Normal, CoordinateSystem.Object, CoordinateSystem.World).ToVector2();
-                            //((Leader)entity).Offset  = MathHelper.Transform(((Leader)entity).Offset.ToVector3(), entity.Normal, CoordinateSystem.Object, CoordinateSystem.World).ToVector2();
-
-
-                            //for (int k=0;k< ((Leader)entity).Vertexes.Count;k++)
-
-                            //{
-                            //    ((Leader)entity).Vertexes[k] = MathHelper.Transform(((Leader)entity).Vertexes[k].ToVector3(), entity.Normal, CoordinateSystem.Object, CoordinateSystem.World).ToVector2();
-                            //}
-
-                            break;
-                        default:
-                            entity.Normal = Vector3.UnitZ;
-                            break;
-                    }
-
-
-                }
-
-            }
-
-            dxfReaderNETControl1.DXF.RemoveEntities(allEntities);
-        }
 
         private void ribbonButtonDeleteSelectedEntities_Click(object sender, EventArgs e)
         {
@@ -9910,14 +10698,14 @@ namespace DXFReaderNETDemoProgram
                 if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
 
-
+                    SaveUndo();
 
                     for (int x = 0; x < deleteEntities.checkedListBox1.CheckedItems.Count; x++)
                     {
                         string sType = deleteEntities.checkedListBox1.CheckedItems[x].ToString().Substring(0, deleteEntities.checkedListBox1.CheckedItems[x].ToString().IndexOf(" (")).Trim();
                         DeleteTypedEntities(sType);
 
-                        RemoveUnusedBlocks();
+                        RemoveUnUsedBlocks(dxfReaderNETControl1);
                     }
                     dxfReaderNETControl1.Refresh();
 
@@ -9974,7 +10762,7 @@ namespace DXFReaderNETDemoProgram
             {
 
                 deleteObjects.listView1.Items.Add("          ");
-                deleteObjects.listView1.View = View.SmallIcon; ;
+                deleteObjects.listView1.View = System.Windows.Forms.View.SmallIcon;
                 if (key.Contains(";"))
                 {
                     int r = int.Parse(key.Split(';')[0]);
@@ -10005,7 +10793,7 @@ namespace DXFReaderNETDemoProgram
             {
                 if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-
+                    SaveUndo();
                     for (int x = 0; x < deleteObjects.listView1.CheckedItems.Count; x++)
                     {
                         string key = deleteObjects.listView1.CheckedItems[x].Tag.ToString().Trim();
@@ -10023,7 +10811,7 @@ namespace DXFReaderNETDemoProgram
                         }
 
                     }
-                    RemoveUnusedBlocks();
+                    RemoveUnUsedBlocks(dxfReaderNETControl1);
                     dxfReaderNETControl1.Refresh();
 
                 }
@@ -10120,15 +10908,17 @@ namespace DXFReaderNETDemoProgram
             {
                 if (deleteEntities.checkedListBox1.CheckedItems.Count > 0)
                 {
+
                     if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                     {
+                        SaveUndo();
                         for (int x = 0; x < deleteEntities.checkedListBox1.CheckedItems.Count; x++)
                         {
                             string layerN = deleteEntities.checkedListBox1.CheckedItems[x].ToString().Substring(0, deleteEntities.checkedListBox1.CheckedItems[x].ToString().IndexOf(" (")).Trim();
                             DeleteEntitiesByLayer(layerN);
 
                         }
-                        RemoveUnusedBlocks();
+                        RemoveUnUsedBlocks(dxfReaderNETControl1);
                         dxfReaderNETControl1.Refresh();
                     }
 
@@ -10180,175 +10970,6 @@ namespace DXFReaderNETDemoProgram
         }
 
 
-        private void RemoveUnusedBlocks()
-        {
-            List<DXFReaderNET.Blocks.Block> usedBlocks = new List<DXFReaderNET.Blocks.Block>();
-            foreach (Insert insert in dxfReaderNETControl1.DXF.Inserts)
-            {
-                if (!usedBlocks.Contains(insert.Block))
-                    usedBlocks.Add(insert.Block);
-            }
-            foreach (Dimension dimension in dxfReaderNETControl1.DXF.Dimensions)
-            {
-                if (!usedBlocks.Contains(dimension.Block))
-                    usedBlocks.Add(dimension.Block);
-            }
-            List<DXFReaderNET.Blocks.Block> unUsedBlocks = new List<DXFReaderNET.Blocks.Block>();
-            foreach (DXFReaderNET.Blocks.Block block in dxfReaderNETControl1.DXF.Blocks)
-            {
-                if (!usedBlocks.Contains(block))
-                    unUsedBlocks.Add(block);
-            }
-
-
-            foreach (DXFReaderNET.Blocks.Block block in unUsedBlocks)
-            {
-                if (!block.Name.Contains("*Model_Space") && !block.Name.Contains("*Paper_Space"))
-                    dxfReaderNETControl1.DXF.RemoveBlock(block);
-
-            }
-        }
-
-        private static void FindDrawingExtensions(DXFReaderNETControl myDXF)
-        {
-
-
-
-            List<Vector2> vertexes = new List<Vector2>();
-            Vector2 v = new Vector2();
-
-            foreach (EntityObject ent in myDXF.DXF.Entities)
-            {
-
-                switch (ent.Type)
-                {
-                    case EntityType.Line:
-                        {
-                            if (!vertexes.Contains(((Line)ent).StartPoint.ToVector2()))
-                                vertexes.Add(((Line)ent).StartPoint.ToVector2());
-                            if (!vertexes.Contains(((Line)ent).EndPoint.ToVector2()))
-                                vertexes.Add(((Line)ent).EndPoint.ToVector2());
-                            break;
-                        }
-
-                    case EntityType.Arc:
-                        {
-                            List<LwPolylineVertex> Avertexes;
-                            Avertexes = ((Arc)ent).ToPolyline(36).Vertexes;
-
-                            for (int k = 0; k <= Avertexes.Count - 1; k++)
-                            {
-                                v = Avertexes[k].ToVector2();
-                                if (!vertexes.Contains(v))
-                                    vertexes.Add(v);
-                            }
-
-                            break;
-                        }
-
-                    case EntityType.Circle:
-                        {
-                            v = new Vector2(((Circle)ent).Center.X + ((Circle)ent).Radius, ((Circle)ent).Center.Y);
-                            if (!vertexes.Contains(v))
-                                vertexes.Add(v);
-                            v = new Vector2(((Circle)ent).Center.X - ((Circle)ent).Radius, ((Circle)ent).Center.Y);
-                            if (!vertexes.Contains(v))
-                                vertexes.Add(v);
-                            v = new Vector2(((Circle)ent).Center.X, ((Circle)ent).Center.Y - ((Circle)ent).Radius);
-                            if (!vertexes.Contains(v))
-                                vertexes.Add(v);
-                            v = new Vector2(((Circle)ent).Center.X, ((Circle)ent).Center.Y + ((Circle)ent).Radius);
-                            if (!vertexes.Contains(v))
-                                vertexes.Add(v);
-                            break;
-                        }
-
-                    case EntityType.Ellipse:
-                        {
-                            List<LwPolylineVertex> Evertexes;
-                            Evertexes = ((Ellipse)ent).ToPolyline(36).Vertexes;
-
-                            for (int k = 0; k <= Evertexes.Count - 1; k++)
-                            {
-                                v = Evertexes[k].ToVector2();
-                                if (!vertexes.Contains(v))
-                                    vertexes.Add(v);
-                            }
-
-                            break;
-                        }
-
-                    case EntityType.LightWeightPolyline:
-                        {
-                            foreach (LwPolylineVertex lwv in ((LwPolyline)ent).Vertexes)
-                            {
-                                v = lwv.ToVector2();
-                                if (!vertexes.Contains(v))
-                                    vertexes.Add(v);
-                            }
-
-                            break;
-                        }
-
-                    case EntityType.Polyline:
-                        {
-                            foreach (PolylineVertex pv in ((Polyline)ent).Vertexes)
-                            {
-                                v = pv.Position.ToVector2();
-                                if (!vertexes.Contains(v))
-                                    vertexes.Add(v);
-                            }
-
-                            break;
-                        }
-
-                    case EntityType.Spline:
-                        {
-                            List<PolylineVertex> Pvertexes;
-                            Pvertexes = ((Spline)ent).ToPolyline(36).Vertexes;
-
-                            for (int k = 0; k <= Pvertexes.Count - 1; k++)
-                            {
-                                v = Pvertexes[k].Position.ToVector2();
-                                if (!vertexes.Contains(v))
-                                    vertexes.Add(v);
-                            }
-
-                            break;
-                        }
-                }
-            }
-
-            double minX = 1.0E+20;
-            double minY = 1.0E+20;
-            double maxX = -1.0E+20;
-            double maxY = -1.0E+20;
-
-            foreach (Vector2 vx in vertexes)
-            {
-                if (vx.X < minX)
-                    minX = vx.X;
-                if (vx.Y < minY)
-                    minY = vx.Y;
-                if (vx.X > maxX)
-                    maxX = vx.X;
-                if (vx.Y > maxY)
-                    maxY = vx.Y;
-            }
-
-
-
-
-            Vector3 p = new Vector3(minX, minY, 0);
-
-
-            myDXF.DXF.DrawingVariables.ExtMin = p;
-            p = new Vector3(maxX, maxY, 0);
-
-            myDXF.DXF.DrawingVariables.ExtMax = p;
-
-        }
-
         private void ribbonButtonModifyChamfer_Click(object sender, EventArgs e)
         {
             string inputValue = dxfReaderNETControl1.DXF.DrawingVariables.CHAMFERA.ToString();
@@ -10384,35 +11005,9 @@ namespace DXFReaderNETDemoProgram
             StatusLabel.Text = "Select start point";
 
             CheckSnap();
+            LastCommand = Commands.SLOT;
         }
 
-        private string newGroupName(DXFReaderNETControl myDXF, string name)
-        {
-
-            int newGropuNumberR = 0;
-            if (myDXF.DXF.Groups != null)
-            {
-                foreach (DXFReaderNET.Objects.Group _group in myDXF.DXF.Groups)
-                {
-                    if (_group.Name.StartsWith(name))
-                    {
-                        string strNum = _group.Name.Replace(name, "");
-
-                        if (strNum.Split('_').Length > 0)
-                        {
-                            newGropuNumberR = Convert.ToInt32(strNum.Split('_')[0]);
-                        }
-                        else
-                        {
-                            newGropuNumberR = Convert.ToInt32(_group.Name.Replace(name, ""));
-                        }
-                    }
-
-                }
-            }
-            newGropuNumberR++;
-            return name + newGropuNumberR.ToString();
-        }
 
         private void ribbonButtonModifyUngroup_Click(object sender, EventArgs e)
         {
@@ -10651,11 +11246,9 @@ namespace DXFReaderNETDemoProgram
             DialogResult result = deleteEntities.ShowDialog();
             if (result == DialogResult.OK)
             {
-                if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                if (MessageBox.Show("Are you sure? Only line types without entities will be deleted.", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-
-
-
+                    SaveUndo();
                     for (int x = 0; x < deleteEntities.checkedListBox1.CheckedItems.Count; x++)
                     {
                         string lTypeName = deleteEntities.checkedListBox1.CheckedItems[x].ToString();//.Substring(0, deleteEntities.checkedListBox1.CheckedItems[x].ToString().IndexOf(" (")).Trim();
@@ -10671,24 +11264,6 @@ namespace DXFReaderNETDemoProgram
         }
 
 
-
-        private void ribbonButtonTreeView_Click(object sender, EventArgs e)
-        {
-            if (ribbonButtonTreeView.Checked)
-            {
-                splitContainer1.SplitterDistance = 200;
-                splitContainer1.IsSplitterFixed = false;
-                TreeView1.Visible = true;
-                RefreshTree();
-            }
-            else
-            {
-                splitContainer1.SplitterDistance = 0;
-                splitContainer1.IsSplitterFixed = true;
-                TreeView1.Visible = false;
-            }
-
-        }
         private void RefreshTree()
         {
             {
@@ -10900,31 +11475,37 @@ namespace DXFReaderNETDemoProgram
                 TreeView1.Nodes[0].Nodes.Add(new TreeNode("THUMBNAILIMAGE")); // 6
                 TreeView1.Nodes[0].Nodes.Add(new TreeNode("ACDSDATA")); // 7
 
-                cont = ""; if (dxfReaderNETControl1.DXF.AcdsSchemas.Count() > 0)
+                cont = "";
+
+                if (dxfReaderNETControl1.DXF.AcdsSchemas.Count() > 0)
+                {
                     cont = " (" + dxfReaderNETControl1.DXF.AcdsSchemas.Count.ToString("###,###,##0") + ")";
 
-                TreeView1.Nodes[0].Nodes[7].Nodes.Add(new TreeNode("ACDSSCHEMA" + cont));
+                    TreeView1.Nodes[0].Nodes[7].Nodes.Add(new TreeNode("ACDSSCHEMA" + cont));
 
-                foreach (var AcdsSchema in dxfReaderNETControl1.DXF.AcdsSchemas)
-                {
-                    TreeView1.Nodes[0].Nodes[7].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes.Count - 1].Nodes.Add(new TreeNode(AcdsSchema.SchemaType.ToString()));
+                    foreach (var AcdsSchema in dxfReaderNETControl1.DXF.AcdsSchemas)
+                    {
+                        TreeView1.Nodes[0].Nodes[7].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes.Count - 1].Nodes.Add(new TreeNode(AcdsSchema.SchemaType.ToString()));
 
-                    TreeView1.Nodes[0].Nodes[7].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes.Count - 1].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes.Count - 1].Nodes.Count - 1].Tag = "ACDSSCHEMA";
+                        TreeView1.Nodes[0].Nodes[7].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes.Count - 1].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes.Count - 1].Nodes.Count - 1].Tag = "ACDSSCHEMA";
+                    }
                 }
 
+                cont = "";
 
-                cont = ""; if (dxfReaderNETControl1.DXF.AcdsRecords.Count() > 0)
+                if (dxfReaderNETControl1.DXF.AcdsRecords.Count() > 0)
+                {
                     cont = " (" + dxfReaderNETControl1.DXF.AcdsRecords.Count.ToString("###,###,##0") + ")";
 
-                TreeView1.Nodes[0].Nodes[7].Nodes.Add(new TreeNode("ACDSRECORD" + cont));
+                    TreeView1.Nodes[0].Nodes[7].Nodes.Add(new TreeNode("ACDSRECORD" + cont));
 
-                foreach (var AcdsRecord in dxfReaderNETControl1.DXF.AcdsRecords)
-                {
-                    TreeView1.Nodes[0].Nodes[7].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes.Count - 1].Nodes.Add(new TreeNode(AcdsRecord.RecordHandle.ToString()));
+                    foreach (var AcdsRecord in dxfReaderNETControl1.DXF.AcdsRecords)
+                    {
+                        TreeView1.Nodes[0].Nodes[7].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes.Count - 1].Nodes.Add(new TreeNode(AcdsRecord.RecordHandle.ToString()));
 
-                    TreeView1.Nodes[0].Nodes[7].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes.Count - 1].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes.Count - 1].Nodes.Count - 1].Tag = "ACDSRECORD";
+                        TreeView1.Nodes[0].Nodes[7].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes.Count - 1].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes[TreeView1.Nodes[0].Nodes[7].Nodes.Count - 1].Nodes.Count - 1].Tag = "ACDSRECORD";
+                    }
                 }
-
                 // entities
 
                 AddEntitiesTree(TreeView1.Nodes[0].Nodes[4]);
@@ -10956,7 +11537,8 @@ namespace DXFReaderNETDemoProgram
                 }
 
 
-                cont = ""; if (dxfReaderNETControl1.DXF.MlineStyles.Count() > 0)
+                cont = "";
+                if (dxfReaderNETControl1.DXF.MlineStyles.Count() > 0)
                     cont = " (" + dxfReaderNETControl1.DXF.MlineStyles.Count.ToString("###,###,##0") + ")";
                 TreeView1.Nodes[0].Nodes[5].Nodes.Add(new TreeNode("MLINESTYLE" + cont));
 
@@ -10967,7 +11549,11 @@ namespace DXFReaderNETDemoProgram
                 if (dxfReaderNETControl1.DXF.MlineStyles.Count() > 0)
                 {
                     foreach (DXFReaderNET.Objects.MLineStyle MlineStyle in dxfReaderNETControl1.DXF.MlineStyles)
-                        TreeView1.Nodes[0].Nodes[5].Nodes[TreeView1.Nodes[0].Nodes[5].Nodes.Count - 1].Nodes.Add(new TreeNode(MlineStyle.Name));
+                    {
+                        TreeView1.Nodes[0].Nodes[5].Nodes[TreeView1.Nodes[0].Nodes[5].Nodes.Count - 1].Nodes.Add(new TreeNode(MlineStyle.Handle.ToString() + " - " + MlineStyle.Name));
+                        TreeView1.Nodes[0].Nodes[5].Nodes[TreeView1.Nodes[0].Nodes[5].Nodes.Count - 1].Nodes[TreeView1.Nodes[0].Nodes[5].Nodes[TreeView1.Nodes[0].Nodes[5].Nodes.Count - 1].Nodes.Count - 1].Tag = "MLINESTYLE";
+
+                    }
                 }
             }
         }
@@ -10975,92 +11561,107 @@ namespace DXFReaderNETDemoProgram
         private void AddEntitiesTree(TreeNode myNode)
         {
             string cont = "";
-
-            cont = ""; if (dxfReaderNETControl1.DXF.Faces3d.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Faces3d.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("3DFACE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "3DFACE";
+            string displayText = "";
+            cont = "";
             if (dxfReaderNETControl1.DXF.Faces3d.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Faces3d.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Faces3d.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("3DFACE" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "3DFACE";
+                if (dxfReaderNETControl1.DXF.Faces3d.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Faces3d[k].Handle.ToString(), dxfReaderNETControl1.DXF.Faces3d[k].Handle.ToString());
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Faces3d.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Faces3d[k].Handle.ToString(), dxfReaderNETControl1.DXF.Faces3d[k].Handle.ToString());
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
+
             }
-
-
-            cont = ""; if (dxfReaderNETControl1.DXF.Solids3D.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Solids3D.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("3DSOLID" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "3DSOLID";
+            cont = "";
             if (dxfReaderNETControl1.DXF.Solids3D.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Solids3D.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Solids3D.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("3DSOLID" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "3DSOLID";
+                if (dxfReaderNETControl1.DXF.Solids3D.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Solids3D[k].Handle.ToString(), dxfReaderNETControl1.DXF.Solids3D[k].Handle.ToString());
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Solids3D.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Solids3D[k].Handle.ToString(), dxfReaderNETControl1.DXF.Solids3D[k].Handle.ToString());
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
-
-            cont = ""; if (dxfReaderNETControl1.DXF.AcadProxyEntities.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.AcadProxyEntities.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("ACAD_PROXY_ENTITY" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "ACAD_PROXY_ENTITY";
+            cont = "";
             if (dxfReaderNETControl1.DXF.AcadProxyEntities.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.AcadProxyEntities.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.AcadProxyEntities.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("ACAD_PROXY_ENTITY" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "ACAD_PROXY_ENTITY";
+                if (dxfReaderNETControl1.DXF.AcadProxyEntities.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.AcadProxyEntities[k].Handle.ToString(), dxfReaderNETControl1.DXF.AcadProxyEntities[k].Handle.ToString());
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.AcadProxyEntities.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.AcadProxyEntities[k].Handle.ToString(), dxfReaderNETControl1.DXF.AcadProxyEntities[k].Handle.ToString());
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
-            cont = ""; if (dxfReaderNETControl1.DXF.Arcs.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Arcs.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("ARC" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "ARC";
+            cont = "";
             if (dxfReaderNETControl1.DXF.Arcs.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Arcs.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Arcs.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("ARC" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "ARC";
+                if (dxfReaderNETControl1.DXF.Arcs.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Arcs[k].Handle.ToString(), dxfReaderNETControl1.DXF.Arcs[k].Handle.ToString());
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Arcs.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Arcs[k].Handle.ToString(), dxfReaderNETControl1.DXF.Arcs[k].Handle.ToString());
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
-            cont = ""; if (dxfReaderNETControl1.DXF.AttributeDefinitions.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.AttributeDefinitions.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("ATTDEF" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "ATTDEF";
-
-
+            cont = "";
             if (dxfReaderNETControl1.DXF.AttributeDefinitions.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.AttributeDefinitions.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.AttributeDefinitions.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("ATTDEF" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "ATTDEF";
+
+
+                if (dxfReaderNETControl1.DXF.AttributeDefinitions.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.AttributeDefinitions[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.AttributeDefinitions.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.AttributeDefinitions[k].Handle.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
             // ---------------------------------------------------------------------------------------------------------------------
 
             cont = ""; if (dxfReaderNETControl1.DXF.Bodies.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Bodies.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("BODY" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "BODY";
-            if (dxfReaderNETControl1.DXF.Bodies.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Bodies.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Bodies.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("BODY" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "BODY";
+                if (dxfReaderNETControl1.DXF.Bodies.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Bodies[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Bodies.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Bodies[k].Handle.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
@@ -11068,447 +11669,516 @@ namespace DXFReaderNETDemoProgram
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.Circles.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Circles.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("CIRCLE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "CIRCLE";
-            if (dxfReaderNETControl1.DXF.Circles.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Circles.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Circles.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("CIRCLE" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "CIRCLE";
+                if (dxfReaderNETControl1.DXF.Circles.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Circles[k].Handle.ToString(), dxfReaderNETControl1.DXF.Circles[k].Handle.ToString());
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Circles.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Circles[k].Handle.ToString(), dxfReaderNETControl1.DXF.Circles[k].Handle.ToString());
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
             cont = ""; if (dxfReaderNETControl1.DXF.Dimensions.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Dimensions.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("DIMENSION" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "DIMENSION";
-            if (dxfReaderNETControl1.DXF.Dimensions.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Dimensions.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Dimensions.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("DIMENSION" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "DIMENSION";
+                if (dxfReaderNETControl1.DXF.Dimensions.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Dimensions[k].Handle.ToString(), dxfReaderNETControl1.DXF.Dimensions[k].Handle.ToString());
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Dimensions.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Dimensions[k].Handle.ToString(), dxfReaderNETControl1.DXF.Dimensions[k].Handle.ToString());
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.Ellipses.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Ellipses.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("ELLIPSE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "ELLIPSE";
-            if (dxfReaderNETControl1.DXF.Ellipses.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Ellipses.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Ellipses.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("ELLIPSE" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "ELLIPSE";
+                if (dxfReaderNETControl1.DXF.Ellipses.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Ellipses[k].Handle.ToString(), dxfReaderNETControl1.DXF.Ellipses[k].Handle.ToString());
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Ellipses.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Ellipses[k].Handle.ToString(), dxfReaderNETControl1.DXF.Ellipses[k].Handle.ToString());
 
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.Hatches.Count() > 0)
+            {
                 cont = " (" + dxfReaderNETControl1.DXF.Hatches.Count.ToString("###,###,##0") + ")";
 
-            myNode.Nodes.Add(new TreeNode("HATCH" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "HATCH";
-            if (dxfReaderNETControl1.DXF.Hatches.Count() > 0)
-            {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Hatches.Count - 1; k++)
+                myNode.Nodes.Add(new TreeNode("HATCH" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "HATCH";
+                if (dxfReaderNETControl1.DXF.Hatches.Count() > 0)
                 {
-                    // myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(New TreeNode(dxfReaderNETControl1.DXF.Hatches[k].Pattern.Name.ToString()))
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Hatches[k].Handle.ToString() + " - " + dxfReaderNETControl1.DXF.Hatches[k].Pattern.Name.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Hatches.Count - 1; k++)
+                    {
+                        // myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(New TreeNode(dxfReaderNETControl1.DXF.Hatches[k].Pattern.Name.ToString()))
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Hatches[k].Handle.ToString() + " - " + dxfReaderNETControl1.DXF.Hatches[k].Pattern.Name.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.Helixes.Count() > 0)
+            {
                 cont = " (" + dxfReaderNETControl1.DXF.Helixes.Count.ToString("###,###,##0") + ")";
 
-            myNode.Nodes.Add(new TreeNode("HELIX" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "HELIX";
-            if (dxfReaderNETControl1.DXF.Helixes.Count() > 0)
-            {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Helixes.Count - 1; k++)
+                myNode.Nodes.Add(new TreeNode("HELIX" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "HELIX";
+                if (dxfReaderNETControl1.DXF.Helixes.Count() > 0)
                 {
-                    // myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(New TreeNode(dxfReaderNETControl1.DXF.Hatches[k].Pattern.Name.ToString()))
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Helixes[k].Handle.ToString()));
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Helixes.Count - 1; k++)
+                    {
+                        // myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(New TreeNode(dxfReaderNETControl1.DXF.Hatches[k].Pattern.Name.ToString()))
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Helixes[k].Handle.ToString()));
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
-            cont = ""; if (dxfReaderNETControl1.DXF.Images.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Images.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("IMAGE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "IMAGE";
 
+            cont = "";
             if (dxfReaderNETControl1.DXF.Images.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Images.Count - 1; k++)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Images[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    cont = " (" + dxfReaderNETControl1.DXF.Images.Count.ToString("###,###,##0") + ")";
+                    myNode.Nodes.Add(new TreeNode("IMAGE" + cont));
+                    myNode.Nodes[myNode.Nodes.Count - 1].Tag = "IMAGE";
+
+                    if (dxfReaderNETControl1.DXF.Images.Count() > 0)
+                    {
+                        for (var k = 0; k <= dxfReaderNETControl1.DXF.Images.Count - 1; k++)
+                        {
+                            myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Images[k].Handle.ToString()));
+                            myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        }
+                    }
                 }
             }
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.Inserts.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Inserts.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("INSERT" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "INSERT";
-
-            if (dxfReaderNETControl1.DXF.Inserts.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Inserts.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Inserts.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("INSERT" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "INSERT";
+
+                if (dxfReaderNETControl1.DXF.Inserts.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Inserts[k].Handle.ToString(), dxfReaderNETControl1.DXF.Inserts[k].Handle.ToString());
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
-                    AddInsertEntitiesTree(myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1], dxfReaderNETControl1.DXF.Inserts[k].Block.Entities);
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Inserts.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Inserts[k].Handle.ToString(), dxfReaderNETControl1.DXF.Inserts[k].Handle.ToString());
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        AddInsertEntitiesTree(myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1], dxfReaderNETControl1.DXF.Inserts[k].Block.Entities);
+                    }
                 }
             }
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.Leaders.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Leaders.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("LEADER" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "LEADER";
-
-            if (dxfReaderNETControl1.DXF.Leaders.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Leaders.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Leaders.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("LEADER" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "LEADER";
+
+                if (dxfReaderNETControl1.DXF.Leaders.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Leaders[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Leaders.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Leaders[k].Handle.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
             cont = ""; if (dxfReaderNETControl1.DXF.Lines.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Lines.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("LINE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "LINE";
-
-            if (dxfReaderNETControl1.DXF.Lines.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Lines.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Lines.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("LINE" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "LINE";
+
+                if (dxfReaderNETControl1.DXF.Lines.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Lines[k].Handle.ToString(), dxfReaderNETControl1.DXF.Lines[k].Handle.ToString());
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Lines.Count - 1; k++)
+                    {
+                        //displayText = dxfReaderNETControl1.DXF.Entities.IndexOf(dxfReaderNETControl1.DXF.Lines[k]).ToString() + " - " + dxfReaderNETControl1.DXF.Lines[k].Handle.ToString();
+                        displayText = dxfReaderNETControl1.DXF.Lines[k].Handle.ToString();
+
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Lines[k].Handle.ToString(), displayText);
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.LwPolylines.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.LwPolylines.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("LWPOLYLINE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "LWPOLYLINE";
-
-
-            if (dxfReaderNETControl1.DXF.LwPolylines.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.LwPolylines.Count - 1; k++)
-                {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.LwPolylines[k].Handle.ToString(), dxfReaderNETControl1.DXF.LwPolylines[k].Handle.ToString());
+                cont = " (" + dxfReaderNETControl1.DXF.LwPolylines.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("LWPOLYLINE" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "LWPOLYLINE";
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+
+                if (dxfReaderNETControl1.DXF.LwPolylines.Count() > 0)
+                {
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.LwPolylines.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.LwPolylines[k].Handle.ToString(), dxfReaderNETControl1.DXF.LwPolylines[k].Handle.ToString());
+
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
             cont = ""; if (dxfReaderNETControl1.DXF.PolyfaceMeshes.Count() > 0)
+            {
                 cont = " (" + dxfReaderNETControl1.DXF.PolyfaceMeshes.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("MESH" + cont));
+                myNode.Nodes.Add(new TreeNode("MESH" + cont));
 
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "MESH";
-            if (dxfReaderNETControl1.DXF.PolyfaceMeshes.Count() > 0)
-            {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.PolyfaceMeshes.Count - 1; k++)
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "MESH";
+                if (dxfReaderNETControl1.DXF.PolyfaceMeshes.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.PolyfaceMeshes[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.PolyfaceMeshes.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.PolyfaceMeshes[k].Handle.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
-            }
 
-            if (dxfReaderNETControl1.DXF.Meshes.Count() > 0)
-            {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Meshes.Count - 1; k++)
+                if (dxfReaderNETControl1.DXF.Meshes.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Meshes[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Meshes.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Meshes[k].Handle.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.MLines.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.MLines.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("MLINE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "MLINE";
-            if (dxfReaderNETControl1.DXF.MLines.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.MLines.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.MLines.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("MLINE" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "MLINE";
+                if (dxfReaderNETControl1.DXF.MLines.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.MLines[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.MLines.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.MLines[k].Handle.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.MTexts.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.MTexts.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("MTEXT" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "MTEXT";
-
-
-            if (dxfReaderNETControl1.DXF.MTexts.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.MTexts.Count - 1; k++)
-                {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.MTexts[k].Handle.ToString(), dxfReaderNETControl1.DXF.MTexts[k].Handle.ToString());
+                cont = " (" + dxfReaderNETControl1.DXF.MTexts.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("MTEXT" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "MTEXT";
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+
+                if (dxfReaderNETControl1.DXF.MTexts.Count() > 0)
+                {
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.MTexts.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.MTexts[k].Handle.ToString(), dxfReaderNETControl1.DXF.MTexts[k].Handle.ToString());
+
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.OleFrames.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.OleFrames.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("OLEFRAME" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "OLEFRAME";
-
-
-            if (dxfReaderNETControl1.DXF.OleFrames.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.OleFrames.Count - 1; k++)
-                {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.OleFrames[k].Handle.ToString(), dxfReaderNETControl1.DXF.OleFrames[k].Handle.ToString());
+                cont = " (" + dxfReaderNETControl1.DXF.OleFrames.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("OLEFRAME" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "OLEFRAME";
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+
+                if (dxfReaderNETControl1.DXF.OleFrames.Count() > 0)
+                {
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.OleFrames.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.OleFrames[k].Handle.ToString(), dxfReaderNETControl1.DXF.OleFrames[k].Handle.ToString());
+
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
             // ---
 
             cont = ""; if (dxfReaderNETControl1.DXF.Ole2Frames.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Ole2Frames.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("OLE2FRAME" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "OLE2FRAME";
-
-
-            if (dxfReaderNETControl1.DXF.Ole2Frames.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Ole2Frames.Count - 1; k++)
-                {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Ole2Frames[k].Handle.ToString(), dxfReaderNETControl1.DXF.Ole2Frames[k].Handle.ToString());
+                cont = " (" + dxfReaderNETControl1.DXF.Ole2Frames.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("OLE2FRAME" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "OLE2FRAME";
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+
+                if (dxfReaderNETControl1.DXF.Ole2Frames.Count() > 0)
+                {
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Ole2Frames.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Ole2Frames[k].Handle.ToString(), dxfReaderNETControl1.DXF.Ole2Frames[k].Handle.ToString());
+
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.Points.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Points.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("POINT" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "POINT";
-
-            if (dxfReaderNETControl1.DXF.Points.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Points.Count - 1; k++)
-                {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Points[k].Handle.ToString(), dxfReaderNETControl1.DXF.Points[k].Handle.ToString());
+                cont = " (" + dxfReaderNETControl1.DXF.Points.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("POINT" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "POINT";
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                if (dxfReaderNETControl1.DXF.Points.Count() > 0)
+                {
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Points.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Points[k].Handle.ToString(), dxfReaderNETControl1.DXF.Points[k].Handle.ToString());
+
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
             cont = ""; if (dxfReaderNETControl1.DXF.Polylines.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Polylines.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("POLYLINE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "POLYLINE";
-
-            if (dxfReaderNETControl1.DXF.Polylines.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Polylines.Count - 1; k++)
-                {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Polylines[k].Handle.ToString(), dxfReaderNETControl1.DXF.Polylines[k].Handle.ToString());
+                cont = " (" + dxfReaderNETControl1.DXF.Polylines.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("POLYLINE" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "POLYLINE";
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                if (dxfReaderNETControl1.DXF.Polylines.Count() > 0)
+                {
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Polylines.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Polylines[k].Handle.ToString(), dxfReaderNETControl1.DXF.Polylines[k].Handle.ToString());
+
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
             cont = ""; if (dxfReaderNETControl1.DXF.Rays.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Rays.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("RAY" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "RAY";
-            if (dxfReaderNETControl1.DXF.Rays.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Rays.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Rays.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("RAY" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "RAY";
+                if (dxfReaderNETControl1.DXF.Rays.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Rays[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Rays.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Rays[k].Handle.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.Regions.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Regions.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("REGION" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "REGION";
-            if (dxfReaderNETControl1.DXF.Regions.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Regions.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Regions.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("REGION" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "REGION";
+                if (dxfReaderNETControl1.DXF.Regions.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Regions[k].Handle.ToString(), dxfReaderNETControl1.DXF.Regions[k].Handle.ToString());
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Regions.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Regions[k].Handle.ToString(), dxfReaderNETControl1.DXF.Regions[k].Handle.ToString());
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
             cont = ""; if (dxfReaderNETControl1.DXF.Solids.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Solids.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("SOLID" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "SOLID";
-            if (dxfReaderNETControl1.DXF.Solids.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Solids.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Solids.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("SOLID" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "SOLID";
+                if (dxfReaderNETControl1.DXF.Solids.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Solids[k].Handle.ToString(), dxfReaderNETControl1.DXF.Solids[k].Handle.ToString());
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Solids.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Solids[k].Handle.ToString(), dxfReaderNETControl1.DXF.Solids[k].Handle.ToString());
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
             cont = ""; if (dxfReaderNETControl1.DXF.Splines.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Splines.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("SPLINE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "SPLINE";
-            if (dxfReaderNETControl1.DXF.Splines.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Splines.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Splines.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("SPLINE" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "SPLINE";
+                if (dxfReaderNETControl1.DXF.Splines.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Splines[k].Handle.ToString(), dxfReaderNETControl1.DXF.Splines[k].Handle.ToString());
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Splines.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Splines[k].Handle.ToString(), dxfReaderNETControl1.DXF.Splines[k].Handle.ToString());
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.Surfaces.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Surfaces.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("SURFACE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "SURFACE";
-            if (dxfReaderNETControl1.DXF.Surfaces.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Surfaces.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Surfaces.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("SURFACE" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "SURFACE";
+                if (dxfReaderNETControl1.DXF.Surfaces.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Surfaces[k].Handle.ToString(), dxfReaderNETControl1.DXF.Surfaces[k].Handle.ToString());
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Surfaces.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Surfaces[k].Handle.ToString(), dxfReaderNETControl1.DXF.Surfaces[k].Handle.ToString());
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.Texts.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Texts.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("TEXT" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "TEXT";
-            if (dxfReaderNETControl1.DXF.Texts.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Texts.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Texts.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("TEXT" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "TEXT";
+                if (dxfReaderNETControl1.DXF.Texts.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Texts[k].Handle.ToString(), dxfReaderNETControl1.DXF.Texts[k].Handle.ToString());
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Texts.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Texts[k].Handle.ToString(), dxfReaderNETControl1.DXF.Texts[k].Handle.ToString());
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
             cont = ""; if (dxfReaderNETControl1.DXF.Tolerances.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Tolerances.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("TOLERANCE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "TOLERANCE";
-            if (dxfReaderNETControl1.DXF.Tolerances.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Tolerances.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Tolerances.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("TOLERANCE" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "TOLERANCE";
+                if (dxfReaderNETControl1.DXF.Tolerances.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Tolerances[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Tolerances.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Tolerances[k].Handle.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
             cont = ""; if (dxfReaderNETControl1.DXF.Traces.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Traces.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("TRACE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "TRACE";
-            if (dxfReaderNETControl1.DXF.Traces.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Traces.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Traces.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("TRACE" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "TRACE";
+                if (dxfReaderNETControl1.DXF.Traces.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Traces[k].Handle.ToString(), dxfReaderNETControl1.DXF.Traces[k].Handle.ToString());
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Traces.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(dxfReaderNETControl1.DXF.Traces[k].Handle.ToString(), dxfReaderNETControl1.DXF.Traces[k].Handle.ToString());
 
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
+
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.Underlays.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Underlays.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("UNDERLAY" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "UNDERLAY";
-            if (dxfReaderNETControl1.DXF.Underlays.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Underlays.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Underlays.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("UNDERLAY" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "UNDERLAY";
+                if (dxfReaderNETControl1.DXF.Underlays.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Underlays[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Underlays.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Underlays[k].Handle.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
+
+
             cont = ""; if (dxfReaderNETControl1.DXF.Viewports.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Viewports.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("VIEWPORT" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "VIEWPORT";
-            if (dxfReaderNETControl1.DXF.Viewports.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Viewports.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Viewports.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("VIEWPORT" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "VIEWPORT";
+                if (dxfReaderNETControl1.DXF.Viewports.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Viewports[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Viewports.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Viewports[k].Handle.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
             cont = ""; if (dxfReaderNETControl1.DXF.Wipeouts.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.Wipeouts.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("WIPEOUT" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "WIPEOUT";
-            if (dxfReaderNETControl1.DXF.Wipeouts.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.Wipeouts.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.Wipeouts.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("WIPEOUT" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "WIPEOUT";
+                if (dxfReaderNETControl1.DXF.Wipeouts.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Wipeouts[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.Wipeouts.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.Wipeouts[k].Handle.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
 
 
 
             cont = ""; if (dxfReaderNETControl1.DXF.XLines.Count() > 0)
-                cont = " (" + dxfReaderNETControl1.DXF.XLines.Count.ToString("###,###,##0") + ")";
-            myNode.Nodes.Add(new TreeNode("XLINE" + cont));
-            myNode.Nodes[myNode.Nodes.Count - 1].Tag = "XLINE";
-
-            if (dxfReaderNETControl1.DXF.XLines.Count() > 0)
             {
-                for (var k = 0; k <= dxfReaderNETControl1.DXF.XLines.Count - 1; k++)
+                cont = " (" + dxfReaderNETControl1.DXF.XLines.Count.ToString("###,###,##0") + ")";
+                myNode.Nodes.Add(new TreeNode("XLINE" + cont));
+                myNode.Nodes[myNode.Nodes.Count - 1].Tag = "XLINE";
+
+                if (dxfReaderNETControl1.DXF.XLines.Count() > 0)
                 {
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.XLines[k].Handle.ToString()));
-                    myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    for (var k = 0; k <= dxfReaderNETControl1.DXF.XLines.Count - 1; k++)
+                    {
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Add(new TreeNode(dxfReaderNETControl1.DXF.XLines[k].Handle.ToString()));
+                        myNode.Nodes[myNode.Nodes.Count - 1].Nodes[myNode.Nodes[myNode.Nodes.Count - 1].Nodes.Count - 1].Tag = "HANDLE";
+                    }
                 }
             }
         }
+
 
         private void AddInsertEntitiesTree(TreeNode myNode, DXFReaderNET.Collections.EntityCollection myEntities)
         {
@@ -11640,55 +12310,34 @@ namespace DXFReaderNETDemoProgram
 
                             break;
                         }
-
-                    case "BLOCK":
-                        {
-                            break;
-                        }
-
-                    case "BLOCK_RECORD":
-                        {
-                            string handle = e.Node.Text.Trim();
-                            if (e.Node.Text.Contains("-"))
-                                handle = e.Node.Text.Split('.')[0].Trim();
-
-                            dxfReaderNETControl1.ShowProperties(handle);
-                            break;
-                        }
-
                     case "LAYOUT":
-                        {
-                            string handle = e.Node.Text.Trim();
-                            if (e.Node.Text.Contains("-"))
-                                handle = e.Node.Text.Split('.')[0].Trim();
-                            dxfReaderNETControl1.ShowProperties(handle);
-                            break;
-                        }
-
+                    case "BLOCK":
+                    case "BLOCK_RECORD":
                     case "ACDSRECORD":
+                    case "ACDSSCHEMA":
+                    case "MLINESTYLE":
                         {
                             string handle = e.Node.Text.Trim();
                             if (e.Node.Text.Contains("-"))
-                                handle = e.Node.Text.Split('.')[0].Trim();
+                                handle = e.Node.Text.Split('-')[0].Trim();
+
                             dxfReaderNETControl1.ShowProperties(handle);
                             break;
                         }
 
-                    case "ACDSSCHEMA":
-                        {
-                            string handle = e.Node.Text.Trim();
-                            if (e.Node.Text.Contains("-"))
-                                handle = e.Node.Text.Split('.')[0].Trim();
-                            dxfReaderNETControl1.ShowProperties(handle);
-                            break;
-                        }
+
+
+
+
                 }
             }
         }
 
         private void TreeView1_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            dxfReaderNETControl1.ShowProperties(e.Node.Text.Trim());
+            string Handle = e.Node.Text.Trim();
+            //if (dxfReaderNETControl1.DXF.GetEntityByHandle(Handle) != null)
+            dxfReaderNETControl1.ShowProperties(Handle);
         }
 
         private void ribbonButtonDeleteEntitiesByLineType_Click(object sender, EventArgs e)
@@ -11739,280 +12388,53 @@ namespace DXFReaderNETDemoProgram
                 {
                     if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                     {
+                        SaveUndo();
                         for (int x = 0; x < deleteEntities.checkedListBox1.CheckedItems.Count; x++)
                         {
                             string layerN = deleteEntities.checkedListBox1.CheckedItems[x].ToString().Substring(0, deleteEntities.checkedListBox1.CheckedItems[x].ToString().IndexOf(" (")).Trim();
                             DeleteLinetypeEntities(layerN);
 
                         }
-                        RemoveUnusedBlocks();
+                        RemoveUnUsedBlocks(dxfReaderNETControl1);
                         dxfReaderNETControl1.Refresh();
                     }
 
                 }
             }
         }
-        private string FilledAndEmptyAreas(DXFReaderNETControl myDXF)
-
-        {
-            List<EntityObject> externalContour = MathHelper.ExternalContour(myDXF.DXF.Entities);
-            List<EntityObject> allEntities = new List<EntityObject>();
-            foreach (EntityObject entity in myDXF.DXF.Entities)
-            {
-                if (!externalContour.Contains(entity))
-                    allEntities.Add(entity);
-            }
-            LwPolyline LexternalContour = new LwPolyline(externalContour, true);
-
-            List<LwPolyline> lws = dxfReaderNETControl1.EntitiesToLwPolylines(allEntities);
 
 
-            double FilledArea = LexternalContour.Area;
-            double FilledLength = LexternalContour.Lenght;
-
-            double EmptyArea = 0;
-            double EmptyLength = 0;
-            foreach (LwPolyline l in lws)
-            {
-                EmptyArea += l.Area;
-                EmptyLength += l.Lenght;
-
-
-            }
-
-
-
-            int contoursNumber = lws.Count + 1;
-            double actualArea = FilledArea - EmptyArea;
-            double totalCutlength = FilledLength + EmptyLength;
-
-            Vector2 extension = new Vector2(myDXF.DXF.DrawingVariables.ExtMax.X - myDXF.DXF.DrawingVariables.ExtMin.X, myDXF.DXF.DrawingVariables.ExtMax.Y - myDXF.DXF.DrawingVariables.ExtMin.Y);
-
-
-            string ret = "";
-
-            ret = "Filled area: " + myDXF.DXF.ToFormattedUnit(FilledArea);
-            ret += " Empty area: " + myDXF.DXF.ToFormattedUnit(EmptyArea);
-            ret += " Actual area: " + myDXF.DXF.ToFormattedUnit(actualArea);
-
-            ret += " Filled length: " + myDXF.DXF.ToFormattedUnit(FilledLength);
-            ret += " Empty length: " + myDXF.DXF.ToFormattedUnit(EmptyLength);
-
-            ret += " Actual length: " + myDXF.DXF.ToFormattedUnit(totalCutlength);
-            ret += " Total number of contours: " + contoursNumber.ToString();
-            ret += " Extension : " + myDXF.DXF.ToFormattedUnit(extension.X) + " x " + myDXF.DXF.ToFormattedUnit(extension.Y);
-
-            return ret;
-        }
-
-        private string FilledAndEmptyAreas_old(DXFReaderNETControl myDXF)
-
-        {
-            List<EntityObject> allEntities = new List<EntityObject>();
-            foreach (EntityObject entity in myDXF.DXF.Entities)
-            {
-                allEntities.Add(entity);
-            }
-            AddLayerIfNotPresent("FILLEDAREAS");
-            AddLayerIfNotPresent("EMPTYAREAS");
-            List<EntityObject> externalContour = MathHelper.ExternalContour(allEntities);
-            foreach (EntityObject ent in allEntities)
-            {
-                ent.Layer = myDXF.DXF.Layers["EMPTYAREAS"];
-                if (externalContour.Contains(ent))
-                    ent.Layer = myDXF.DXF.Layers["FILLEDAREAS"];
-
-            }
-
-            double FilledArea = 0;
-            double FilledLength = 0;
-
-            double EmptyArea = 0;
-            double EmptyLength = 0;
-            List<EntityObject> arcsLinesFilled = new List<EntityObject>();
-            List<EntityObject> arcsLinesEmpty = new List<EntityObject>();
-            string ret = "";
-            if (allEntities.Count > 0)
-            {
-
-                foreach (EntityObject entity in allEntities)
-                {
-
-                    double area = 0;
-                    double length = 0;
-                    switch (entity.Type)
-                    {
-                        case EntityType.Line:
-                            // if (!selectedEntities.Contains(entity))
-                            //length += ((Line)entity).length;
-                            if (entity.Layer.Name == "FILLEDAREAS")
-                            {
-                                arcsLinesFilled.Add(entity);
-                            }
-                            if (entity.Layer.Name == "EMPTYAREAS")
-                            {
-                                arcsLinesEmpty.Add(entity);
-                            }
-
-                            break;
-                        case EntityType.Arc:
-                            //    if (!selectedEntities.Contains(entity))
-                            //length += ((Arc)entity).length;
-                            if (entity.Layer.Name == "FILLEDAREAS")
-                            {
-                                arcsLinesFilled.Add(entity);
-                            }
-                            if (entity.Layer.Name == "EMPTYAREAS")
-                            {
-                                arcsLinesEmpty.Add(entity);
-                            }
-                            break;
-                        case EntityType.Circle:
-                            length += ((Circle)entity).Lenght;
-                            area += ((Circle)entity).Area;
-
-                            break;
-                        case EntityType.Ellipse:
-                            length += ((Ellipse)entity).Lenght;
-                            area += ((Ellipse)entity).Area;
-
-                            break;
-                        case EntityType.LightWeightPolyline:
-                            LwPolyline lw = (LwPolyline)entity;
-                            if (lw.IsClosed)
-                            {
-                                length += lw.Lenght;
-                                area += lw.Area;
-
-                            }
-                            else
-                            {
-                                if (entity.Layer.Name == "FILLEDAREAS")
-                                {
-                                    arcsLinesFilled.AddRange(lw.Explode());
-                                }
-                                if (entity.Layer.Name == "EMPTYAREAS")
-                                {
-                                    arcsLinesEmpty.AddRange(lw.Explode());
-                                }
-                            }
-
-
-                            break;
-                        case EntityType.Polyline:
-
-                            Polyline poly = (Polyline)entity;
-                            if (poly.IsClosed)
-                            {
-                                length += poly.Lenght;
-                                area += poly.Area;
-
-                            }
-                            else
-                            {
-                                if (entity.Layer.Name == "FILLEDAREAS")
-                                {
-                                    arcsLinesFilled.AddRange(poly.Explode());
-                                }
-                                if (entity.Layer.Name == "EMPTYAREAS")
-                                {
-                                    arcsLinesEmpty.AddRange(poly.Explode());
-                                }
-                            }
-                            break;
-
-                        case EntityType.Spline:
-                            Spline s = (Spline)entity;
-                            int precision = (int)(s.CtrlPointTolerance / s.FitTolerance / 10);
-                            if (precision == 0) precision = 100;
-                            Polyline spoly = s.ToPolyline(precision);
-                            if (spoly.IsClosed)
-                            {
-                                length += spoly.Lenght;
-                                area += spoly.Area;
-
-                            }
-                            else
-                            {
-                                //if (entity.Layer.Name == "FILLEDAREAS")
-                                //{
-                                //    arcsLinesFilled.AddRange(spoly.Explode());
-                                //}
-                                //if (entity.Layer.Name == "EMPTYAREAS")
-                                //{
-                                //    arcsLinesEmpty.AddRange(spoly.Explode());
-                                //}
-                            }
-
-                            break;
-                    }
-                    if (entity.Layer.Name == "FILLEDAREAS")
-                    {
-                        FilledArea += area;
-                        FilledLength += length;
-                    }
-
-                    if (entity.Layer.Name == "EMPTYAREAS")
-                    {
-                        EmptyArea += area;
-                        EmptyLength += length;
-
-                    }
-
-
-                }
-
-                if (arcsLinesFilled.Count > 0)
-                {
-                    List<LwPolyline> lws = new List<LwPolyline>();
-                    lws = dxfReaderNETControl1.EntitiesToLwPolylines(arcsLinesFilled);
-                    foreach (LwPolyline lw in lws)
-                    {
-                        FilledArea += lw.Area;
-                        FilledLength += lw.Lenght;
-
-                    }
-                }
-                if (arcsLinesEmpty.Count > 0)
-                {
-                    List<LwPolyline> lws = new List<LwPolyline>();
-                    lws = dxfReaderNETControl1.EntitiesToLwPolylines(arcsLinesEmpty);
-                    foreach (LwPolyline lw in lws)
-                    {
-                        EmptyArea += lw.Area;
-                        EmptyLength += lw.Lenght;
-
-                    }
-                }
-
-                int contoursNumber = dxfReaderNETControl1.EntitiesToLwPolylines(allEntities).Count;
-                double actualArea = FilledArea - EmptyArea;
-                double totalCutlength = FilledLength + EmptyLength;
-
-                Vector2 extension = new Vector2(myDXF.DXF.DrawingVariables.ExtMax.X - myDXF.DXF.DrawingVariables.ExtMin.X, myDXF.DXF.DrawingVariables.ExtMax.Y - myDXF.DXF.DrawingVariables.ExtMin.Y);
-
-
-
-
-                ret = "Filled area: " + myDXF.DXF.ToFormattedUnit(FilledArea);
-                ret += " Empty area: " + myDXF.DXF.ToFormattedUnit(EmptyArea);
-                ret += " Actual area: " + myDXF.DXF.ToFormattedUnit(actualArea);
-
-                ret += " Filled length: " + myDXF.DXF.ToFormattedUnit(FilledLength);
-                ret += " Empty length: " + myDXF.DXF.ToFormattedUnit(EmptyLength);
-
-                ret += " Actual length: " + myDXF.DXF.ToFormattedUnit(totalCutlength);
-                ret += " Total number of contours: " + contoursNumber.ToString();
-                ret += " Extension : " + myDXF.DXF.ToFormattedUnit(extension.X) + " x " + myDXF.DXF.ToFormattedUnit(extension.Y);
-
-
-            }
-            return ret;
-        }
 
         private void ribbonButtonInquiryMeasureFilledEmpty_Click(object sender, EventArgs e)
         {
-            StatusLabel.Text = FilledAndEmptyAreas(dxfReaderNETControl1);
+            //StatusLabel.Text = FilledAndEmptyAreas(dxfReaderNETControl1);
+
+            int InternalCountoursNumber = 0;
+            double ExternalLenght = 0;
+            double ExternalArea = 0;
+            double InternalLenght = 0;
+            double InternalArea = 0;
+            bool ret = MathHelper.FindClosedAreaData(dxfReaderNETControl1.DXF.Entities, out ExternalLenght, out ExternalArea, out InternalLenght, out InternalArea, out InternalCountoursNumber);
+
+            if (ret)
+            {
+
+                StatusLabel.Text = "Ext. lenght: " + dxfReaderNETControl1.DXF.ToFormattedUnit(ExternalLenght);
+                StatusLabel.Text += " Ext. area: " + dxfReaderNETControl1.DXF.ToFormattedUnit(ExternalArea);
+                StatusLabel.Text += " Int. lenght: " + dxfReaderNETControl1.DXF.ToFormattedUnit(InternalLenght);
+                StatusLabel.Text += " Int. area: " + dxfReaderNETControl1.DXF.ToFormattedUnit(InternalArea);
+                StatusLabel.Text += " Filled area: " + dxfReaderNETControl1.DXF.ToFormattedUnit(ExternalArea - InternalArea);
+                StatusLabel.Text += " Int. countours #: " + InternalCountoursNumber.ToString();
+
+                Vector2 extension = new Vector2(dxfReaderNETControl1.DXF.DrawingVariables.ExtMax.X - dxfReaderNETControl1.DXF.DrawingVariables.ExtMin.X, dxfReaderNETControl1.DXF.DrawingVariables.ExtMax.Y - dxfReaderNETControl1.DXF.DrawingVariables.ExtMin.Y);
+                StatusLabel.Text += " Extension : " + dxfReaderNETControl1.DXF.ToFormattedUnit(extension.X) + " x " + dxfReaderNETControl1.DXF.ToFormattedUnit(extension.Y);
+
+            }
+
+            else
+            {
+                StatusLabel.Text = " Closed area not found";
+            }
 
         }
 
@@ -12074,13 +12496,16 @@ namespace DXFReaderNETDemoProgram
                                 if (ent.CodeName == sType)
                                 {
                                     if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
+                                    {
                                         dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
+
+                                    }
                                 }
                             }
                         }
 
                     }
-
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
 
 
                     dxfReaderNETControl1.HighLight(dxfReaderNETControl1.DXF.SelectedEntities);
@@ -12133,7 +12558,7 @@ namespace DXFReaderNETDemoProgram
             {
 
                 deleteObjects.listView1.Items.Add("          ");
-                deleteObjects.listView1.View = View.SmallIcon; ;
+                deleteObjects.listView1.View = System.Windows.Forms.View.SmallIcon;
                 if (key.Contains(";"))
                 {
                     int r = int.Parse(key.Split(';')[0]);
@@ -12182,8 +12607,7 @@ namespace DXFReaderNETDemoProgram
                     }
 
                 }
-                RemoveUnusedBlocks(dxfReaderNETControl1);
-                dxfReaderNETControl1.Refresh();
+
 
 
             }
@@ -12237,8 +12661,9 @@ namespace DXFReaderNETDemoProgram
 
             myDXF.DXF.SelectedEntities.AddRange(EntitiesToDelete);
 
-            myDXF.HighLight(myDXF.DXF.SelectedEntities);
 
+            myDXF.HighLight(myDXF.DXF.SelectedEntities);
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
 
 
         }
@@ -12297,6 +12722,7 @@ namespace DXFReaderNETDemoProgram
                             {
                                 if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(entity))
                                 {
+
                                     dxfReaderNETControl1.DXF.SelectedEntities.Add(entity);
                                     dxfReaderNETControl1.HighLight(entity);
                                 }
@@ -12308,7 +12734,7 @@ namespace DXFReaderNETDemoProgram
 
                     }
 
-
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
                 }
             }
         }
@@ -12389,7 +12815,7 @@ namespace DXFReaderNETDemoProgram
             myDXF.DXF.SelectedEntities.Clear();
 
             myDXF.DXF.SelectedEntities.AddRange(EntitiesToDelete);
-
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
             myDXF.HighLight(myDXF.DXF.SelectedEntities);
 
         }
@@ -12398,7 +12824,7 @@ namespace DXFReaderNETDemoProgram
         {
             if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-
+                SaveUndo();
                 LwPolyline newPoly = new LwPolyline(dxfReaderNETControl1.DXF.SelectedEntities, true);
                 if (newPoly != null)
                 {
@@ -12454,8 +12880,2052 @@ namespace DXFReaderNETDemoProgram
             }
         }
 
+        private void ribbonButtonOrbit3D_Click(object sender, EventArgs e)
+        {
+            CurrentFunction = FunctionsEnum.Orbit3D;
+            dxfReaderNETControl1.Cursor = Cursors.SizeAll;
+
+            StatusLabel.Text = "3D Orbit - Press ESC or right click to exit";
+        }
+
+        private void ribbonButtonShowExtents_Click(object sender, EventArgs e)
+        {
+            dxfReaderNETControl1.ShowExtents = ribbonButtonShowExtents.Checked;
+            dxfReaderNETControl1.Refresh();
+        }
+
+        private void ribbonButtonShowData_Click(object sender, EventArgs e)
+        {
+            ShowDrawingData();
+        }
+        private void ShowDrawingData()
+        {
+            string inputValue = dxfReaderNETControl1.DXF.CurrentTextSize.ToString();
+            if (ShowInputDialog(ref inputValue, "Text height", true) == DialogResult.OK)
+            {
+                dxfReaderNETControl1.ClearDrawnElements();
+                dxfReaderNETControl1.DXF.CurrentTextSize = double.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
+                int n = 0;
+                Pen textColor = new Pen(Color.Yellow, 0);
+                Pen pointsColor = new Pen(Color.Green, 0);
+                Pen marksColor = new Pen(Color.Magenta, 0);
+                Pen marksColorLine = new Pen(Color.Magenta, 0);
+                marksColorLine.DashStyle = System.Drawing.Drawing2D.DashStyle.DashDot;
+                Pen entColor = new Pen(Color.Cyan, 0);
+                bool writeCoord = true;
+                bool writeHandle = false;
+                bool writeCircles = true;
+                foreach (EntityObject ent in dxfReaderNETControl1.DXF.Entities)
+                {
+                    string coords = "";
+                    string entInfo = "";
+                    switch (ent.Type)
+                    {
+                        case EntityType.Line:
+
+                            Line l = (Line)ent;
+                            double angle = Vector2.Angle(l.StartPoint.ToVector2(), l.EndPoint.ToVector2()) * MathHelper.RadToDeg;
+                            Vector2 lDir = l.Direction.ToVector2();
+                            //lDir -= dxfReaderNETControl1.DXF.CurrentTextSize*10;
+                            lDir.Normalize();
 
 
+                            if (writeCoord)
+                            {
+                                coords = "S (" + dxfReaderNETControl1.DXF.ToFormattedUnit(l.StartPoint.X) + "; " + dxfReaderNETControl1.DXF.ToFormattedUnit(l.StartPoint.Y) + ")";
+
+                                dxfReaderNETControl1.DrawText(textColor, coords, l.StartPoint.ToVector2() + lDir, dxfReaderNETControl1.DXF.CurrentTextSize / 2, angle, FontStyle.Regular, StringAlignment.Near, true);
+
+                                coords = "E (" + dxfReaderNETControl1.DXF.ToFormattedUnit(l.EndPoint.X) + "; " + dxfReaderNETControl1.DXF.ToFormattedUnit(l.EndPoint.Y) + ")";
+
+                                dxfReaderNETControl1.DrawText(textColor, coords, l.EndPoint.ToVector2() - lDir, dxfReaderNETControl1.DXF.CurrentTextSize / 2, angle, FontStyle.Regular, StringAlignment.Far, true);
+                            }
+
+
+                            entInfo = "#" + n.ToString() + " LINE";
+                            if (writeHandle)
+                            {
+                                entInfo += " [" + l.Handle + "]";
+
+                            }
+                            dxfReaderNETControl1.DrawText(entColor, entInfo, Vector2.MidPoint(l.StartPoint.ToVector2(), l.EndPoint.ToVector2()), dxfReaderNETControl1.DXF.CurrentTextSize, angle, FontStyle.Regular, StringAlignment.Center, true);
+
+                            if (writeCircles)
+                            {
+                                WritePointCircle(pointsColor, l.StartPoint.ToVector2());
+                                WritePointCircle(pointsColor, l.EndPoint.ToVector2());
+                            }
+                            break;
+
+                        case EntityType.Arc:
+
+                            Arc a = (Arc)ent;
+                            //angle = Vector2.Angle(a.StartPoint.ToVector2(), a.EndPoint.ToVector2()) * MathHelper.RadToDeg;
+                            Line la = new Line(a.StartPoint.ToVector2(), a.EndPoint.ToVector2());
+                            lDir = la.Direction.ToVector2();
+                            if (writeCoord)
+                            {
+                                coords = "S (" + dxfReaderNETControl1.DXF.ToFormattedUnit(a.StartPoint.X) + "; " + dxfReaderNETControl1.DXF.ToFormattedUnit(a.StartPoint.Y) + ")";
+                                coords += " ∠ " + dxfReaderNETControl1.DXF.ToFormattedAngle(a.StartAngle * MathHelper.DegToRad);
+
+                                dxfReaderNETControl1.DrawText(textColor, coords, a.StartPoint.ToVector2(), dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0, FontStyle.Regular, StringAlignment.Near, true);
+                                //dxfReaderNETControl1.DrawText(textColor, coords, a.StartPoint.ToVector2() + lDir, dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0, FontStyle.Regular, StringAlignment.Near, true);
+
+                                coords = "E (" + dxfReaderNETControl1.DXF.ToFormattedUnit(a.EndPoint.X) + "; " + dxfReaderNETControl1.DXF.ToFormattedUnit(a.EndPoint.Y) + ")";
+                                coords += " ∠ " + dxfReaderNETControl1.DXF.ToFormattedAngle(a.EndAngle * MathHelper.DegToRad);
+
+                                dxfReaderNETControl1.DrawText(textColor, coords, a.EndPoint.ToVector2(), dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0, FontStyle.Regular, StringAlignment.Far, true);
+                                //dxfReaderNETControl1.DrawText(textColor, coords, a.EndPoint.ToVector2() - lDir, dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0, FontStyle.Regular, StringAlignment.Far, true);
+
+
+
+                            }
+
+                            angle = Vector2.Angle(a.Center.ToVector2(), a.MidPoint.ToVector2()) * MathHelper.RadToDeg + 270;
+
+                            entInfo = "#" + n.ToString() + " ARC";
+                            if (writeHandle)
+                            {
+                                entInfo += " [" + a.Handle + "]";
+
+                            }
+
+                            dxfReaderNETControl1.DrawText(entColor, entInfo, a.MidPoint.ToVector2(), dxfReaderNETControl1.DXF.CurrentTextSize, angle, FontStyle.Regular, StringAlignment.Center, true);
+                            if (writeCircles)
+                            {
+                                WritePointCircle(pointsColor, a.StartPoint.ToVector2());
+                                WritePointCircle(pointsColor, a.EndPoint.ToVector2());
+                            }
+                            if (writeCoord)
+                            {
+                                dxfReaderNETControl1.DrawLine(marksColor, a.Center.ToVector2() - new Vector2(dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0), a.Center.ToVector2() + new Vector2(dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0), true);
+                                dxfReaderNETControl1.DrawLine(marksColor, a.Center.ToVector2() - new Vector2(0, dxfReaderNETControl1.DXF.CurrentTextSize / 2), a.Center.ToVector2() + new Vector2(0, dxfReaderNETControl1.DXF.CurrentTextSize / 2), true);
+
+                                coords = "(" + dxfReaderNETControl1.DXF.ToFormattedUnit(a.Center.X) + "; " + dxfReaderNETControl1.DXF.ToFormattedUnit(a.Center.Y) + ")";
+                                coords += " R" + dxfReaderNETControl1.DXF.ToFormattedUnit(a.Radius);
+                                dxfReaderNETControl1.DrawText(marksColor, coords, a.Center.ToVector2(), dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0, FontStyle.Regular, StringAlignment.Near, true);
+
+                                dxfReaderNETControl1.DrawLine(marksColorLine, a.Center.ToVector2(), a.MidPoint.ToVector2(), true);
+
+
+                            }
+                            break;
+
+                        case EntityType.Ellipse:
+
+                            Ellipse e = (Ellipse)ent;
+
+                            dxfReaderNETControl1.DrawLine(marksColor, e.Center.ToVector2() - new Vector2(dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0), e.Center.ToVector2() + new Vector2(dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0), true);
+                            dxfReaderNETControl1.DrawLine(marksColor, e.Center.ToVector2() - new Vector2(0, dxfReaderNETControl1.DXF.CurrentTextSize / 2), e.Center.ToVector2() + new Vector2(0, dxfReaderNETControl1.DXF.CurrentTextSize / 2), true);
+
+                            double beta = e.Rotation * MathHelper.DegToRad;
+                            double sinbeta = Math.Sin(beta);
+                            double cosbeta = Math.Cos(beta);
+
+
+                            double pointX = 0.5 * (e.MajorAxis * cosbeta);
+                            double pointY = 0.5 * (e.MajorAxis * sinbeta);
+
+
+
+                            if (writeCoord)
+                            {
+                                coords = "(" + dxfReaderNETControl1.DXF.ToFormattedUnit(e.Center.X) + "; " + dxfReaderNETControl1.DXF.ToFormattedUnit(e.Center.Y) + ")";
+                                coords += " MajorAxis: " + dxfReaderNETControl1.DXF.ToFormattedUnit(e.MajorAxis);
+                                dxfReaderNETControl1.DrawText(marksColor, coords, e.Center.ToVector2(), dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0, FontStyle.Regular, StringAlignment.Near, true);
+
+                                dxfReaderNETControl1.DrawText(entColor, "#" + n.ToString() + " ELLIPSE [" + e.Handle + "]", e.Center.ToVector2() + new Vector2(pointX, pointY), dxfReaderNETControl1.DXF.CurrentTextSize / 2, e.Rotation, FontStyle.Regular, StringAlignment.Center, true);
+                            }
+
+                            break;
+                        case EntityType.Circle:
+
+                            Circle c = (Circle)ent;
+
+                            dxfReaderNETControl1.DrawLine(marksColor, c.Center.ToVector2() - new Vector2(dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0), c.Center.ToVector2() + new Vector2(dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0), true);
+                            dxfReaderNETControl1.DrawLine(marksColor, c.Center.ToVector2() - new Vector2(0, dxfReaderNETControl1.DXF.CurrentTextSize / 2), c.Center.ToVector2() + new Vector2(0, dxfReaderNETControl1.DXF.CurrentTextSize / 2), true);
+                            if (writeCoord)
+                            {
+                                coords = "(" + dxfReaderNETControl1.DXF.ToFormattedUnit(c.Center.X) + "; " + dxfReaderNETControl1.DXF.ToFormattedUnit(c.Center.Y) + ")";
+                                coords += " R" + dxfReaderNETControl1.DXF.ToFormattedUnit(c.Radius);
+                                dxfReaderNETControl1.DrawText(marksColor, coords, c.Center.ToVector2(), dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0, FontStyle.Regular, StringAlignment.Near, true);
+
+                                dxfReaderNETControl1.DrawText(entColor, "#" + n.ToString() + " CIRCLE [" + c.Handle + "]", c.Center.ToVector2() + new Vector2(0, c.Radius), dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0, FontStyle.Regular, StringAlignment.Center, true);
+                            }
+
+                            break;
+                        case EntityType.LightWeightPolyline:
+                            LwPolyline lw = (LwPolyline)ent;
+                            int nv = 0;
+                            Vector2[] vA = new Vector2[lw.Vertexes.Count];
+
+                            //foreach (LwPolylineVertex v in lw.Vertexes)
+                            for (int k = 0; k < lw.Vertexes.Count; k++)
+                            {
+
+                                coords = nv.ToString();
+                                int startIndex = nv;
+                                int endIndex = nv + 1;
+                                if (nv == lw.Vertexes.Count - 1)
+                                {
+                                    startIndex = lw.Vertexes.Count - 1;
+                                    endIndex = 0;
+                                }
+                                if (writeCoord)
+                                {
+                                    coords += " (" + dxfReaderNETControl1.DXF.ToFormattedUnit(lw.Vertexes[k].Position.X) + "; " + dxfReaderNETControl1.DXF.ToFormattedUnit(lw.Vertexes[k].Position.Y) + ")"; ;
+                                    if (lw.Vertexes[k].Bulge != 0)
+                                    {
+                                        coords += " ∠ " + dxfReaderNETControl1.DXF.ToFormattedAngle(4 * Math.Atan(Math.Abs(lw.Vertexes[k].Bulge)) * Math.Sign(lw.Vertexes[k].Bulge));
+
+
+                                        MathHelper.BulgeParam(lw.Vertexes[startIndex].ToVector2(), lw.Vertexes[endIndex].ToVector2(), lw.Vertexes[k].Bulge, out Vector2 Center, out double R, out double StartAngle, out double EndAngle);
+
+                                        if (writeCoord)
+                                        {
+                                            dxfReaderNETControl1.DrawLine(marksColor, Center - new Vector2(dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0), Center + new Vector2(dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0), true);
+                                            dxfReaderNETControl1.DrawLine(marksColor, Center - new Vector2(0, dxfReaderNETControl1.DXF.CurrentTextSize / 2), Center + new Vector2(0, dxfReaderNETControl1.DXF.CurrentTextSize / 2), true);
+
+                                            string coordsB = "(" + dxfReaderNETControl1.DXF.ToFormattedUnit(Center.X) + "; " + dxfReaderNETControl1.DXF.ToFormattedUnit(Center.Y) + ")";
+                                            coordsB += " R" + dxfReaderNETControl1.DXF.ToFormattedUnit(R);
+                                            dxfReaderNETControl1.DrawText(marksColor, coordsB, Center, dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0, FontStyle.Regular, StringAlignment.Near, true);
+                                            double midAngle = (EndAngle - StartAngle) / 2 + StartAngle;
+                                            if (EndAngle > StartAngle)
+                                            {
+                                                midAngle = (StartAngle - EndAngle) / 2 + EndAngle;
+                                            }
+                                            Vector2 midPoint = Center + new Vector2(R * Math.Cos(midAngle * MathHelper.DegToRad), R * Math.Sin(midAngle * MathHelper.DegToRad));
+                                            dxfReaderNETControl1.DrawLine(marksColorLine, Center, midPoint, true);
+
+                                        }
+
+                                    }
+                                }
+
+                                angle = Vector2.Angle(lw.Vertexes[startIndex].ToVector2(), lw.Vertexes[endIndex].ToVector2()) * MathHelper.RadToDeg;
+
+                                dxfReaderNETControl1.DrawText(textColor, coords, lw.Vertexes[k].Position, dxfReaderNETControl1.DXF.CurrentTextSize / 2, angle, FontStyle.Regular, StringAlignment.Near, true);
+                                if (writeCircles)
+                                {
+                                    WritePointCircle(pointsColor, lw.Vertexes[k].Position);
+                                }
+                                nv++;
+                            }
+
+                            //dxfReaderNETControl1.DrawText(entColor, "#" + n.ToString() + " LWPOLYLINE [" + lw.Handle + "]", MathHelper.PolygonCenter(vA), dxfReaderNETControl1.DXF.CurrentTextSize, 0, FontStyle.Regular, StringAlignment.Center, true);
+                            if (lw.Vertexes.Count > 1)
+                            {
+                                angle = Vector2.Angle(lw.Vertexes[0].ToVector2(), lw.Vertexes[1].ToVector2()) * MathHelper.RadToDeg;
+                                dxfReaderNETControl1.DrawText(entColor, "#" + n.ToString() + " LWPOLYLINE [" + lw.Handle + "]", Vector2.MidPoint(lw.Vertexes[0].ToVector2(), lw.Vertexes[1].ToVector2()), dxfReaderNETControl1.DXF.CurrentTextSize, angle, FontStyle.Regular, StringAlignment.Center, true);
+
+                            }
+
+
+                            break;
+
+                        case EntityType.Polyline:
+                            Polyline p = (Polyline)ent;
+                            nv = 0;
+                            vA = new Vector2[p.Vertexes.Count];
+                            foreach (PolylineVertex v in p.Vertexes)
+                            {
+                                coords = nv.ToString();
+                                if (writeCoord)
+                                {
+                                    coords += " (" + dxfReaderNETControl1.DXF.ToFormattedUnit(v.Position.X) + "; " + dxfReaderNETControl1.DXF.ToFormattedUnit(v.Position.Y) + ")"; ;
+                                    if (v.Bulge != 0)
+                                    {
+                                        coords += " ∠ " + dxfReaderNETControl1.DXF.ToFormattedAngle(4 * Math.Atan(Math.Abs(v.Bulge)) * Math.Sign(v.Bulge));
+                                    }
+                                }
+
+                                vA[nv] = v.Position.ToVector2();
+
+                                dxfReaderNETControl1.DrawText(textColor, coords, v.Position.ToVector2(), dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0, FontStyle.Regular, StringAlignment.Near, true);
+                                if (writeCircles)
+                                {
+
+                                    WritePointCircle(pointsColor, v.Position.ToVector2());
+                                }
+                                nv++;
+                            }
+                            // dxfReaderNETControl1.DrawText(entColor, "#" + n.ToString() + " POLYLINE [" + p.Handle + "]", MathHelper.PolygonCenter(vA), dxfReaderNETControl1.DXF.CurrentTextSize, 0, FontStyle.Regular, StringAlignment.Center, true);
+                            if (p.Vertexes.Count > 1)
+                            {
+                                angle = Vector2.Angle(p.Vertexes[0].Position.ToVector2(), p.Vertexes[1].Position.ToVector2()) * MathHelper.RadToDeg;
+                                dxfReaderNETControl1.DrawText(entColor, "#" + n.ToString() + " POLYLINE [" + p.Handle + "]", Vector2.MidPoint(p.Vertexes[0].Position.ToVector2(), p.Vertexes[1].Position.ToVector2()), dxfReaderNETControl1.DXF.CurrentTextSize, angle, FontStyle.Regular, StringAlignment.Center, true);
+
+                            }
+                            break;
+                        case EntityType.Spline:
+                            DXFReaderNET.Entities.Spline s = (DXFReaderNET.Entities.Spline)ent;
+                            nv = 0;
+                            vA = new Vector2[s.ControlPoints.Count];
+                            foreach (SplineVertex v in s.ControlPoints)
+                            {
+                                coords = nv.ToString() + " (" + dxfReaderNETControl1.DXF.ToFormattedUnit(v.Position.X) + "; " + dxfReaderNETControl1.DXF.ToFormattedUnit(v.Position.Y) + ")"; ;
+
+
+
+                                vA[nv] = v.Position.ToVector2();
+                                if (writeCoord)
+                                    dxfReaderNETControl1.DrawText(textColor, coords, v.Position.ToVector2(), dxfReaderNETControl1.DXF.CurrentTextSize / 2, 0, FontStyle.Regular, StringAlignment.Near, true);
+
+                                if (writeCircles)
+                                {
+                                    WritePointCircle(pointsColor, v.Position.ToVector2());
+                                }
+
+                                nv++;
+                            }
+                            //dxfReaderNETControl1.DrawText(entColor, "#" + n.ToString() + " SPLINE [" + s.Handle + "]", MathHelper.PolygonCenter(vA), dxfReaderNETControl1.DXF.CurrentTextSize, 0, FontStyle.Regular, StringAlignment.Center, true);
+                            if (s.ControlPoints.Count > 1)
+                            {
+                                angle = Vector2.Angle(vA[0], vA[1]) * MathHelper.RadToDeg;
+                                dxfReaderNETControl1.DrawText(entColor, "#" + n.ToString() + " SPLINE [" + s.Handle + "]", Vector2.MidPoint(vA[0], vA[1]), dxfReaderNETControl1.DXF.CurrentTextSize, angle, FontStyle.Regular, StringAlignment.Center, true);
+
+                            }
+                            break;
+                    }
+                    n++;
+                }
+                //dxfReaderNETControl1.Refresh();
+            }
+        }
+        private void WritePointCircle(Pen pen, Vector2 point)
+        {
+            double h = dxfReaderNETControl1.DXF.CurrentTextSize / 4;
+            dxfReaderNETControl1.DrawCircle(pen, point, h, false, true);
+            dxfReaderNETControl1.DrawLine(pen, point - new Vector2(0, h), point + new Vector2(0, h), true);
+            dxfReaderNETControl1.DrawLine(pen, point - new Vector2(h, 0), point + new Vector2(h, 0), true);
+        }
+        private void ribbonButtonZoomCenter_Click(object sender, EventArgs e)
+        {
+            dxfReaderNETControl1.ZoomCenter();
+        }
+
+        private void ribbonButtonRedo_Click(object sender, EventArgs e)
+        {
+            ReDo();
+        }
+
+
+
+        private void ribbonButtonMultiLine_Click(object sender, EventArgs e)
+        {
+
+
+            string inputValue = m_mlineScale.ToString();
+            if (ShowInputDialog(ref inputValue, "Spacing", true) == DialogResult.OK)
+            {
+                m_mlineScale = double.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
+
+                if (m_mlineScale >= 0)
+                {
+                    StartMultiLine();
+
+
+                }
+            }
+        }
+        private void StartMultiLine()
+        {
+            LastCommand = Commands.MLINE;
+            CurrentFunction = FunctionsEnum.Mline;
+            vertexes.Clear();
+            StatusLabel.Text = "Select points with left mouse click. Right mouse click to end.";
+            CheckSnap();
+        }
+
+        private void ribbonButtonNormalize_Click(object sender, EventArgs e)
+        {
+
+            if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                SaveUndo();
+                ChangeNormalVector(dxfReaderNETControl1);
+
+            }
+        }
+
+        private void ribbonButtonShowSelectedEntitiesInfo_Click(object sender, EventArgs e)
+        {
+            if (dxfReaderNETControl1.DXF.SelectedEntities.Count > 0)
+                dxfReaderNETControl1.ShowDrawingInfo(dxfReaderNETControl1.DXF.SelectedEntities);
+        }
+
+        private void ribbonButtonExplodePolySingle_Click(object sender, EventArgs e)
+        {
+
+
+            CurrentFunction = FunctionsEnum.ExplodePoly;
+            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
+            StatusLabel.Text = "Select polyline or light weight polyline entity";
+
+
+        }
+
+        private void ribbonButtonExplodePolyRect_Click(object sender, EventArgs e)
+        {
+            CurrentFunction = FunctionsEnum.ExplodePoly1;
+            StatusLabel.Text = "Select start point of selection rectangle";
+        }
+
+        private void ribbonButtonDeleteCoincident_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                List<EntityObject> entitesToDelete = dxfReaderNETControl1.CoincidentEntities();
+
+                if (entitesToDelete.Count > 0)
+                {
+                    SaveUndo();
+                    dxfReaderNETControl1.DXF.RemoveEntities(entitesToDelete);
+                    //dxfReaderNETControl1.DXF.ModifyEntities(entitesToDelete,Vector2.Zero,new Vector2(100, 100),1,0);
+                    dxfReaderNETControl1.Refresh();
+
+
+
+
+                }
+            }
+        }
+
+        private void ribbonButtonExplodeInserSingle_Click(object sender, EventArgs e)
+        {
+            CurrentFunction = FunctionsEnum.ExplodeInsert;
+            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquareQuestionMark;
+            StatusLabel.Text = "Select insert entity";
+        }
+
+        private void ribbonButtonExplodeInsertRect_Click(object sender, EventArgs e)
+        {
+            CurrentFunction = FunctionsEnum.ExplodeInsert1;
+            StatusLabel.Text = "Select start point of selection rectangle";
+        }
+
+
+        private void FindBoundaries(List<EntityObject> selectedEntities, out List<EntityObject> externalContour, out List<EntityObject> innerEntities)
+        {
+            externalContour = MathHelper.ExternalContour(selectedEntities); //find external contour
+                                                                            //System.Diagnostics.Debugger.Break(); //stop
+            innerEntities = new List<EntityObject>();
+
+            foreach (EntityObject entity in selectedEntities)
+            {
+                if (!externalContour.Contains(entity))
+                {
+                    innerEntities.Add(entity);
+                }
+
+
+
+            }
+            List<LwPolyline> lws = dxfReaderNETControl1.EntitiesToLwPolylines(innerEntities);
+            innerEntities.Clear();
+            innerEntities.AddRange(lws);
+        }
+
+        private void ribbonButtonGridInsideLimits_Click(object sender, EventArgs e)
+        {
+            if (ribbonButtonGridInsideLimits.Checked)
+            {
+                dxfReaderNETControl1.GridDisplay = GridDisplayType.InsideDrawingLimits;
+            }
+            else
+            {
+                dxfReaderNETControl1.GridDisplay = GridDisplayType.Normal;
+            }
+            dxfReaderNETControl1.Refresh();
+        }
+
+        private void ribbonButtonTruTOPS_Click(object sender, EventArgs e)
+        {
+            AddLayerIfNotPresent("DIMENSION");
+            dxfReaderNETControl1.DXF.Layers["DIMENSION"].IsLocked = true;
+            dxfReaderNETControl1.DXF.Layers["DIMENSION"].Color = AciColor.Yellow;
+            DXFReaderNET.Tables.Layer dimLayer = dxfReaderNETControl1.DXF.Layers["DIMENSION"];
+            bool dimFound = false;
+            foreach (DXFReaderNET.Blocks.Block _block in dxfReaderNETControl1.DXF.Blocks.Items)
+            {
+                if (_block.Name.Contains("DIM"))
+                {
+                    dimFound = true;
+                    foreach (EntityObject ent in _block.Entities)
+                    {
+                        ent.Color = ent.Layer.Color;
+                    }
+                    dxfReaderNETControl1.AddInsert(_block.Name, Vector3.Zero);
+                    dxfReaderNETControl1.DXF.Inserts[dxfReaderNETControl1.DXF.Inserts.Count - 1].Layer = dimLayer;
+
+
+                }
+            }
+            if (dimFound)
+            {
+                dxfReaderNETControl1.DXF.RemoveEntities(dxfReaderNETControl1.DXF.Dimensions);
+                dxfReaderNETControl1.Refresh();
+                dxfReaderNETControl1.ZoomExtents();
+            }
+        }
+
+        private void ribbonButtonDeleteNotConnected_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+
+                SaveUndo();
+                dxfReaderNETControl1.DXF.RemoveEntities(MathHelper.NotConnectedEntities(dxfReaderNETControl1.DXF.Entities));
+                dxfReaderNETControl1.Refresh();
+
+
+            }
+        }
+
+        private void ribbonDrawingInfo_Click(object sender, EventArgs e)
+        {
+            dxfReaderNETControl1.ShowDrawingInfo();
+        }
+
+        private void ribbonButtonRubberBandStyle_DropDownItemClicked(object sender, RibbonItemEventArgs e)
+        {
+            if (((RibbonComboBox)sender).SelectedItem.Text != "")
+            {
+                dxfReaderNETControl1.DXF.DrawingVariables.DimStyle = ((RibbonComboBox)sender).SelectedItem.Text.Trim();
+            }
+
+            switch (((RibbonComboBox)sender).SelectedItem.Text)
+            {
+                case "Dashed":
+                    m_RubberBandType = RubberBandType.Dashed;
+                    break;
+                case "Solid":
+                    m_RubberBandType = RubberBandType.Solid;
+                    break;
+
+            }
+        }
+
+        private void contextMenuStrip1_Opened(object sender, EventArgs e)
+        {
+            if (dxfReaderNETControl1.DXF.Entities.Count == 0)
+            {
+                selectEntitiesToolStripMenuItem.Enabled = false;
+            }
+            else
+            {
+                selectEntitiesToolStripMenuItem.Enabled = true;
+
+            }
+            menuLastCommand.Text = "Last command: " + LastCommand.ToString();
+            menuLastCommand.Visible = false;
+            toolStripSeparator1.Visible = false;
+
+            if (dxfReaderNETControl1.DXF.SelectedEntities.Count == 0)
+            {
+                deleteSelectionsToolStripMenuItem.Enabled = false;
+
+            }
+            else
+            {
+                deleteSelectionsToolStripMenuItem.Enabled = true;
+            }
+
+
+            if (CurrentFunction == FunctionsEnum.None || CurrentFunction == FunctionsEnum.GetEntities)
+            {
+                if (LastCommand != Commands.None)
+                {
+                    menuLastCommand.Visible = true;
+                    toolStripSeparator1.Visible = true;
+                }
+                enterToolStripMenuItem.Enabled = false;
+                closeToolStripMenuItem.Enabled = false;
+
+                cancelToolStripMenuItem.Enabled = false;
+            }
+            else
+            {
+                switch (CurrentFunction)
+                {
+
+                    case FunctionsEnum.Trim2:
+                    case FunctionsEnum.Mline:
+                    case FunctionsEnum.Lines:
+                    case FunctionsEnum.LwPolyline:
+                    case FunctionsEnum.Polyline:
+                        enterToolStripMenuItem.Enabled = true;
+                        closeToolStripMenuItem.Enabled = true;
+
+                        cancelToolStripMenuItem.Enabled = true;
+                        break;
+                    case FunctionsEnum.Trim1:
+
+                        enterToolStripMenuItem.Enabled = true;
+                        closeToolStripMenuItem.Enabled = false;
+
+                        cancelToolStripMenuItem.Enabled = true;
+                        break;
+                    case FunctionsEnum.GetEntities:
+
+                        enterToolStripMenuItem.Enabled = true;
+                        closeToolStripMenuItem.Enabled = false;
+
+                        cancelToolStripMenuItem.Enabled = false;
+                        break;
+                }
+            }
+
+        }
+
+        private void menuLastCommand_Click(object sender, EventArgs e)
+        {
+            ClickLastCommand();
+        }
+
+        private void ClickLastCommand()
+        {
+            switch (LastCommand)
+            {
+                case Commands.LEADER:
+
+                    CurrentFunction = FunctionsEnum.Leader1;
+                    CheckSnap();
+                    StatusLabel.Text = "Select leader start point";
+                    vertexes.Clear();
+                    break;
+                case Commands.LINE:
+                    ribbonButtonDrawLineSingle_Click(null, null);
+                    break;
+                case Commands.POINT:
+                    break;
+
+                case Commands.LINES:
+                    ribbonButtonDrawLineContinous_Click(null, null);
+                    break;
+                case Commands.TRACE:
+                    StartDrawLineTrace();
+                    break;
+                case Commands.MLINE:
+                    StartMultiLine();
+                    break;
+                case Commands.RAY:
+                    ribbonButtonDrawLineRay_Click(null, null);
+                    break;
+                case Commands.XLINE:
+                    ribbonButtonDrawContructionLine_Click(null, null);
+                    break;
+                case Commands.CIRCLE_Center_Radius:
+                    ribbonButtonDrawCircleRadius_Click(null, null);
+                    break;
+                case Commands.CIRCLE_Diameter:
+                    ribbonButtonDrawCircle2Points_Click(null, null);
+                    break;
+                case Commands.CIRCLE_3Points:
+                    ribbonButtonDrawCircle3Points_Click(null, null);
+                    break;
+                case Commands.ELLIPSE:
+                    ribbonButtonEllipse_Click(null, null);
+                    break;
+                case Commands.SLOT:
+                    ribbonButtonDrawSlot_Click(null, null);
+                    break;
+                case Commands.LWPOLYLINE:
+                    StartDrawLwPolyline();
+                    break;
+                case Commands.POLYLINE:
+                    StartDrawPolyline();
+                    break;
+                case Commands.RECTANGLE:
+                    ribbonButtonDrawPolylineRectangle_Click(null, null);
+                    break;
+                case Commands.POLIGON:
+                    ribbonButtonDrawPolylinePolygon_Click(null, null);
+                    break;
+                case Commands.SOLID:
+                    ribbonButtonDrawPolylineSolid_Click(null, null);
+                    break;
+                case Commands.SPLINE:
+                    break;
+                case Commands.ARCCenterStartAngleEndAngle:
+                    break;
+                case Commands.ARCStartPointMiddlePointEndPoint:
+                    break;
+                case Commands.ARCStartPointEndPointMiddlePoint:
+                    break;
+                case Commands.HATCH:
+                    CreateHatch();
+                    break;
+                case Commands.HATCH_GRADIENT:
+                    CreateGradientHatch();
+                    break;
+                case Commands.INSERT:
+                    break;
+                case Commands.IMAGE:
+                    ribbonButtonDrawImageImage_Click(null, null);
+                    break;
+                case Commands.ATTACHPDF:
+                    ribbonButtonDrawImagePDF_Click(null, null);
+                    break;
+                case Commands.TRIM:
+                    break;
+                case Commands.EXTEND:
+                    break;
+                case Commands.CHAMFER:
+                    break;
+                case Commands.OFFSET:
+                    break;
+                case Commands.JOIN:
+                    break;
+                case Commands.FILLET:
+                    break;
+                case Commands.NORMALIZE:
+                    break;
+                case Commands.COPY:
+                    break;
+                case Commands.MOVE:
+                    break;
+                case Commands.ROTATE:
+                    break;
+                case Commands.CREATEBLOCK:
+                    break;
+                case Commands.MIRROR:
+                    break;
+                case Commands.CREATELWPOLYLINE:
+                    break;
+                case Commands.CREATEBULGEDLWPOLYLINE:
+                    break;
+                case Commands.ARRAY:
+                    break;
+                case Commands.POLARARRAY:
+                    break;
+                case Commands.EXPLODEINSERT:
+                    break;
+                case Commands.EXPLODEDIMENSION:
+                    break;
+                case Commands.EXPLODEPOLYLINE:
+                    break;
+                case Commands.EXPLODESPLINE:
+                    break;
+                case Commands.EXPLODECIRCLE:
+                    break;
+                case Commands.EXPLODEELLIPSE:
+                    break;
+                case Commands.EXPLODEREGION:
+                    break;
+                case Commands.DIMENSION:
+                    break;
+                case Commands.TEXT:
+                    break;
+                case Commands.DISTANCE:
+                    break;
+                case Commands.AREA:
+                    break;
+
+            }
+        }
+
+        private void closeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            switch (CurrentFunction)
+            {
+
+                case FunctionsEnum.Mline:
+                    dxfReaderNETControl1.DrawEntity(dxfReaderNETControl1.AddMline(vertexes, true, m_mlineScale, dxfReaderNETControl1.DXF.CurrentColor.Index));
+                    vertexes.Clear();
+                    break;
+                case FunctionsEnum.Lines:
+                    DrawLines();
+                    break;
+                case FunctionsEnum.LwPolyline:
+                    CreateLwPolyline(true);
+                    break;
+                case FunctionsEnum.Polyline:
+
+                    CreatePolyline(true);
+
+
+                    break;
+
+                case FunctionsEnum.Spline:
+                    CreateSpline(true);
+
+                    break;
+            }
+            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+            CurrentFunction = FunctionsEnum.None;
+
+        }
+
+
+        private void enterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            switch (CurrentFunction)
+            {
+                case FunctionsEnum.Mline:
+                    dxfReaderNETControl1.DrawEntity(dxfReaderNETControl1.AddMline(vertexes, false, m_mlineScale, dxfReaderNETControl1.DXF.CurrentColor.Index));
+                    vertexes.Clear();
+                    break;
+                case FunctionsEnum.Lines:
+                    DrawLines(false);
+                    dxfReaderNETControl1.Refresh();
+                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CurrentFunction = FunctionsEnum.None;
+                    break;
+                case FunctionsEnum.LwPolyline:
+                    CreateLwPolyline(false);
+                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CurrentFunction = FunctionsEnum.None;
+                    break;
+                case FunctionsEnum.Polyline:
+
+                    CreatePolyline(false);
+                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CurrentFunction = FunctionsEnum.None;
+
+                    break;
+
+                case FunctionsEnum.Spline:
+                    CreateSpline(false);
+
+                    break;
+
+                case FunctionsEnum.Trim2:
+
+
+                    break;
+                case FunctionsEnum.Trim1:
+
+                    StatusLabel.Text = "Select objects to trim. ESC or right click to end.";
+                    CurrentFunction = FunctionsEnum.Trim2;
+                    break;
+
+                default:
+                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    CurrentFunction = FunctionsEnum.None;
+                    StatusLabel.Text = "";
+                    break;
+            }
+
+        }
+        private void cancelToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CurrentFunction = FunctionsEnum.None;
+            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+            StatusLabel.Text = "";
+            dxfReaderNETControl1.Refresh();
+        }
+        private void DrawLines(bool closed = true)
+        {
+            for (int k = 0; k < vertexes.Count - 1; k++)
+            {
+                dxfReaderNETControl1.DrawEntity(dxfReaderNETControl1.AddLine(new Vector3(vertexes[k].X, vertexes[k].Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(vertexes[k + 1].X, vertexes[k + 1].Y, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index));
+
+            }
+
+            if (closed)
+                dxfReaderNETControl1.DrawEntity(dxfReaderNETControl1.AddLine(new Vector3(vertexes[vertexes.Count - 1].X, vertexes[vertexes.Count - 1].Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(vertexes[0].X, vertexes[0].Y, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index));
+
+        }
+        private void CreateSpline(bool closed = false)
+        {
+            List<SplineVertex> splinevertexes = new List<SplineVertex>();
+            foreach (Vector2 v in vertexes)
+            {
+                SplineVertex splinevertex = new SplineVertex(v.X, v.Y, dxfReaderNETControl1.DXF.CurrentElevation);
+
+                splinevertexes.Add(splinevertex);
+            }
+
+            if (closed)
+            {
+                splinevertexes.Add(splinevertexes[0]);
+            }
+
+            dxfReaderNETControl1.DrawEntity(dxfReaderNETControl1.AddSpline(splinevertexes, closed, dxfReaderNETControl1.DXF.CurrentColor.Index));
+        }
+        private void CreateLwPolyline(bool closed = false)
+        {
+            //InitStatus();
+            List<LwPolylineVertex> lwpolyvertexes = new List<LwPolylineVertex>();
+            foreach (Vector2 v in vertexes)
+            {
+                LwPolylineVertex polyvertex = new LwPolylineVertex(v.X, v.Y);
+                polyvertex.StartWidth = dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth;
+                polyvertex.EndWidth = dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth;
+                lwpolyvertexes.Add(polyvertex);
+            }
+            bool isClosed = closed;
+            dxfReaderNETControl1.DrawEntity(dxfReaderNETControl1.AddLightWeightPolyline(lwpolyvertexes, isClosed, dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth, dxfReaderNETControl1.DXF.CurrentColor.Index));
+
+            //vertexes.Clear();
+        }
+
+        private void CreatePolyline(bool closed = false)
+        {
+            //InitStatus();
+            List<PolylineVertex> polyvertexes = new List<PolylineVertex>();
+            foreach (Vector2 v in vertexes)
+            {
+                PolylineVertex polyvertex = new PolylineVertex(v.X, v.Y, 0);
+
+                polyvertex.StartWidth = dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth;
+                polyvertex.EndWidth = dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth;
+                polyvertexes.Add(polyvertex);
+            }
+            bool isClosed = closed;// MessageBox.Show("Close?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+            dxfReaderNETControl1.DrawEntity(dxfReaderNETControl1.AddPolyline(polyvertexes, isClosed, dxfReaderNETControl1.DXF.DrawingVariables.Polylinewidth, dxfReaderNETControl1.DXF.CurrentColor.Index));
+
+            //vertexes.Clear();
+        }
+
+
+        private void ribbonButtonGrabPoints_Click(object sender, EventArgs e)
+        {
+            dxfReaderNETControl1.HighlightGrabPoints = ribbonButtonGrabPoints.Checked;
+            dxfReaderNETControl1.Refresh();
+        }
+
+        private void ribbonButtonArcCenterStartPEndP_Click(object sender, EventArgs e)
+        {
+            StatusLabel.Text = "Select center point";
+            CurrentFunction = FunctionsEnum.ArcCenterPStartPEnd1;
+            CheckSnap();
+        }
+
+        private void ribbonButtonObjectSnapGeometricCenter_Click(object sender, EventArgs e)
+        {
+            SetObjectSnapMode();
+        }
+
+        private void ribbonButtonObjectSnapClear_Click(object sender, EventArgs e)
+        {
+            dxfReaderNETControl1.ObjectOsnapMode = ObjectOsnapTypeFlags.None;
+            SetSnapRibbon();
+            if (dxfReaderNETControl1.HighlightGrabPoints)
+            {
+                dxfReaderNETControl1.Refresh();
+            }
+        }
+
+        private void ribbonButtonObjectSnapSelectAll_Click(object sender, EventArgs e)
+        {
+            ObjectOsnapTypeFlags m_OsnapMode = ObjectOsnapTypeFlags.None;
+
+            m_OsnapMode |= ObjectOsnapTypeFlags.Endpoint;
+
+
+            m_OsnapMode |= ObjectOsnapTypeFlags.Midpoint;
+
+
+            m_OsnapMode |= ObjectOsnapTypeFlags.Center;
+
+
+            m_OsnapMode |= ObjectOsnapTypeFlags.Intersection;
+
+
+            m_OsnapMode |= ObjectOsnapTypeFlags.Quadrant;
+
+
+            m_OsnapMode |= ObjectOsnapTypeFlags.Perpendicular;
+
+
+            m_OsnapMode |= ObjectOsnapTypeFlags.Tangent;
+
+
+            m_OsnapMode |= ObjectOsnapTypeFlags.Insertion;
+
+
+            m_OsnapMode |= ObjectOsnapTypeFlags.Nearest;
+
+
+            m_OsnapMode |= ObjectOsnapTypeFlags.Node;
+
+
+            m_OsnapMode |= ObjectOsnapTypeFlags.GeometricCenter;
+
+            dxfReaderNETControl1.ObjectOsnapMode = m_OsnapMode;
+            SetSnapRibbon();
+            if (dxfReaderNETControl1.HighlightGrabPoints)
+            {
+                dxfReaderNETControl1.Refresh();
+            }
+        }
+
+        private void ribbonButtonModifyLw2Poly_Click(object sender, EventArgs e)
+        {
+            CurrentFunction = FunctionsEnum.Lw2Poly;
+            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
+            StatusLabel.Text = "Select light weight polyline entity";
+        }
+
+        private void ribbonButtonModifyPoly2Lw_Click(object sender, EventArgs e)
+        {
+            CurrentFunction = FunctionsEnum.Poly2Lw;
+            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
+            StatusLabel.Text = "Select polyline entity";
+        }
+
+        private void ribbonButtonTablesLayers_Click(object sender, EventArgs e)
+        {
+            DeleteEntities deleteEntities = new DeleteEntities();
+
+
+
+            foreach (DXFReaderNET.Tables.Layer layer in dxfReaderNETControl1.DXF.Layers)
+            {
+                string codeName = layer.Name;
+                if (codeName.ToLower() != "0")
+                {
+                    deleteEntities.checkedListBox1.Items.Add(codeName, CheckState.Unchecked);
+                }
+
+
+            }
+
+
+
+            deleteEntities.Text = "Delete layers";
+            deleteEntities.ButtonOk.Text = "Delete selected layers";
+
+
+            DialogResult result = deleteEntities.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                if (MessageBox.Show("Are you sure? Only layers without entities will be deleted.", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+
+                    SaveUndo();
+
+                    for (int x = 0; x < deleteEntities.checkedListBox1.CheckedItems.Count; x++)
+                    {
+                        string layereName = deleteEntities.checkedListBox1.CheckedItems[x].ToString();//.Substring(0, deleteEntities.checkedListBox1.CheckedItems[x].ToString().IndexOf(" (")).Trim();
+
+                        dxfReaderNETControl1.DXF.RemoveObject(dxfReaderNETControl1.DXF.Layers[layereName].Handle);
+
+
+                    }
+
+
+                }
+            }
+        }
+
+        private void ribbonButtonModVisibilityOff_Click(object sender, EventArgs e)
+        {
+            if (dxfReaderNETControl1.DXF.SelectedEntities.Count > 0)
+            {
+                foreach (EntityObject ent in dxfReaderNETControl1.DXF.SelectedEntities)
+                {
+                    ent.IsVisible = false;
+
+
+                }
+                dxfReaderNETControl1.Refresh();
+            }
+        }
+
+        private void ribbonButtonModVisibilityOn_Click(object sender, EventArgs e)
+        {
+            bool oneInvisible = false;
+            foreach (EntityObject ent in dxfReaderNETControl1.DXF.Entities)
+            {
+                if (!ent.IsVisible)
+                {
+                    ent.IsVisible = true;
+                    oneInvisible = true;
+                }
+
+
+
+            }
+            if (oneInvisible)
+                dxfReaderNETControl1.Refresh();
+        }
+
+        private void ribbonButtonSelectGroup_Click(object sender, EventArgs e)
+        {
+            DeleteEntities deleteEntities = new DeleteEntities();
+
+
+            var myGroups = new Dictionary<string, int>();
+            if (dxfReaderNETControl1.DXF.Groups != null)
+            {
+                foreach (DXFReaderNET.Objects.Group _group in dxfReaderNETControl1.DXF.Groups)
+                {
+                    //RibbonButton newItem = new RibbonButton();
+                    //newItem.Text = _group.Name;
+                    //ribbonButtonModPropGroup.DropDownItems.Add(newItem);
+
+                    myGroups.Add(_group.Name, _group.Entities.Count);
+
+                }
+            }
+
+
+
+
+            myGroups = myGroups.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value);
+
+
+            foreach (var key in myGroups.Keys)
+            {
+                deleteEntities.checkedListBox1.Items.Add(key + " (" + myGroups[key].ToString() + ")", CheckState.Unchecked);
+
+            }
+            deleteEntities.Text = "Select entities by group";
+            deleteEntities.ButtonOk.Text = "Select entities";
+            DialogResult result = deleteEntities.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                if (deleteEntities.checkedListBox1.CheckedItems.Count > 0)
+                {
+                    dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+                    for (int x = 0; x < deleteEntities.checkedListBox1.CheckedItems.Count; x++)
+                    {
+                        string sType = deleteEntities.checkedListBox1.CheckedItems[x].ToString().Substring(0, deleteEntities.checkedListBox1.CheckedItems[x].ToString().IndexOf(" (")).Trim();
+
+                        foreach (EntityObject ent in dxfReaderNETControl1.DXF.Groups[sType].Entities)
+                        {
+                            if (ent.IsVisible && dxfReaderNETControl1.DXF.Layers[ent.Layer.Name].IsVisible && !dxfReaderNETControl1.DXF.Layers[ent.Layer.Name].IsLocked)
+                            {
+
+                                if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
+                                {
+                                    dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
+
+                                }
+
+                            }
+                        }
+
+                    }
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+
+
+                    dxfReaderNETControl1.HighLight(dxfReaderNETControl1.DXF.SelectedEntities);
+
+
+
+                }
+
+            }
+        }
+
+        private void ribbonButtonDeleteZeroLen_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                List<EntityObject> entitesToDelete = dxfReaderNETControl1.CoincidentEntities();
+                int prec = dxfReaderNETControl1.DXF.DrawingVariables.LUprec - 1;
+                foreach (EntityObject entity in dxfReaderNETControl1.DXF.Entities)
+                {
+
+                    switch (entity.Type)
+                    {
+
+
+                        case EntityType.Line:
+                            Line myLine = (Line)entity;
+
+                            if (Math.Round(myLine.Lenght, prec) == 0)
+                                entitesToDelete.Add(myLine);
+                            break;
+                        case EntityType.Arc:
+                            Arc myArc = (Arc)entity;
+                            if (Math.Round(myArc.Lenght, prec) == 0)
+                                entitesToDelete.Add(myArc);
+                            break;
+
+                        case EntityType.Circle:
+                            Circle myCircle = (Circle)entity;
+                            if (Math.Round(myCircle.Lenght, prec) == 0)
+                                entitesToDelete.Add(myCircle);
+
+                            break;
+                        case EntityType.Ellipse:
+                            Ellipse myEllipse = (Ellipse)entity;
+                            if (Math.Round(myEllipse.Lenght, prec) == 0)
+                                entitesToDelete.Add(myEllipse);
+
+                            break;
+                        case EntityType.LightWeightPolyline:
+                            LwPolyline myLwPolyline = (LwPolyline)entity;
+                            if (Math.Round(myLwPolyline.Lenght, prec) == 0)
+                                entitesToDelete.Add(myLwPolyline);
+                            break;
+
+                        case EntityType.Polyline:
+                            Polyline myPolyline = (Polyline)entity;
+                            if (Math.Round(myPolyline.Lenght, prec) == 0)
+                                entitesToDelete.Add(myPolyline);
+                            break;
+                        //case EntityType.Spline:
+                        //    Spline mySpline = (Spline)entity;
+                        //    if (Math.Round(mySpline.Area, prec) == 0)
+                        //        entitesToDelete.Add(mySpline);
+                        //    break;
+
+                        case EntityType.Solid:
+                            Solid mySolid = (Solid)entity;
+                            if (Math.Round(mySolid.Area, prec) == 0)
+                                entitesToDelete.Add(mySolid);
+                            break;
+
+                        case EntityType.Trace:
+                            Trace myTrace = (Trace)entity;
+                            if (Math.Round(myTrace.Lenght, prec) == 0)
+                                entitesToDelete.Add(myTrace);
+                            break;
+
+
+
+
+                    }
+                }
+
+
+                if (entitesToDelete.Count > 0)
+                {
+                    SaveUndo();
+                    dxfReaderNETControl1.DXF.RemoveEntities(entitesToDelete);
+                    //dxfReaderNETControl1.DXF.ModifyEntities(entitesToDelete,Vector2.Zero,new Vector2(100, 100),1,0);
+                    dxfReaderNETControl1.Refresh();
+
+
+
+
+                }
+            }
+        }
+
+
+
+        private void ribbonButtonDeleteGroup_Click(object sender, EventArgs e)
+        {
+            DeleteEntities deleteEntities = new DeleteEntities();
+
+
+            var myGroups = new Dictionary<string, int>();
+            if (dxfReaderNETControl1.DXF.Groups != null)
+            {
+                foreach (DXFReaderNET.Objects.Group _group in dxfReaderNETControl1.DXF.Groups)
+                {
+
+
+                    myGroups.Add(_group.Name, _group.Entities.Count);
+
+                }
+            }
+
+
+
+
+            myGroups = myGroups.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value);
+
+
+            foreach (var key in myGroups.Keys)
+            {
+                deleteEntities.checkedListBox1.Items.Add(key + " (" + myGroups[key].ToString() + ")", CheckState.Unchecked);
+
+            }
+            deleteEntities.Text = "Delete group definitions";
+            deleteEntities.ButtonOk.Text = "Delete group definitions";
+            DialogResult result = deleteEntities.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                if (deleteEntities.checkedListBox1.CheckedItems.Count > 0)
+                {
+                    if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    {
+                        SaveUndo();
+                        for (int x = 0; x < deleteEntities.checkedListBox1.CheckedItems.Count; x++)
+                        {
+                            string sType = deleteEntities.checkedListBox1.CheckedItems[x].ToString().Substring(0, deleteEntities.checkedListBox1.CheckedItems[x].ToString().IndexOf(" (")).Trim();
+                            dxfReaderNETControl1.DXF.Groups.Remove(dxfReaderNETControl1.DXF.Groups[sType]);
+
+
+                        }
+                    }
+
+
+
+
+                }
+            }
+        }
+
+               
+        private void ribbonButtonTablesDimStyles_Click(object sender, EventArgs e)
+        {
+            DeleteEntities deleteEntities = new DeleteEntities();
+
+
+
+            foreach (DXFReaderNET.Tables.DimensionStyle dimstyle in dxfReaderNETControl1.DXF.DimensionStyles)
+            {
+                string codeName = dimstyle.Name;
+                if (codeName.ToLower() != "standard")
+                {
+                    deleteEntities.checkedListBox1.Items.Add(codeName, CheckState.Unchecked);
+                }
+
+
+            }
+
+
+
+            deleteEntities.Text = "Delete dimension styles";
+            deleteEntities.ButtonOk.Text = "Delete selected dim. styles";
+
+
+            DialogResult result = deleteEntities.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                if (MessageBox.Show("Are you sure? Only dimension styles without entities will be deleted.", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    SaveUndo();
+                    for (int x = 0; x < deleteEntities.checkedListBox1.CheckedItems.Count; x++)
+                    {
+                        string itemName = deleteEntities.checkedListBox1.CheckedItems[x].ToString();//.Substring(0, deleteEntities.checkedListBox1.CheckedItems[x].ToString().IndexOf(" (")).Trim();
+
+                        dxfReaderNETControl1.DXF.RemoveObject(dxfReaderNETControl1.DXF.DimensionStyles[itemName].Handle);
+
+
+                    }
+
+
+                }
+            }
+        }
+
+        private void ribbonButtonTablesTextStyles_Click(object sender, EventArgs e)
+        {
+            DeleteEntities deleteEntities = new DeleteEntities();
+
+
+
+            foreach (DXFReaderNET.Tables.TextStyle textstile in dxfReaderNETControl1.DXF.TextStyles)
+            {
+                string codeName = textstile.Name;
+                if (codeName.ToLower() != "standard")
+                {
+                    deleteEntities.checkedListBox1.Items.Add(codeName, CheckState.Unchecked);
+                }
+
+
+            }
+
+
+
+            deleteEntities.Text = "Delete text styles";
+            deleteEntities.ButtonOk.Text = "Delete selected text style";
+
+
+            DialogResult result = deleteEntities.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                if (MessageBox.Show("Are you sure? Only text styles without entities will be deleted.", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    SaveUndo();
+                    for (int x = 0; x < deleteEntities.checkedListBox1.CheckedItems.Count; x++)
+                    {
+                        string lTypeName = deleteEntities.checkedListBox1.CheckedItems[x].ToString();//.Substring(0, deleteEntities.checkedListBox1.CheckedItems[x].ToString().IndexOf(" (")).Trim();
+
+                        dxfReaderNETControl1.DXF.RemoveObject(dxfReaderNETControl1.DXF.TextStyles[lTypeName].Handle);
+
+
+                    }
+
+
+                }
+            }
+        }
+
+        private void AutoJoinEntities(IEnumerable<EntityObject> Entities)
+        {
+
+            List<Vector2> pointsNotConnected = dxfReaderNETControl1.DXF.NotConnectedPoints(Entities);
+            //MathHelper.Epsilon = Math.Pow(10, -dxfReaderNETControl1.DXF.DrawingVariables.LUprec);
+            double eps = Math.Pow(10, -dxfReaderNETControl1.DXF.DrawingVariables.LUprec) * 2;
+            int n = 0;
+            List<Vector2> points1 = new List<Vector2>();
+            List<Vector2> points2 = new List<Vector2>();
+
+            if (pointsNotConnected.Count > 1)
+            {
+
+                do
+                {
+
+                    for (int k = 0; k < pointsNotConnected.Count; k++)
+                    {
+                        for (int j = k + 1; j < pointsNotConnected.Count; j++)
+                        {
+                            double d = Vector2.Distance(pointsNotConnected[k], pointsNotConnected[j]);
+
+                            if (d < eps)
+                            {
+                                //if (!points1.Contains(pointsNotConnected[k]) && !points2.Contains(pointsNotConnected[j]))
+                                //{
+
+
+
+
+                                points1.Add(pointsNotConnected[k]);
+                                points2.Add(pointsNotConnected[j]);
+
+                                //}
+
+                            }
+                        }
+                    }
+
+                    n++;
+                } while (points1.Count < pointsNotConnected.Count / 2 && n < 10000);
+
+
+            }
+            List<EntityObject> allEntities = new List<EntityObject>();
+            foreach (EntityObject entity in Entities)
+            {
+
+                allEntities.Add(entity);
+            }
+            for (int k = 0; k < points1.Count; k++)
+            {
+                EntityObject e1 = dxfReaderNETControl1.GetEntity(allEntities, points1[k]);
+                if (e1 != null)
+                    allEntities.Remove(e1);
+                EntityObject e2 = dxfReaderNETControl1.GetEntity(allEntities, points2[k]);
+
+                //dxfReaderNETControl1.AddLine(points1[k].ToVector3(), points2[k].ToVector3());
+                dxfReaderNETControl1.Join(e1, e2, points1[k]);
+            }
+            //System.Diagnostics.Debugger.Break(); //stop
+
+
+
+
+        }
+
+        private void copyDisplayedAreaToClipboardToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetImage(dxfReaderNETControl1.Image);
+            StatusLabel.Text = "Displayed image copied to clipboard";
+        }
+
+        private void deleteSelectionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            ribbonButtonModyfiSelectClear_Click(null, null);
+        }
+
+        private void selectEntitiesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ribbonButtonModifySelectSingleMulti_Click(null, null);
+        }
+
+        private void ribbonButtonSplitSections_Click(object sender, EventArgs e)
+        {
+            string dxfFileName = "";
+
+            if (dxfReaderNETControl1.FileName != null)
+            {
+                dxfFileName = dxfReaderNETControl1.FileName;
+
+
+
+
+
+                folderBrowserDialog1.SelectedPath = CurrentSaveDXFPath;
+                if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+                {
+
+                    StatusLabel.Text = "Export start";
+                    Application.DoEvents();
+                    string dxfFname = dxfFileName;
+                    string sectionsFileNamesPre = folderBrowserDialog1.SelectedPath + "\\" + Path.GetFileName(dxfFileName.Replace(".dxf", "")) + "_";
+                    string secName = "";
+                    string righe = "";
+
+                    int n = 0;
+                    foreach (string line in System.IO.File.ReadLines(dxfFname))
+                    {
+                        if (line.Trim().ToUpper() == "SECTION")
+                        {
+                            n = 0;
+                        }
+                        if (n == 2)
+                        {
+                            secName = line;
+                        }
+                        n++;
+                        righe += line + System.Environment.NewLine;
+                        if (line.Trim().ToUpper() == "ENDSEC")
+                        {
+                            System.IO.File.WriteAllText(sectionsFileNamesPre + secName + ".txt", righe);
+                            righe = "";
+                            ErrorLabel.Text = "Section " + secName + " exported";
+                            Application.DoEvents();
+                        }
+                    }
+
+                    //split delle entities
+                    //string entfile = sectionsFileNamesPre + "ENTITIES.txt";
+                    //string handle = "";
+                    //righe = "";
+                    //n = 0;
+                    //foreach (string line in System.IO.File.ReadLines(entfile))
+                    //{
+                    //    if (line.Trim().ToUpper() == "LEADER")
+                    //    {
+                    //        n = 0;
+                    //    }
+                    //    if (n == 2)
+                    //    {
+                    //        handle = line;
+                    //    }
+
+
+
+                    //    n++;
+                    //    righe += line + System.Environment.NewLine;
+                    //    if (line.Trim().ToUpper() == "ENDSEC")
+                    //    {
+                    //        System.IO.File.WriteAllText(sectionsFileNamesPre + secName + ".txt", righe);
+                    //        righe = "";
+                    //    }
+                    //}
+                    ErrorLabel.Text = "";
+                    StatusLabel.Text = "Export ended";
+
+                }
+            }
+        }
+
+        private void ribbonButtonObjectByHandle_Click(object sender, EventArgs e)
+        {
+            string handle = "";
+            if (ShowInputDialog(ref handle, "Object handle", false) == DialogResult.OK)
+            {
+                if (handle != "")
+                {
+
+                    dxfReaderNETControl1.ShowProperties(handle);
+                }
+            }
+        }
+
+        private void ribbonButtonModifyExplodeEllipseArcs_Click(object sender, EventArgs e)
+        {
+            string inputValue = m_precision.ToString();
+
+            if (ShowInputDialog(ref inputValue, "Precision", true) == DialogResult.OK)
+            {
+                m_precision = int.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
+                if (m_precision > 5)
+                {
+                    CurrentFunction = FunctionsEnum.ExplodeEllipseArcs;
+                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquareQuestionMark;
+                    StatusLabel.Text = "Select ellipse entity";
+                }
+                else
+                {
+                    CurrentFunction = FunctionsEnum.None;
+                    StatusLabel.Text = "Precision is too little";
+                }
+            }
+        }
+
+        private void ribbonButtonModifyExplode_DropDownShowing(object sender, EventArgs e)
+        {
+            ribbonButtonModifyExplodeInsert.Enabled = false;
+            ribbonButtonModifyExplodeDimension.Enabled = false;
+
+            ribbonButtonModifyExplodePoly.Enabled = false;
+            ribbonButtonModifyExplodeSpline.Enabled = false;
+            ribbonButtonModifyExplodeCircle.Enabled = false;
+            ribbonButtonModifyExplodeArc.Enabled = false;
+            ribbonButtonModifyExplodeEllipse.Enabled = false;
+            ribbonButtonModifyExplodeEllipseArcs.Enabled = false;
+            ribbonButtonModifyExplodeCircleArcs.Enabled = false;
+            ribbonButtonModifyLw2Poly.Enabled = false;
+            ribbonButtonModifyPoly2Lw.Enabled = false;
+            ribbonButtonModifyExplodeRegion.Enabled = false;
+            ribbonButtonModifyUngroup.Enabled = false;
+
+            if (dxfReaderNETControl1.DXF.Inserts.Count > 0)
+                ribbonButtonModifyExplodeInsert.Enabled = true;
+
+            if (dxfReaderNETControl1.DXF.Dimensions.Count > 0)
+                ribbonButtonModifyExplodeDimension.Enabled = true;
+
+            if (dxfReaderNETControl1.DXF.Splines.Count > 0)
+                ribbonButtonModifyExplodeSpline.Enabled = true;
+
+            if (dxfReaderNETControl1.DXF.Circles.Count > 0)
+                ribbonButtonModifyExplodeCircle.Enabled = true;
+
+            if (dxfReaderNETControl1.DXF.Arcs.Count > 0)
+                ribbonButtonModifyExplodeArc.Enabled = true;
+
+            if (dxfReaderNETControl1.DXF.Ellipses.Count > 0)
+            {
+                ribbonButtonModifyExplodeEllipse.Enabled = true;
+                ribbonButtonModifyExplodeEllipseArcs.Enabled = true;
+            }
+
+
+            if (dxfReaderNETControl1.DXF.Circles.Count > 0)
+            {
+
+                ribbonButtonModifyExplodeCircleArcs.Enabled = true;
+            }
+            if (dxfReaderNETControl1.DXF.LwPolylines.Count > 0)
+                ribbonButtonModifyLw2Poly.Enabled = true;
+
+            if (dxfReaderNETControl1.DXF.LwPolylines.Count > 0 || dxfReaderNETControl1.DXF.Polylines.Count > 0)
+                ribbonButtonModifyExplodePoly.Enabled = true;
+
+            if (dxfReaderNETControl1.DXF.Polylines.Count > 0)
+                ribbonButtonModifyPoly2Lw.Enabled = true;
+
+            if (dxfReaderNETControl1.DXF.Regions.Count > 0)
+                ribbonButtonModifyExplodeRegion.Enabled = true;
+
+            if (dxfReaderNETControl1.DXF.Groups.Count > 0)
+                ribbonButtonModifyUngroup.Enabled = true;
+
+
+
+        }
+
+        private void ribbonButtonLeader_Click(object sender, EventArgs e)
+        {
+            string inputValue = m_Text;
+            if (ShowInputDialog(ref inputValue, "Annotation?", false) == DialogResult.OK)
+            {
+                m_Text = inputValue;
+                LastCommand = Commands.LEADER;
+                CurrentFunction = FunctionsEnum.Leader1;
+                CheckSnap();
+                StatusLabel.Text = "Select leader start point";
+                vertexes.Clear();
+
+            }
+        }
+
+        private void ribbonButtonModifyExplodeCircleArcs_Click(object sender, EventArgs e)
+        {
+            string inputValue = m_precision.ToString();
+
+            if (ShowInputDialog(ref inputValue, "Precision", true) == DialogResult.OK)
+            {
+                m_precision = int.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
+                if (m_precision > 1)
+                {
+                    CurrentFunction = FunctionsEnum.ExplodeCircleArcs;
+                    dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquareQuestionMark;
+                    StatusLabel.Text = "Select circle entity";
+                }
+                else
+                {
+                    CurrentFunction = FunctionsEnum.None;
+                    StatusLabel.Text = "Precision is too little";
+                }
+            }
+        }
+
+        private void ribbonButtonPropertiesDimStyles_Click(object sender, EventArgs e)
+        {
+            dxfReaderNETControl1.ShowDimStyles();
+            FillComboDimStyles();
+        }
+
+        private void ribbonButtonPropertiesLayers_Click(object sender, EventArgs e)
+        {
+            dxfReaderNETControl1.ShowLayers();
+            LoadLayersCombo();
+        }
+
+        private void ribbonButtonViewTreeView_Click(object sender, EventArgs e)
+        {
+            if (ribbonButtonViewTreeView.Checked)
+            {
+                splitContainer1.SplitterDistance = 200;
+                splitContainer1.IsSplitterFixed = false;
+                TreeView1.Visible = true;
+                RefreshTree();
+            }
+            else
+            {
+                splitContainer1.SplitterDistance = 0;
+                splitContainer1.IsSplitterFixed = true;
+                TreeView1.Visible = false;
+            }
+        }
+
+        private void ribbonButtonContinuosSelection_Click(object sender, EventArgs e)
+        {
+            m_ContinuousSelection = ribbonButtonContinuosSelection.Checked;
+            ribbonButtonModifySelectSingleMulti.Enabled = !m_ContinuousSelection;
+            ribbonButtonModifySelectSinlge.Enabled = !m_ContinuousSelection;
+
+            CheckContinuousSelection();
+            StatusLabel.Text = "";
+        }
+
+        private void ribbonButtonSelectExtCont_Click(object sender, EventArgs e)
+        {
+            DateTime StartTime = DateTime.Now;
+            dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+
+            dxfReaderNETControl1.DXF.SelectedEntities.AddRange(MathHelper.ExternalContour(dxfReaderNETControl1.DXF.Entities));
+
+            dxfReaderNETControl1.HighLight(dxfReaderNETControl1.DXF.SelectedEntities);
+
+
+
+
+            TimeSpan ElapsedTime = DateTime.Now.Subtract(StartTime);
+            toolStripStatusLabelInfo.Text = "Time: " + ElapsedTime.ToString(@"s\.fff\s");
+        }
+
+        private void ribbonButtonSelectNumber_Click(object sender, EventArgs e)
+        {
+            string number = "";
+            if (ShowInputDialog(ref number, "Select entity with number", false) == DialogResult.OK)
+            {
+                if (number != "")
+                {
+
+                    EntityObject ent = null;
+                    try
+                    {
+                        ent = dxfReaderNETControl1.DXF.Entities[Int32.Parse(number)];
+                    }
+                    catch { }
+                    if (ent != null)
+                    {
+                        if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
+                        {
+                            dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                        }
+
+                        dxfReaderNETControl1.HighLight(ent);
+                    }
+                    else
+                    {
+                        StatusLabel.Text = "No entity found";
+                        dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+                    }
+                }
+            }
+        }
+
+        private void ribbonButtonAllButSelected_Click(object sender, EventArgs e)
+        {
+
+
+            List<EntityObject> toSelect = new List<EntityObject>();
+            foreach (EntityObject ent in dxfReaderNETControl1.DXF.Entities)
+            {
+                if (ent.IsVisible && dxfReaderNETControl1.DXF.Layers[ent.Layer.Name].IsVisible && !dxfReaderNETControl1.DXF.Layers[ent.Layer.Name].IsFrozen && !dxfReaderNETControl1.DXF.Layers[ent.Layer.Name].IsLocked)
+                {
+                    if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
+                    {
+                        toSelect.Add(ent);
+
+                    }
+
+                }
+            }
+            dxfReaderNETControl1.DXF.SelectedEntities.Clear();
+            dxfReaderNETControl1.DXF.SelectedEntities.AddRange(toSelect);
+            dxfReaderNETControl1.Refresh();
+            dxfReaderNETControl1.HighLight(dxfReaderNETControl1.DXF.SelectedEntities);
+        }
+
+        private void CheckContinuousSelection()
+        {
+            if (m_ContinuousSelection)
+            {
+                CurrentFunction = FunctionsEnum.GetEntities;
+                dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
+            }
+            else
+            {
+                CurrentFunction = FunctionsEnum.None;
+                dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+            }
+        }
+
+        public static string EntityInfo(DXFReaderNETControl myDXF, EntityObject ent)
+        {
+            string s = "";
+            string colorE = ent.Color.ToString();
+            if (colorE == "ByLayer") colorE = myDXF.DXF.Layers[ent.Layer.Name].Color.ToString();
+
+            switch (colorE)
+            {
+                case "1":
+                    colorE = "Red";
+                    break;
+                case "2":
+                    colorE = "Yellow";
+                    break;
+                case "3":
+                    colorE = "Green";
+                    break;
+                case "4":
+                    colorE = "Cyan";
+                    break;
+                case "5":
+                    colorE = "Blue";
+                    break;
+                case "6":
+                    colorE = "Magenta";
+                    break;
+                case "7":
+                    colorE = "White";
+                    break;
+            }
+
+
+
+            string ltE = ent.Linetype.Name;
+            if (ltE == "ByLayer") ltE = myDXF.DXF.Layers[ent.Layer.Name].Linetype.Name;
+
+
+            s = "Entity type: " + ent.Type.ToString() + "  - Color: " + colorE + " - Layer: " + ent.Layer.Name + " - Linetype: " + ltE;
+
+            switch (ent.Type)
+            {
+                case EntityType.Line:
+                    s += " - Length: " + myDXF.DXF.ToFormattedUnit(((Line)ent).Lenght);
+                    s += " - Start point: (" + myDXF.DXF.ToFormattedUnit(((Line)ent).StartPoint.X) + ";" + myDXF.DXF.ToFormattedUnit(((Line)ent).StartPoint.Y) + ")";
+                    s += " - End point: (" + myDXF.DXF.ToFormattedUnit(((Line)ent).EndPoint.X) + ";" + myDXF.DXF.ToFormattedUnit(((Line)ent).EndPoint.Y) + ")";
+
+                    break;
+                case EntityType.XLine:
+
+                    s += " - Origin: (" + myDXF.DXF.ToFormattedUnit(((XLine)ent).Origin.X) + ";" + myDXF.DXF.ToFormattedUnit(((XLine)ent).Origin.Y) + ")";
+                    s += " - Direction: (" + myDXF.DXF.ToFormattedUnit(((XLine)ent).Direction.X) + ";" + myDXF.DXF.ToFormattedUnit(((XLine)ent).Direction.Y) + ")";
+
+                    break;
+                case EntityType.Ray:
+
+                    s += " - Origin: (" + myDXF.DXF.ToFormattedUnit(((Ray)ent).Origin.X) + ";" + myDXF.DXF.ToFormattedUnit(((Ray)ent).Origin.Y) + ")";
+                    s += " - Direction: (" + myDXF.DXF.ToFormattedUnit(((Ray)ent).Direction.X) + ";" + myDXF.DXF.ToFormattedUnit(((Ray)ent).Direction.Y) + ")";
+
+                    break;
+                case EntityType.Arc:
+                    s += " - Length: " + myDXF.DXF.ToFormattedUnit(((Arc)ent).Lenght);
+                    s += " - Start point: (" + myDXF.DXF.ToFormattedUnit(((Arc)ent).StartPoint.X) + ";" + myDXF.DXF.ToFormattedUnit(((Arc)ent).StartPoint.Y) + ")";
+                    s += " - End point: (" + myDXF.DXF.ToFormattedUnit(((Arc)ent).EndPoint.X) + ";" + myDXF.DXF.ToFormattedUnit(((Arc)ent).EndPoint.Y) + ")";
+                    s += " - Start angle [°]: " + myDXF.DXF.ToFormattedUnit(((Arc)ent).StartAngle);
+                    s += " - End angle  [°]: " + myDXF.DXF.ToFormattedUnit(((Arc)ent).EndAngle);
+                    s += " - Radius: " + myDXF.DXF.ToFormattedUnit(((Arc)ent).Radius);
+                    break;
+                case EntityType.Circle:
+                    s += " - Length: " + myDXF.DXF.ToFormattedUnit(((Circle)ent).Lenght);
+                    s += " - Area: " + myDXF.DXF.ToFormattedUnit(((Circle)ent).Area);
+                    s += " - Center point: (" + myDXF.DXF.ToFormattedUnit(((Circle)ent).Center.X) + ";" + myDXF.DXF.ToFormattedUnit(((Circle)ent).Center.Y) + ")";
+                    s += " - Radius: " + myDXF.DXF.ToFormattedUnit(((Circle)ent).Radius);
+
+                    break;
+                case EntityType.LightWeightPolyline:
+                    s += " - Length: " + myDXF.DXF.ToFormattedUnit(((LwPolyline)ent).Lenght);
+                    if (((LwPolyline)ent).IsClosed)
+                        s += " - Area: " + myDXF.DXF.ToFormattedUnit(((LwPolyline)ent).Area);
+
+                    s += " - Vertexes #: " + ((LwPolyline)ent).Vertexes.Count.ToString();
+                    break;
+                case EntityType.Polyline:
+                    s += " - Length: " + myDXF.DXF.ToFormattedUnit(((Polyline)ent).Lenght);
+                    if (((Polyline)ent).IsClosed)
+                        s += " - Area: " + myDXF.DXF.ToFormattedUnit(((Polyline)ent).Area);
+                    s += " - Vertexes #: " + ((Polyline)ent).Vertexes.Count.ToString();
+                    break;
+
+                case EntityType.Insert:
+
+                    s += " - Insert point: (" + myDXF.DXF.ToFormattedUnit(((Insert)ent).Position.X) + ";" + myDXF.DXF.ToFormattedUnit(((Insert)ent).Position.Y) + ")";
+                    s += " - Block name: " + ((Insert)ent).Block.Name;
+
+                    break;
+            }
+
+
+            foreach (DXFReaderNET.Objects.Group _group in myDXF.DXF.Groups)
+            {
+                if (_group.Entities.Contains(ent))
+                {
+                    s += " Group: " + _group.Name;
+                    break;
+                }
+
+            }
+
+            return s;
+        }
+
+        private void ribbonButtonRecoverDXFFIle_Click(object sender, EventArgs e)
+        {
+
+            StatusLabel.Text = "";
+            ErrorLabel.Text = "";
+            openFileDialog1.Title = "Recover DXF file";
+            openFileDialog1.DefaultExt = "dxf";
+            openFileDialog1.Filter = "DXF|*.dxf|All files (*.*)|*.*";
+            openFileDialog1.FileName = "";
+            openFileDialog1.InitialDirectory = CurrentLoadRecoveryDXFPath;
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                CurrentLoadRecoveryDXFPath = Path.GetDirectoryName(openFileDialog1.FileName);
+                dxfReaderNETControl1.RecoverDXFFile(openFileDialog1.FileName);
+            }
+        }
+
+
+        private void ribbonButtonJoinTwoEntities_Click(object sender, EventArgs e)
+        {
+            CurrentFunction = FunctionsEnum.Join1;
+
+            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
+            StatusLabel.Text = "Select first object";
+        }
+
+        private void ribbonButtonAutoJoinWindow_Click(object sender, EventArgs e)
+        {
+            CurrentFunction = FunctionsEnum.Connect1;
+            dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
+            StatusLabel.Text = "Select start point of the window";
+        }
+
+        private void ribbonButtonAutoJoinAll_Click(object sender, EventArgs e)
+        {
+
+
+            if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                SaveUndo();
+                AutoJoinEntities(dxfReaderNETControl1.DXF.Entities);
+                dxfReaderNETControl1.Refresh();
+
+            }
+        }
+
+
+
+        private void txtCommand_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                string[] coords = txtCommand.Text.Trim().Split((char)44);
+                double coordX = 0;
+                double coordY = 0;
+                float output;
+
+
+                if (float.TryParse(coords[0], out output))
+                {
+                    coordX = double.Parse(coords[0].Replace(",", "."), System.Globalization.CultureInfo.InvariantCulture);
+
+                }
+                if (CurrentFunction == FunctionsEnum.Rectangle0)
+                {
+                    m_RectangleFilletRadius = coordX;
+
+                    CurrentFunction = FunctionsEnum.Rectangle1;
+
+                    StatusLabel.Text = "Select start corner of the rectangle";
+                    LastCommand = Commands.RECTANGLE;
+                    CheckSnap();
+                    return;
+                }
+
+
+
+                if (coords.Length == 2)
+                {
+                    if (float.TryParse(coords[1], out output))
+                    {
+
+                        coordY = double.Parse(coords[1].Replace(",", "."), System.Globalization.CultureInfo.InvariantCulture);
+                    }
+                }
+                p = new Vector2(coordX, coordY);
+                switch (CurrentFunction)
+                {
+                    case FunctionsEnum.Circle2:
+                        p = p1 + new Vector2(coordX, coordY);
+                        break;
+                }
+                setPoint();
+                if ((CurrentFunction == FunctionsEnum.LwPolyline || CurrentFunction == FunctionsEnum.Mline) && labelCommands.Visible)
+                {
+                    ShowCommandLine();
+                }
+                if (m_LastAddedEntity != null)
+                {
+                    if (m_LastAddedEntity.Type != EntityType.Hatch)
+                    {
+                        dxfReaderNETControl1.DrawEntity(m_LastAddedEntity);
+                    }
+                    else
+                    {
+                        dxfReaderNETControl1.Refresh();
+                    }
+                }
+                e.Handled = true;
+            }
+        }
+
+        private void txtCommand_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            e.Handled = CheckNumericValidChar(e.KeyChar, (sender as TextBox));
+        }
+        private bool CheckNumericValidChar(char key, TextBox textBox)
+        {
+            if (textBox.SelectedText.Length > 0 && key == '-')
+            {
+                return false;
+            }
+
+            if (key == (char)Keys.Escape)
+            {
+                return true;
+            }
+
+           
+            if (!char.IsControl(key) && !char.IsDigit(key) && key != '-' && key != '.' && key != ',')
+            {
+                return true;
+            }
+
+            //only allow one decimal point
+            //if (key == Global.decimalSeparetor && text.IndexOf(Global.decimalSeparetor) > -1)
+            //{
+            //    return true;
+            //}
+
+            if (key == '-' && textBox.Text.Length > 0)
+            {
+                return true;
+            }
+
+
+
+            return false;
+        }
+
+        private void ribbonButtonExplodeInsertAll_Click(object sender, EventArgs e)
+        {
+            ExplodeAllInserts(dxfReaderNETControl1);
+        }
 
     }
 }

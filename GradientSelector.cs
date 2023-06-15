@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-
-using System.Text;
-
+﻿using DXFReaderNET;
+using System;
 using System.Windows.Forms;
-using DXFReaderNET;
 
 namespace DXFReaderNETDemoProgram
 {
@@ -40,7 +33,7 @@ namespace DXFReaderNETDemoProgram
             AciColor color = AciColor.FromCadIndex((short)buttonColor1.Tag);
 
 
-            Form1 mainForm=new Form1(); 
+            Form1 mainForm = new Form1();
 
             color = mainForm.dxfReaderNETControl1.ShowPalette(color);
             buttonColor1.BackColor = color.ToColor();
@@ -75,6 +68,16 @@ namespace DXFReaderNETDemoProgram
         }
 
         private void ButtonOk_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label7_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
         {
 
         }

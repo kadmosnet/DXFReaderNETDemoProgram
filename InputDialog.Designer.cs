@@ -33,13 +33,14 @@
             this.ButtonOk = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.textBox1 = new System.Windows.Forms.TextBox();
+            this.checkBoxInputDialog = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // ButtonCancel
             // 
             this.ButtonCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.ButtonCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ButtonCancel.Location = new System.Drawing.Point(183, 79);
+            this.ButtonCancel.Location = new System.Drawing.Point(229, 87);
             this.ButtonCancel.Margin = new System.Windows.Forms.Padding(2);
             this.ButtonCancel.Name = "ButtonCancel";
             this.ButtonCancel.Size = new System.Drawing.Size(67, 24);
@@ -51,7 +52,7 @@
             // 
             this.ButtonOk.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.ButtonOk.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ButtonOk.Location = new System.Drawing.Point(107, 79);
+            this.ButtonOk.Location = new System.Drawing.Point(153, 87);
             this.ButtonOk.Name = "ButtonOk";
             this.ButtonOk.Size = new System.Drawing.Size(67, 24);
             this.ButtonOk.TabIndex = 1;
@@ -72,9 +73,20 @@
             // 
             this.textBox1.Location = new System.Drawing.Point(12, 34);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(238, 20);
+            this.textBox1.Size = new System.Drawing.Size(284, 20);
             this.textBox1.TabIndex = 0;
             this.textBox1.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox1_KeyPress);
+            // 
+            // checkBoxInputDialog
+            // 
+            this.checkBoxInputDialog.AutoSize = true;
+            this.checkBoxInputDialog.Location = new System.Drawing.Point(12, 60);
+            this.checkBoxInputDialog.Name = "checkBoxInputDialog";
+            this.checkBoxInputDialog.Size = new System.Drawing.Size(128, 17);
+            this.checkBoxInputDialog.TabIndex = 10;
+            this.checkBoxInputDialog.Text = "checkBoxInputDialog";
+            this.checkBoxInputDialog.UseVisualStyleBackColor = true;
+            this.checkBoxInputDialog.Visible = false;
             // 
             // InputDialog
             // 
@@ -82,7 +94,8 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.ButtonCancel;
-            this.ClientSize = new System.Drawing.Size(262, 121);
+            this.ClientSize = new System.Drawing.Size(308, 124);
+            this.Controls.Add(this.checkBoxInputDialog);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.ButtonCancel);
@@ -93,6 +106,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "DXFReader.NET Demo Program";
+            this.Load += new System.EventHandler(this.InputDialog_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -104,5 +118,6 @@
         internal System.Windows.Forms.Button ButtonOk;
         internal System.Windows.Forms.Label label1;
         internal System.Windows.Forms.TextBox textBox1;
+        internal System.Windows.Forms.CheckBox checkBoxInputDialog;
     }
 }

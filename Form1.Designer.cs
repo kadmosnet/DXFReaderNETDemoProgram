@@ -54,6 +54,7 @@
             this.ribbonButtonPlotPreview = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonZoomExt = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonUndo = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonRedo = new System.Windows.Forms.RibbonButton();
             this.ribbonTabHome = new System.Windows.Forms.RibbonTab();
             this.ribbonPanelDraw = new System.Windows.Forms.RibbonPanel();
             this.ribbonButtonDrawLine = new System.Windows.Forms.RibbonButton();
@@ -63,6 +64,7 @@
             this.ribbonButtonDrawLineContinous = new System.Windows.Forms.RibbonButton();
             this.ribbonSeparator13 = new System.Windows.Forms.RibbonSeparator();
             this.ribbonButtonDrawLineTrace = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonMultiLine = new System.Windows.Forms.RibbonButton();
             this.ribbonSeparator15 = new System.Windows.Forms.RibbonSeparator();
             this.ribbonButtonDrawLineRay = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonDrawContructionLine = new System.Windows.Forms.RibbonButton();
@@ -88,6 +90,7 @@
             this.ribbonButtonDrawSlot = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonArc = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonArcCenterStartEnd = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonArcCenterStartPEndP = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonArcStartMiddleEnd = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonArcStartEndMiddle = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonDrawHatch = new System.Windows.Forms.RibbonButton();
@@ -103,20 +106,24 @@
             this.ribbonButtonModifySelectSinlge = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifySelectSingleMulti = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifySelectHandle = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonSelectNumber = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifySelectGroup = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifySelectRectangle = new System.Windows.Forms.RibbonButton();
             this.ribbonButton5 = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifySelectAll = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonAllButSelected = new System.Windows.Forms.RibbonButton();
             this.ribbonSeparator7 = new System.Windows.Forms.RibbonSeparator();
             this.ribbonButton12 = new System.Windows.Forms.RibbonButton();
             this.ribbonButton13 = new System.Windows.Forms.RibbonButton();
             this.ribbonButton14 = new System.Windows.Forms.RibbonButton();
             this.ribbonButton15 = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonSelectGroup = new System.Windows.Forms.RibbonButton();
             this.ribbonSeparator20 = new System.Windows.Forms.RibbonSeparator();
             this.ribbonButtonModyfiSelectShow = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModyfiSelectClear = new System.Windows.Forms.RibbonButton();
             this.ribbonSeparator21 = new System.Windows.Forms.RibbonSeparator();
             this.ribbonButtonSelectContours = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonSelectExtCont = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyDelete = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyDeleteSelected = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyDeleteNotSelected = new System.Windows.Forms.RibbonButton();
@@ -131,15 +138,28 @@
             this.ribbonButtonDeleteEntitiesByLayer = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonDeleteEntitiesByLineType = new System.Windows.Forms.RibbonButton();
             this.ribbonSeparator19 = new System.Windows.Forms.RibbonSeparator();
+            this.ribbonButtonDeleteCoincident = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonDeleteZeroLen = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonDeleteNotConnected = new System.Windows.Forms.RibbonButton();
+            this.ribbonSeparator22 = new System.Windows.Forms.RibbonSeparator();
             this.ribbonButtonTables = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonTablesDimStyles = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonTablesLayers = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonTablesLTYPE = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonTablesTextStyles = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonObjects = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonDeleteGroup = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyProperties = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModPropColor = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModPropLayer = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModPropLineType = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonModPropLineWeight = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModPropGroup = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonGroupAdd = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModElev = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonModVisibility = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonModVisibilityOff = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonModVisibilityOn = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyCopy = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModidyCopyCopy = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyCopyMove = new System.Windows.Forms.RibbonButton();
@@ -153,14 +173,22 @@
             this.ribbonButtonModifyArrayPolar = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyExplode = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyExplodeInsert = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonExplodeInserSingle = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonExplodeInsertRect = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyExplodeDimension = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyExplodePoly = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonExplodePolySingle = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonExplodePolyRect = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyExplodeSpline = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonExplodeSplineSingle = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonExplodeSplineRectangle = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyExplodeCircle = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyExplodeArc = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyExplodeEllipse = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonModifyExplodeEllipseArcs = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonModifyExplodeCircleArcs = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonModifyLw2Poly = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonModifyPoly2Lw = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyExplodeRegion = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyUngroup = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyOffset = new System.Windows.Forms.RibbonButton();
@@ -169,6 +197,10 @@
             this.ribbonButtonModifyFillet = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyChamfer = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonModifyJoin = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonJoinTwoEntities = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonAutoJoinWindow = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonAutoJoinAll = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonNormalize = new System.Windows.Forms.RibbonButton();
             this.ribbonPanelAnnotations = new System.Windows.Forms.RibbonPanel();
             this.ribbonButtonAnnotationsText = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonAnnotationsDimension = new System.Windows.Forms.RibbonButton();
@@ -184,6 +216,7 @@
             this.ribbonButtonAnnotationsDimensionAngular3points = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonAnnotationsDimensionDiameter = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonAnnotationsDimensionradius = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonLeader = new System.Windows.Forms.RibbonButton();
             this.ribbonComboBoxDimensionStyle = new System.Windows.Forms.RibbonComboBox();
             this.ribbonComboBox1 = new System.Windows.Forms.RibbonComboBox();
             this.ribbonComboBoxTextStyle = new System.Windows.Forms.RibbonComboBox();
@@ -198,10 +231,12 @@
             this.ribbonColorChooserColor = new System.Windows.Forms.RibbonColorChooser();
             this.ribbonLabel1 = new System.Windows.Forms.RibbonLabel();
             this.ribbonLabelCurrentColor = new System.Windows.Forms.RibbonLabel();
-            this.ribbonButtonPropertiesUnits = new System.Windows.Forms.RibbonButton();
             this.ribbonTextBoxElevation = new System.Windows.Forms.RibbonTextBox();
             this.ribbonTextBoxThickness = new System.Windows.Forms.RibbonTextBox();
             this.ribbonTextBoxLtScale = new System.Windows.Forms.RibbonTextBox();
+            this.ribbonButtonPropertiesUnits = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonPropertiesLayers = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonPropertiesDimStyles = new System.Windows.Forms.RibbonButton();
             this.ribbonPanelObjectSnap = new System.Windows.Forms.RibbonPanel();
             this.ribbonButtonObjectSnapEndpoint = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonObjectSnapMidpoint = new System.Windows.Forms.RibbonButton();
@@ -213,7 +248,10 @@
             this.ribbonButtonObjectSnapNearest = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonObjectSnapNode = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonObjectSnapCenter = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonObjectSnapGeometricCenter = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonObjectSnapIntersection = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonObjectSnapSelectAll = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonObjectSnapClear = new System.Windows.Forms.RibbonButton();
             this.ribbonPanelNavigate = new System.Windows.Forms.RibbonPanel();
             this.ribbonButtonZoomExtents = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonZoomLimits = new System.Windows.Forms.RibbonButton();
@@ -223,7 +261,7 @@
             this.ribbonButton10 = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonZoomPrev = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonZoomNext = new System.Windows.Forms.RibbonButton();
-            this.ribbonButtonTreeView = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonZoomCenter = new System.Windows.Forms.RibbonButton();
             this.ribbonPanelView = new System.Windows.Forms.RibbonPanel();
             this.ribbonComboBox3D = new System.Windows.Forms.RibbonComboBox();
             this.ribbonButtonView3DTop = new System.Windows.Forms.RibbonButton();
@@ -242,6 +280,8 @@
             this.ribbonButtonRenderingShadedEdges = new System.Windows.Forms.RibbonButton();
             this.ribbonComboBoxViews = new System.Windows.Forms.RibbonComboBox();
             this.ribbonButtonViewRefresh = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonOrbit3D = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonViewTreeView = new System.Windows.Forms.RibbonButton();
             this.ribbonPanelInquiryMeasure = new System.Windows.Forms.RibbonPanel();
             this.ribbonButtonInquiryMeasure = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonInquiryMeasureDistance = new System.Windows.Forms.RibbonButton();
@@ -251,16 +291,21 @@
             this.ribbonButtonInquiryMeasurecenter = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonInquiryMeasureAreaSelected = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonInquiryMeasureFilledEmpty = new System.Windows.Forms.RibbonButton();
+            this.ribbonDrawingInfo = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonInquiryEntityInfo = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonShowSelectedEntitiesInfo = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonObjectByHandle = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonInquiryXdata = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonInquiryTest = new System.Windows.Forms.RibbonButton();
             this.ribbonButton1SaveTest = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonPointInPolygon = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonShowFilledAreas = new System.Windows.Forms.RibbonButton();
-            this.barButtonItemGrabPoints = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonPrintEntityProp = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonPrintEntitiesList = new System.Windows.Forms.RibbonButton();
-            
+            this.ribbonButtonShowData = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonTruTOPS = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonSplitSections = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonRecoverDXFFIle = new System.Windows.Forms.RibbonButton();
             this.ribbonPanelDrawMethods = new System.Windows.Forms.RibbonPanel();
             this.ribbonButtonDrawMethodsLine = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonDrawMethodsCircle = new System.Windows.Forms.RibbonButton();
@@ -339,19 +384,24 @@
             this.ribbonButtonShowgrid = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonGridRuler = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonCommandLine = new System.Windows.Forms.RibbonButton();
-            this.ribbonUpDownPickBoxSize = new System.Windows.Forms.RibbonUpDown();
-            this.ribbonUpDownRubberPenWidth = new System.Windows.Forms.RibbonUpDown();
-            this.ribbonUpDownZoomFactor = new System.Windows.Forms.RibbonUpDown();
             this.ribbonButtonDrawingLimits = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonHighlight = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonCheckContHighligh = new System.Windows.Forms.RibbonButton();
             this.ribbonButton11 = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonShowExtents = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonGridInsideLimits = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonGrabPoints = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonContinuosSelection = new System.Windows.Forms.RibbonButton();
+            this.ribbonUpDownPickBoxSize = new System.Windows.Forms.RibbonUpDown();
+            this.ribbonUpDownRubberPenWidth = new System.Windows.Forms.RibbonUpDown();
+            this.ribbonUpDownZoomFactor = new System.Windows.Forms.RibbonUpDown();
             this.ribbonPanelPlotSettings = new System.Windows.Forms.RibbonPanel();
             this.ribbonComboBoxPlotMode = new System.Windows.Forms.RibbonComboBox();
             this.ribbonButtonPlotModeDisplay = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonPlotModeExtents = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonPlotModeLimits = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonPlotModeWindow = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonPlotModeCentered = new System.Windows.Forms.RibbonButton();
             this.ribbonComboBoxPlotRendering = new System.Windows.Forms.RibbonComboBox();
             this.ribbonButtonPlotRenderingGrayScale = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonPlotRenderingMonochrome = new System.Windows.Forms.RibbonButton();
@@ -376,12 +426,14 @@
             this.ribbonUpDownPlotPenWidth = new System.Windows.Forms.RibbonUpDown();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.StatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.ErrorLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.StatusLabelGrid = new System.Windows.Forms.ToolStripStatusLabel();
             this.StatusLabelOrtho = new System.Windows.Forms.ToolStripStatusLabel();
             this.StatusLabelSnap = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelInfo = new System.Windows.Forms.ToolStripStatusLabel();
             this.StatusLabelX = new System.Windows.Forms.ToolStripStatusLabel();
             this.StatusLabelY = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.ribbonOrbRecentItem10 = new System.Windows.Forms.RibbonOrbRecentItem();
             this.printPreviewControl1 = new System.Windows.Forms.PrintPreviewControl();
             this.ribbonOrbRecentItem7 = new System.Windows.Forms.RibbonOrbRecentItem();
@@ -395,17 +447,33 @@
             this.ribbonDescriptionMenuItem1 = new System.Windows.Forms.RibbonDescriptionMenuItem();
             this.colorDialog1 = new System.Windows.Forms.ColorDialog();
             this.imageListStatusBar = new System.Windows.Forms.ImageList(this.components);
-            this.labelCommands = new System.Windows.Forms.Label();
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.TreeView1 = new System.Windows.Forms.TreeView();
             this.dxfReaderNETControl1 = new DXFReaderNET.DXFReaderNETControl();
+            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.menuLastCommand = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.enterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cancelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.selectEntitiesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteSelectionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.copyDisplayedAreaToClipboardToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.panelCommands = new System.Windows.Forms.Panel();
+            this.txtCommand = new System.Windows.Forms.TextBox();
+            this.labelCommands = new System.Windows.Forms.Label();
+            this.ribbonButtonExplodeInsertAll = new System.Windows.Forms.RibbonButton();
             this.statusStrip1.SuspendLayout();
             this.toolStripPlotPreview.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            this.contextMenuStrip1.SuspendLayout();
+            this.panelCommands.SuspendLayout();
             this.SuspendLayout();
             // 
             // openFileDialog1
@@ -417,6 +485,7 @@
             this.ribbon1.BackColor = System.Drawing.SystemColors.Control;
             this.ribbon1.Cursor = System.Windows.Forms.Cursors.Default;
             this.ribbon1.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.ribbon1.ForeColor = System.Drawing.SystemColors.ControlText;
             this.ribbon1.Location = new System.Drawing.Point(0, 0);
             this.ribbon1.Minimized = false;
             this.ribbon1.Name = "ribbon1";
@@ -452,8 +521,9 @@
             this.ribbon1.QuickAccessToolbar.Items.Add(this.ribbonButtonPlotPreview);
             this.ribbon1.QuickAccessToolbar.Items.Add(this.ribbonButtonZoomExt);
             this.ribbon1.QuickAccessToolbar.Items.Add(this.ribbonButtonUndo);
+            this.ribbon1.QuickAccessToolbar.Items.Add(this.ribbonButtonRedo);
             this.ribbon1.RibbonTabFont = new System.Drawing.Font("Trebuchet MS", 9F);
-            this.ribbon1.Size = new System.Drawing.Size(1416, 156);
+            this.ribbon1.Size = new System.Drawing.Size(1400, 156);
             this.ribbon1.TabIndex = 14;
             this.ribbon1.Tabs.Add(this.ribbonTabHome);
             this.ribbon1.Tabs.Add(this.ribbonTabFormat);
@@ -678,6 +748,19 @@
             this.ribbonButtonUndo.ToolTipTitle = "Undo";
             this.ribbonButtonUndo.Click += new System.EventHandler(this.ribbonButtonUndo_Click);
             // 
+            // ribbonButtonRedo
+            // 
+            this.ribbonButtonRedo.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonRedo.Image")));
+            this.ribbonButtonRedo.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonRedo.LargeImage")));
+            this.ribbonButtonRedo.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonRedo.Name = "ribbonButtonRedo";
+            this.ribbonButtonRedo.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonRedo.SmallImage")));
+            this.ribbonButtonRedo.Text = "ribbonButton16";
+            this.ribbonButtonRedo.ToolTip = "Redo last action";
+            this.ribbonButtonRedo.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonRedo.ToolTipImage")));
+            this.ribbonButtonRedo.ToolTipTitle = "Redo";
+            this.ribbonButtonRedo.Click += new System.EventHandler(this.ribbonButtonRedo_Click);
+            // 
             // ribbonTabHome
             // 
             this.ribbonTabHome.Name = "ribbonTabHome";
@@ -712,6 +795,7 @@
             this.ribbonButtonDrawLine.DropDownItems.Add(this.ribbonButtonDrawLineContinous);
             this.ribbonButtonDrawLine.DropDownItems.Add(this.ribbonSeparator13);
             this.ribbonButtonDrawLine.DropDownItems.Add(this.ribbonButtonDrawLineTrace);
+            this.ribbonButtonDrawLine.DropDownItems.Add(this.ribbonButtonMultiLine);
             this.ribbonButtonDrawLine.DropDownItems.Add(this.ribbonSeparator15);
             this.ribbonButtonDrawLine.DropDownItems.Add(this.ribbonButtonDrawLineRay);
             this.ribbonButtonDrawLine.DropDownItems.Add(this.ribbonButtonDrawContructionLine);
@@ -781,6 +865,16 @@
             this.ribbonButtonDrawLineTrace.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDrawLineTrace.SmallImage")));
             this.ribbonButtonDrawLineTrace.Text = "Trace";
             this.ribbonButtonDrawLineTrace.Click += new System.EventHandler(this.ribbonButtonDrawLineTrace_Click);
+            // 
+            // ribbonButtonMultiLine
+            // 
+            this.ribbonButtonMultiLine.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonMultiLine.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonMultiLine.Image")));
+            this.ribbonButtonMultiLine.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonMultiLine.LargeImage")));
+            this.ribbonButtonMultiLine.Name = "ribbonButtonMultiLine";
+            this.ribbonButtonMultiLine.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonMultiLine.SmallImage")));
+            this.ribbonButtonMultiLine.Text = "Multi line";
+            this.ribbonButtonMultiLine.Click += new System.EventHandler(this.ribbonButtonMultiLine_Click);
             // 
             // ribbonSeparator15
             // 
@@ -1004,6 +1098,7 @@
             // ribbonButtonArc
             // 
             this.ribbonButtonArc.DropDownItems.Add(this.ribbonButtonArcCenterStartEnd);
+            this.ribbonButtonArc.DropDownItems.Add(this.ribbonButtonArcCenterStartPEndP);
             this.ribbonButtonArc.DropDownItems.Add(this.ribbonButtonArcStartMiddleEnd);
             this.ribbonButtonArc.DropDownItems.Add(this.ribbonButtonArcStartEndMiddle);
             this.ribbonButtonArc.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonArc.Image")));
@@ -1028,6 +1123,16 @@
             this.ribbonButtonArcCenterStartEnd.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonArcCenterStartEnd.SmallImage")));
             this.ribbonButtonArcCenterStartEnd.Text = "Center point, start angle, end angle";
             this.ribbonButtonArcCenterStartEnd.Click += new System.EventHandler(this.ribbonButtonArcCenterStartEnd_Click);
+            // 
+            // ribbonButtonArcCenterStartPEndP
+            // 
+            this.ribbonButtonArcCenterStartPEndP.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonArcCenterStartPEndP.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonArcCenterStartPEndP.Image")));
+            this.ribbonButtonArcCenterStartPEndP.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonArcCenterStartPEndP.LargeImage")));
+            this.ribbonButtonArcCenterStartPEndP.Name = "ribbonButtonArcCenterStartPEndP";
+            this.ribbonButtonArcCenterStartPEndP.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonArcCenterStartPEndP.SmallImage")));
+            this.ribbonButtonArcCenterStartPEndP.Text = "Center point, start point, end point";
+            this.ribbonButtonArcCenterStartPEndP.Click += new System.EventHandler(this.ribbonButtonArcCenterStartPEndP_Click);
             // 
             // ribbonButtonArcStartMiddleEnd
             // 
@@ -1150,6 +1255,7 @@
             // ribbonPanelModify
             // 
             this.ribbonPanelModify.ButtonMoreVisible = false;
+            this.ribbonPanelModify.Image = ((System.Drawing.Image)(resources.GetObject("ribbonPanelModify.Image")));
             this.ribbonPanelModify.Items.Add(this.ribbonButtonModifySelect);
             this.ribbonPanelModify.Items.Add(this.ribbonButtonModifyDelete);
             this.ribbonPanelModify.Items.Add(this.ribbonButtonModifyProperties);
@@ -1161,6 +1267,7 @@
             this.ribbonPanelModify.Items.Add(this.ribbonButtonModifyFillet);
             this.ribbonPanelModify.Items.Add(this.ribbonButtonModifyChamfer);
             this.ribbonPanelModify.Items.Add(this.ribbonButtonModifyJoin);
+            this.ribbonPanelModify.Items.Add(this.ribbonButtonNormalize);
             this.ribbonPanelModify.Name = "ribbonPanelModify";
             this.ribbonPanelModify.Text = "Modify";
             // 
@@ -1169,19 +1276,23 @@
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonModifySelectSinlge);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonModifySelectSingleMulti);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonModifySelectHandle);
+            this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonSelectNumber);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonModifySelectGroup);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonModifySelectRectangle);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonModifySelectAll);
+            this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonAllButSelected);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonSeparator7);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButton12);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButton13);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButton14);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButton15);
+            this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonSelectGroup);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonSeparator20);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonModyfiSelectShow);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonModyfiSelectClear);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonSeparator21);
             this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonSelectContours);
+            this.ribbonButtonModifySelect.DropDownItems.Add(this.ribbonButtonSelectExtCont);
             this.ribbonButtonModifySelect.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifySelect.Image")));
             this.ribbonButtonModifySelect.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifySelect.LargeImage")));
             this.ribbonButtonModifySelect.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
@@ -1226,6 +1337,16 @@
             this.ribbonButtonModifySelectHandle.Text = "Select single entity with handle";
             this.ribbonButtonModifySelectHandle.Click += new System.EventHandler(this.ribbonButtonModifySelectHandle_Click);
             // 
+            // ribbonButtonSelectNumber
+            // 
+            this.ribbonButtonSelectNumber.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonSelectNumber.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonSelectNumber.Image")));
+            this.ribbonButtonSelectNumber.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonSelectNumber.LargeImage")));
+            this.ribbonButtonSelectNumber.Name = "ribbonButtonSelectNumber";
+            this.ribbonButtonSelectNumber.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonSelectNumber.SmallImage")));
+            this.ribbonButtonSelectNumber.Text = "Select single entity by number";
+            this.ribbonButtonSelectNumber.Click += new System.EventHandler(this.ribbonButtonSelectNumber_Click);
+            // 
             // ribbonButtonModifySelectGroup
             // 
             this.ribbonButtonModifySelectGroup.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
@@ -1264,6 +1385,16 @@
             this.ribbonButtonModifySelectAll.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifySelectAll.SmallImage")));
             this.ribbonButtonModifySelectAll.Text = "Select all entities";
             this.ribbonButtonModifySelectAll.Click += new System.EventHandler(this.ribbonButtonModifySelectAll_Click);
+            // 
+            // ribbonButtonAllButSelected
+            // 
+            this.ribbonButtonAllButSelected.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonAllButSelected.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAllButSelected.Image")));
+            this.ribbonButtonAllButSelected.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAllButSelected.LargeImage")));
+            this.ribbonButtonAllButSelected.Name = "ribbonButtonAllButSelected";
+            this.ribbonButtonAllButSelected.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAllButSelected.SmallImage")));
+            this.ribbonButtonAllButSelected.Text = "Select all entities BUT selected";
+            this.ribbonButtonAllButSelected.Click += new System.EventHandler(this.ribbonButtonAllButSelected_Click);
             // 
             // ribbonSeparator7
             // 
@@ -1309,6 +1440,16 @@
             this.ribbonButton15.Text = "Select entities by line type";
             this.ribbonButton15.Click += new System.EventHandler(this.ribbonButton15_Click_1);
             // 
+            // ribbonButtonSelectGroup
+            // 
+            this.ribbonButtonSelectGroup.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonSelectGroup.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonSelectGroup.Image")));
+            this.ribbonButtonSelectGroup.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonSelectGroup.LargeImage")));
+            this.ribbonButtonSelectGroup.Name = "ribbonButtonSelectGroup";
+            this.ribbonButtonSelectGroup.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonSelectGroup.SmallImage")));
+            this.ribbonButtonSelectGroup.Text = "Select entities by group";
+            this.ribbonButtonSelectGroup.Click += new System.EventHandler(this.ribbonButtonSelectGroup_Click);
+            // 
             // ribbonSeparator20
             // 
             this.ribbonSeparator20.Name = "ribbonSeparator20";
@@ -1347,6 +1488,16 @@
             this.ribbonButtonSelectContours.Text = "Select contours";
             this.ribbonButtonSelectContours.Click += new System.EventHandler(this.ribbonButtonSelectContours_Click);
             // 
+            // ribbonButtonSelectExtCont
+            // 
+            this.ribbonButtonSelectExtCont.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonSelectExtCont.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonSelectExtCont.Image")));
+            this.ribbonButtonSelectExtCont.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonSelectExtCont.LargeImage")));
+            this.ribbonButtonSelectExtCont.Name = "ribbonButtonSelectExtCont";
+            this.ribbonButtonSelectExtCont.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonSelectExtCont.SmallImage")));
+            this.ribbonButtonSelectExtCont.Text = "Select external contour";
+            this.ribbonButtonSelectExtCont.Click += new System.EventHandler(this.ribbonButtonSelectExtCont_Click);
+            // 
             // ribbonButtonModifyDelete
             // 
             this.ribbonButtonModifyDelete.DropDownItems.Add(this.ribbonButtonModifyDeleteSelected);
@@ -1362,7 +1513,12 @@
             this.ribbonButtonModifyDelete.DropDownItems.Add(this.ribbonButtonDeleteEntitiesByLayer);
             this.ribbonButtonModifyDelete.DropDownItems.Add(this.ribbonButtonDeleteEntitiesByLineType);
             this.ribbonButtonModifyDelete.DropDownItems.Add(this.ribbonSeparator19);
+            this.ribbonButtonModifyDelete.DropDownItems.Add(this.ribbonButtonDeleteCoincident);
+            this.ribbonButtonModifyDelete.DropDownItems.Add(this.ribbonButtonDeleteZeroLen);
+            this.ribbonButtonModifyDelete.DropDownItems.Add(this.ribbonButtonDeleteNotConnected);
+            this.ribbonButtonModifyDelete.DropDownItems.Add(this.ribbonSeparator22);
             this.ribbonButtonModifyDelete.DropDownItems.Add(this.ribbonButtonTables);
+            this.ribbonButtonModifyDelete.DropDownItems.Add(this.ribbonButtonObjects);
             this.ribbonButtonModifyDelete.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyDelete.Image")));
             this.ribbonButtonModifyDelete.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyDelete.LargeImage")));
             this.ribbonButtonModifyDelete.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
@@ -1484,16 +1640,73 @@
             // 
             this.ribbonSeparator19.Name = "ribbonSeparator19";
             // 
+            // ribbonButtonDeleteCoincident
+            // 
+            this.ribbonButtonDeleteCoincident.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonDeleteCoincident.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDeleteCoincident.Image")));
+            this.ribbonButtonDeleteCoincident.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDeleteCoincident.LargeImage")));
+            this.ribbonButtonDeleteCoincident.Name = "ribbonButtonDeleteCoincident";
+            this.ribbonButtonDeleteCoincident.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDeleteCoincident.SmallImage")));
+            this.ribbonButtonDeleteCoincident.Text = "Delete coincident entities";
+            this.ribbonButtonDeleteCoincident.Click += new System.EventHandler(this.ribbonButtonDeleteCoincident_Click);
+            // 
+            // ribbonButtonDeleteZeroLen
+            // 
+            this.ribbonButtonDeleteZeroLen.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonDeleteZeroLen.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDeleteZeroLen.Image")));
+            this.ribbonButtonDeleteZeroLen.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDeleteZeroLen.LargeImage")));
+            this.ribbonButtonDeleteZeroLen.Name = "ribbonButtonDeleteZeroLen";
+            this.ribbonButtonDeleteZeroLen.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDeleteZeroLen.SmallImage")));
+            this.ribbonButtonDeleteZeroLen.Text = "Delete zero lenght entities";
+            this.ribbonButtonDeleteZeroLen.Click += new System.EventHandler(this.ribbonButtonDeleteZeroLen_Click);
+            // 
+            // ribbonButtonDeleteNotConnected
+            // 
+            this.ribbonButtonDeleteNotConnected.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonDeleteNotConnected.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDeleteNotConnected.Image")));
+            this.ribbonButtonDeleteNotConnected.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDeleteNotConnected.LargeImage")));
+            this.ribbonButtonDeleteNotConnected.Name = "ribbonButtonDeleteNotConnected";
+            this.ribbonButtonDeleteNotConnected.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDeleteNotConnected.SmallImage")));
+            this.ribbonButtonDeleteNotConnected.Text = "Delete not connected entities";
+            this.ribbonButtonDeleteNotConnected.Click += new System.EventHandler(this.ribbonButtonDeleteNotConnected_Click);
+            // 
+            // ribbonSeparator22
+            // 
+            this.ribbonSeparator22.Name = "ribbonSeparator22";
+            // 
             // ribbonButtonTables
             // 
             this.ribbonButtonTables.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonTables.DropDownItems.Add(this.ribbonButtonTablesDimStyles);
+            this.ribbonButtonTables.DropDownItems.Add(this.ribbonButtonTablesLayers);
             this.ribbonButtonTables.DropDownItems.Add(this.ribbonButtonTablesLTYPE);
+            this.ribbonButtonTables.DropDownItems.Add(this.ribbonButtonTablesTextStyles);
             this.ribbonButtonTables.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTables.Image")));
             this.ribbonButtonTables.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTables.LargeImage")));
             this.ribbonButtonTables.Name = "ribbonButtonTables";
             this.ribbonButtonTables.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTables.SmallImage")));
             this.ribbonButtonTables.Style = System.Windows.Forms.RibbonButtonStyle.DropDown;
             this.ribbonButtonTables.Text = "Tables";
+            // 
+            // ribbonButtonTablesDimStyles
+            // 
+            this.ribbonButtonTablesDimStyles.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonTablesDimStyles.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTablesDimStyles.Image")));
+            this.ribbonButtonTablesDimStyles.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTablesDimStyles.LargeImage")));
+            this.ribbonButtonTablesDimStyles.Name = "ribbonButtonTablesDimStyles";
+            this.ribbonButtonTablesDimStyles.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTablesDimStyles.SmallImage")));
+            this.ribbonButtonTablesDimStyles.Text = "Delete dimension styles";
+            this.ribbonButtonTablesDimStyles.Click += new System.EventHandler(this.ribbonButtonTablesDimStyles_Click);
+            // 
+            // ribbonButtonTablesLayers
+            // 
+            this.ribbonButtonTablesLayers.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonTablesLayers.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTablesLayers.Image")));
+            this.ribbonButtonTablesLayers.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTablesLayers.LargeImage")));
+            this.ribbonButtonTablesLayers.Name = "ribbonButtonTablesLayers";
+            this.ribbonButtonTablesLayers.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTablesLayers.SmallImage")));
+            this.ribbonButtonTablesLayers.Text = "Delete layers";
+            this.ribbonButtonTablesLayers.Click += new System.EventHandler(this.ribbonButtonTablesLayers_Click);
             // 
             // ribbonButtonTablesLTYPE
             // 
@@ -1505,14 +1718,47 @@
             this.ribbonButtonTablesLTYPE.Text = "Delete line types";
             this.ribbonButtonTablesLTYPE.Click += new System.EventHandler(this.ribbonButtonTablesLTYPE_Click);
             // 
+            // ribbonButtonTablesTextStyles
+            // 
+            this.ribbonButtonTablesTextStyles.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonTablesTextStyles.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTablesTextStyles.Image")));
+            this.ribbonButtonTablesTextStyles.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTablesTextStyles.LargeImage")));
+            this.ribbonButtonTablesTextStyles.Name = "ribbonButtonTablesTextStyles";
+            this.ribbonButtonTablesTextStyles.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTablesTextStyles.SmallImage")));
+            this.ribbonButtonTablesTextStyles.Text = "Delete text styles";
+            this.ribbonButtonTablesTextStyles.Click += new System.EventHandler(this.ribbonButtonTablesTextStyles_Click);
+            // 
+            // ribbonButtonObjects
+            // 
+            this.ribbonButtonObjects.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonObjects.DropDownItems.Add(this.ribbonButtonDeleteGroup);
+            this.ribbonButtonObjects.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjects.Image")));
+            this.ribbonButtonObjects.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjects.LargeImage")));
+            this.ribbonButtonObjects.Name = "ribbonButtonObjects";
+            this.ribbonButtonObjects.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjects.SmallImage")));
+            this.ribbonButtonObjects.Style = System.Windows.Forms.RibbonButtonStyle.DropDown;
+            this.ribbonButtonObjects.Text = "Objects";
+            // 
+            // ribbonButtonDeleteGroup
+            // 
+            this.ribbonButtonDeleteGroup.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonDeleteGroup.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDeleteGroup.Image")));
+            this.ribbonButtonDeleteGroup.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDeleteGroup.LargeImage")));
+            this.ribbonButtonDeleteGroup.Name = "ribbonButtonDeleteGroup";
+            this.ribbonButtonDeleteGroup.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDeleteGroup.SmallImage")));
+            this.ribbonButtonDeleteGroup.Text = "Delete group definitions";
+            this.ribbonButtonDeleteGroup.Click += new System.EventHandler(this.ribbonButtonDeleteGroup_Click);
+            // 
             // ribbonButtonModifyProperties
             // 
             this.ribbonButtonModifyProperties.DrawDropDownIconsBar = false;
             this.ribbonButtonModifyProperties.DropDownItems.Add(this.ribbonButtonModPropColor);
             this.ribbonButtonModifyProperties.DropDownItems.Add(this.ribbonButtonModPropLayer);
             this.ribbonButtonModifyProperties.DropDownItems.Add(this.ribbonButtonModPropLineType);
+            this.ribbonButtonModifyProperties.DropDownItems.Add(this.ribbonButtonModPropLineWeight);
             this.ribbonButtonModifyProperties.DropDownItems.Add(this.ribbonButtonModPropGroup);
             this.ribbonButtonModifyProperties.DropDownItems.Add(this.ribbonButtonModElev);
+            this.ribbonButtonModifyProperties.DropDownItems.Add(this.ribbonButtonModVisibility);
             this.ribbonButtonModifyProperties.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyProperties.Image")));
             this.ribbonButtonModifyProperties.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyProperties.LargeImage")));
             this.ribbonButtonModifyProperties.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
@@ -1523,7 +1769,7 @@
             this.ribbonButtonModifyProperties.Text = "Properties";
             this.ribbonButtonModifyProperties.ToolTip = "Properties";
             this.ribbonButtonModifyProperties.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyProperties.ToolTipImage")));
-            this.ribbonButtonModifyProperties.ToolTipTitle = "Change selected entites properties";
+            this.ribbonButtonModifyProperties.ToolTipTitle = "Change properties";
             this.ribbonButtonModifyProperties.DropDownShowing += new System.EventHandler(this.ribbonButtonModifyProperties_DropDownShowing);
             // 
             // ribbonButtonModPropColor
@@ -1534,7 +1780,7 @@
             this.ribbonButtonModPropColor.Name = "ribbonButtonModPropColor";
             this.ribbonButtonModPropColor.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModPropColor.SmallImage")));
             this.ribbonButtonModPropColor.Text = "Color";
-            this.ribbonButtonModPropColor.ToolTip = "Change entities color";
+            this.ribbonButtonModPropColor.ToolTip = "Changes entities color";
             this.ribbonButtonModPropColor.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModPropColor.ToolTipImage")));
             this.ribbonButtonModPropColor.ToolTipTitle = "Color";
             this.ribbonButtonModPropColor.Click += new System.EventHandler(this.ribbonButtonModPropColor_Click);
@@ -1549,7 +1795,7 @@
             this.ribbonButtonModPropLayer.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModPropLayer.SmallImage")));
             this.ribbonButtonModPropLayer.Style = System.Windows.Forms.RibbonButtonStyle.DropDown;
             this.ribbonButtonModPropLayer.Text = "Layer";
-            this.ribbonButtonModPropLayer.ToolTip = "Change entitites layer";
+            this.ribbonButtonModPropLayer.ToolTip = "Changes entitites layer";
             this.ribbonButtonModPropLayer.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModPropLayer.ToolTipImage")));
             this.ribbonButtonModPropLayer.ToolTipTitle = "Layer";
             this.ribbonButtonModPropLayer.DropDownShowing += new System.EventHandler(this.ribbonButtonModPropLayer_DropDownShowing);
@@ -1565,11 +1811,26 @@
             this.ribbonButtonModPropLineType.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModPropLineType.SmallImage")));
             this.ribbonButtonModPropLineType.Style = System.Windows.Forms.RibbonButtonStyle.DropDown;
             this.ribbonButtonModPropLineType.Text = "Line Type";
-            this.ribbonButtonModPropLineType.ToolTip = "Change entities line type";
+            this.ribbonButtonModPropLineType.ToolTip = "Changes entities line type";
             this.ribbonButtonModPropLineType.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModPropLineType.ToolTipImage")));
             this.ribbonButtonModPropLineType.ToolTipTitle = "Line Type";
             this.ribbonButtonModPropLineType.DropDownShowing += new System.EventHandler(this.ribbonButtonModPropLineType_DropDownShowing);
             this.ribbonButtonModPropLineType.DropDownItemClicked += new System.Windows.Forms.RibbonButton.RibbonItemEventHandler(this.ribbonButtonModPropLineType_DropDownItemClicked);
+            // 
+            // ribbonButtonModPropLineWeight
+            // 
+            this.ribbonButtonModPropLineWeight.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonModPropLineWeight.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModPropLineWeight.Image")));
+            this.ribbonButtonModPropLineWeight.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModPropLineWeight.LargeImage")));
+            this.ribbonButtonModPropLineWeight.Name = "ribbonButtonModPropLineWeight";
+            this.ribbonButtonModPropLineWeight.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModPropLineWeight.SmallImage")));
+            this.ribbonButtonModPropLineWeight.Style = System.Windows.Forms.RibbonButtonStyle.DropDown;
+            this.ribbonButtonModPropLineWeight.Text = "Line Weight";
+            this.ribbonButtonModPropLineWeight.ToolTip = "Changes entities line weight";
+            this.ribbonButtonModPropLineWeight.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModPropLineWeight.ToolTipImage")));
+            this.ribbonButtonModPropLineWeight.ToolTipTitle = "Line Weight";
+            this.ribbonButtonModPropLineWeight.DropDownShowing += new System.EventHandler(this.ribbonButtonModPropLineWeight_DropDownShowing);
+            this.ribbonButtonModPropLineWeight.DropDownItemClicked += new System.Windows.Forms.RibbonButton.RibbonItemEventHandler(this.ribbonButtonModPropLineWeight_DropDownItemClicked);
             // 
             // ribbonButtonModPropGroup
             // 
@@ -1603,6 +1864,38 @@
             this.ribbonButtonModElev.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModElev.SmallImage")));
             this.ribbonButtonModElev.Text = "Elevation/Thickness";
             this.ribbonButtonModElev.Click += new System.EventHandler(this.ribbonButtonModElev_Click);
+            // 
+            // ribbonButtonModVisibility
+            // 
+            this.ribbonButtonModVisibility.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonModVisibility.DropDownItems.Add(this.ribbonButtonModVisibilityOff);
+            this.ribbonButtonModVisibility.DropDownItems.Add(this.ribbonButtonModVisibilityOn);
+            this.ribbonButtonModVisibility.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModVisibility.Image")));
+            this.ribbonButtonModVisibility.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModVisibility.LargeImage")));
+            this.ribbonButtonModVisibility.Name = "ribbonButtonModVisibility";
+            this.ribbonButtonModVisibility.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModVisibility.SmallImage")));
+            this.ribbonButtonModVisibility.Style = System.Windows.Forms.RibbonButtonStyle.DropDown;
+            this.ribbonButtonModVisibility.Text = "Visibility";
+            // 
+            // ribbonButtonModVisibilityOff
+            // 
+            this.ribbonButtonModVisibilityOff.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonModVisibilityOff.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModVisibilityOff.Image")));
+            this.ribbonButtonModVisibilityOff.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModVisibilityOff.LargeImage")));
+            this.ribbonButtonModVisibilityOff.Name = "ribbonButtonModVisibilityOff";
+            this.ribbonButtonModVisibilityOff.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModVisibilityOff.SmallImage")));
+            this.ribbonButtonModVisibilityOff.Text = "Off";
+            this.ribbonButtonModVisibilityOff.Click += new System.EventHandler(this.ribbonButtonModVisibilityOff_Click);
+            // 
+            // ribbonButtonModVisibilityOn
+            // 
+            this.ribbonButtonModVisibilityOn.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonModVisibilityOn.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModVisibilityOn.Image")));
+            this.ribbonButtonModVisibilityOn.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModVisibilityOn.LargeImage")));
+            this.ribbonButtonModVisibilityOn.Name = "ribbonButtonModVisibilityOn";
+            this.ribbonButtonModVisibilityOn.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModVisibilityOn.SmallImage")));
+            this.ribbonButtonModVisibilityOn.Text = "Make all invisible entities visible";
+            this.ribbonButtonModVisibilityOn.Click += new System.EventHandler(this.ribbonButtonModVisibilityOn_Click);
             // 
             // ribbonButtonModifyCopy
             // 
@@ -1766,6 +2059,10 @@
             this.ribbonButtonModifyExplode.DropDownItems.Add(this.ribbonButtonModifyExplodeCircle);
             this.ribbonButtonModifyExplode.DropDownItems.Add(this.ribbonButtonModifyExplodeArc);
             this.ribbonButtonModifyExplode.DropDownItems.Add(this.ribbonButtonModifyExplodeEllipse);
+            this.ribbonButtonModifyExplode.DropDownItems.Add(this.ribbonButtonModifyExplodeEllipseArcs);
+            this.ribbonButtonModifyExplode.DropDownItems.Add(this.ribbonButtonModifyExplodeCircleArcs);
+            this.ribbonButtonModifyExplode.DropDownItems.Add(this.ribbonButtonModifyLw2Poly);
+            this.ribbonButtonModifyExplode.DropDownItems.Add(this.ribbonButtonModifyPoly2Lw);
             this.ribbonButtonModifyExplode.DropDownItems.Add(this.ribbonButtonModifyExplodeRegion);
             this.ribbonButtonModifyExplode.DropDownItems.Add(this.ribbonButtonModifyUngroup);
             this.ribbonButtonModifyExplode.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplode.Image")));
@@ -1779,19 +2076,44 @@
             this.ribbonButtonModifyExplode.ToolTip = "Breaks a compound entity into its component entities";
             this.ribbonButtonModifyExplode.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplode.ToolTipImage")));
             this.ribbonButtonModifyExplode.ToolTipTitle = "Explode";
+            this.ribbonButtonModifyExplode.DropDownShowing += new System.EventHandler(this.ribbonButtonModifyExplode_DropDownShowing);
             // 
             // ribbonButtonModifyExplodeInsert
             // 
             this.ribbonButtonModifyExplodeInsert.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonModifyExplodeInsert.DropDownItems.Add(this.ribbonButtonExplodeInserSingle);
+            this.ribbonButtonModifyExplodeInsert.DropDownItems.Add(this.ribbonButtonExplodeInsertRect);
+            this.ribbonButtonModifyExplodeInsert.DropDownItems.Add(this.ribbonButtonExplodeInsertAll);
             this.ribbonButtonModifyExplodeInsert.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodeInsert.Image")));
             this.ribbonButtonModifyExplodeInsert.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodeInsert.LargeImage")));
             this.ribbonButtonModifyExplodeInsert.Name = "ribbonButtonModifyExplodeInsert";
             this.ribbonButtonModifyExplodeInsert.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodeInsert.SmallImage")));
+            this.ribbonButtonModifyExplodeInsert.Style = System.Windows.Forms.RibbonButtonStyle.DropDown;
             this.ribbonButtonModifyExplodeInsert.Text = "Insert";
             this.ribbonButtonModifyExplodeInsert.ToolTip = "Breaks an insert into its component entities";
             this.ribbonButtonModifyExplodeInsert.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodeInsert.ToolTipImage")));
             this.ribbonButtonModifyExplodeInsert.ToolTipTitle = "Explode insert";
             this.ribbonButtonModifyExplodeInsert.Click += new System.EventHandler(this.ribbonButtonModifyExplodeInsert_Click);
+            // 
+            // ribbonButtonExplodeInserSingle
+            // 
+            this.ribbonButtonExplodeInserSingle.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonExplodeInserSingle.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodeInserSingle.Image")));
+            this.ribbonButtonExplodeInserSingle.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodeInserSingle.LargeImage")));
+            this.ribbonButtonExplodeInserSingle.Name = "ribbonButtonExplodeInserSingle";
+            this.ribbonButtonExplodeInserSingle.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodeInserSingle.SmallImage")));
+            this.ribbonButtonExplodeInserSingle.Text = "Select single insert";
+            this.ribbonButtonExplodeInserSingle.Click += new System.EventHandler(this.ribbonButtonExplodeInserSingle_Click);
+            // 
+            // ribbonButtonExplodeInsertRect
+            // 
+            this.ribbonButtonExplodeInsertRect.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonExplodeInsertRect.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodeInsertRect.Image")));
+            this.ribbonButtonExplodeInsertRect.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodeInsertRect.LargeImage")));
+            this.ribbonButtonExplodeInsertRect.Name = "ribbonButtonExplodeInsertRect";
+            this.ribbonButtonExplodeInsertRect.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodeInsertRect.SmallImage")));
+            this.ribbonButtonExplodeInsertRect.Text = "Select inserts with a rectangle";
+            this.ribbonButtonExplodeInsertRect.Click += new System.EventHandler(this.ribbonButtonExplodeInsertRect_Click);
             // 
             // ribbonButtonModifyExplodeDimension
             // 
@@ -1806,15 +2128,38 @@
             // ribbonButtonModifyExplodePoly
             // 
             this.ribbonButtonModifyExplodePoly.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonModifyExplodePoly.DropDownItems.Add(this.ribbonButtonExplodePolySingle);
+            this.ribbonButtonModifyExplodePoly.DropDownItems.Add(this.ribbonButtonExplodePolyRect);
             this.ribbonButtonModifyExplodePoly.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodePoly.Image")));
             this.ribbonButtonModifyExplodePoly.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodePoly.LargeImage")));
             this.ribbonButtonModifyExplodePoly.Name = "ribbonButtonModifyExplodePoly";
             this.ribbonButtonModifyExplodePoly.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodePoly.SmallImage")));
+            this.ribbonButtonModifyExplodePoly.Style = System.Windows.Forms.RibbonButtonStyle.DropDown;
             this.ribbonButtonModifyExplodePoly.Text = "Polyline to lines and arcs";
             this.ribbonButtonModifyExplodePoly.ToolTip = "Breaks a polyline into lines and arcs";
             this.ribbonButtonModifyExplodePoly.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodePoly.ToolTipImage")));
             this.ribbonButtonModifyExplodePoly.ToolTipTitle = "Explode polyline";
             this.ribbonButtonModifyExplodePoly.Click += new System.EventHandler(this.ribbonButtonModifyExplodePoly_Click);
+            // 
+            // ribbonButtonExplodePolySingle
+            // 
+            this.ribbonButtonExplodePolySingle.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonExplodePolySingle.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodePolySingle.Image")));
+            this.ribbonButtonExplodePolySingle.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodePolySingle.LargeImage")));
+            this.ribbonButtonExplodePolySingle.Name = "ribbonButtonExplodePolySingle";
+            this.ribbonButtonExplodePolySingle.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodePolySingle.SmallImage")));
+            this.ribbonButtonExplodePolySingle.Text = "Select single polyline";
+            this.ribbonButtonExplodePolySingle.Click += new System.EventHandler(this.ribbonButtonExplodePolySingle_Click);
+            // 
+            // ribbonButtonExplodePolyRect
+            // 
+            this.ribbonButtonExplodePolyRect.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonExplodePolyRect.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodePolyRect.Image")));
+            this.ribbonButtonExplodePolyRect.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodePolyRect.LargeImage")));
+            this.ribbonButtonExplodePolyRect.Name = "ribbonButtonExplodePolyRect";
+            this.ribbonButtonExplodePolyRect.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodePolyRect.SmallImage")));
+            this.ribbonButtonExplodePolyRect.Text = "Select polylines with a rectangle";
+            this.ribbonButtonExplodePolyRect.Click += new System.EventHandler(this.ribbonButtonExplodePolyRect_Click);
             // 
             // ribbonButtonModifyExplodeSpline
             // 
@@ -1886,6 +2231,46 @@
             this.ribbonButtonModifyExplodeEllipse.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodeEllipse.ToolTipImage")));
             this.ribbonButtonModifyExplodeEllipse.ToolTipTitle = "Explode ellipse";
             this.ribbonButtonModifyExplodeEllipse.Click += new System.EventHandler(this.ribbonButtonModifyExplodeEllipse_Click);
+            // 
+            // ribbonButtonModifyExplodeEllipseArcs
+            // 
+            this.ribbonButtonModifyExplodeEllipseArcs.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonModifyExplodeEllipseArcs.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodeEllipseArcs.Image")));
+            this.ribbonButtonModifyExplodeEllipseArcs.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodeEllipseArcs.LargeImage")));
+            this.ribbonButtonModifyExplodeEllipseArcs.Name = "ribbonButtonModifyExplodeEllipseArcs";
+            this.ribbonButtonModifyExplodeEllipseArcs.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodeEllipseArcs.SmallImage")));
+            this.ribbonButtonModifyExplodeEllipseArcs.Text = "Ellipse to arcs";
+            this.ribbonButtonModifyExplodeEllipseArcs.Click += new System.EventHandler(this.ribbonButtonModifyExplodeEllipseArcs_Click);
+            // 
+            // ribbonButtonModifyExplodeCircleArcs
+            // 
+            this.ribbonButtonModifyExplodeCircleArcs.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonModifyExplodeCircleArcs.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodeCircleArcs.Image")));
+            this.ribbonButtonModifyExplodeCircleArcs.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodeCircleArcs.LargeImage")));
+            this.ribbonButtonModifyExplodeCircleArcs.Name = "ribbonButtonModifyExplodeCircleArcs";
+            this.ribbonButtonModifyExplodeCircleArcs.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyExplodeCircleArcs.SmallImage")));
+            this.ribbonButtonModifyExplodeCircleArcs.Text = "Circle to arcs";
+            this.ribbonButtonModifyExplodeCircleArcs.Click += new System.EventHandler(this.ribbonButtonModifyExplodeCircleArcs_Click);
+            // 
+            // ribbonButtonModifyLw2Poly
+            // 
+            this.ribbonButtonModifyLw2Poly.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonModifyLw2Poly.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyLw2Poly.Image")));
+            this.ribbonButtonModifyLw2Poly.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyLw2Poly.LargeImage")));
+            this.ribbonButtonModifyLw2Poly.Name = "ribbonButtonModifyLw2Poly";
+            this.ribbonButtonModifyLw2Poly.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyLw2Poly.SmallImage")));
+            this.ribbonButtonModifyLw2Poly.Text = "Lwpolyline to polyline";
+            this.ribbonButtonModifyLw2Poly.Click += new System.EventHandler(this.ribbonButtonModifyLw2Poly_Click);
+            // 
+            // ribbonButtonModifyPoly2Lw
+            // 
+            this.ribbonButtonModifyPoly2Lw.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonModifyPoly2Lw.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyPoly2Lw.Image")));
+            this.ribbonButtonModifyPoly2Lw.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyPoly2Lw.LargeImage")));
+            this.ribbonButtonModifyPoly2Lw.Name = "ribbonButtonModifyPoly2Lw";
+            this.ribbonButtonModifyPoly2Lw.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyPoly2Lw.SmallImage")));
+            this.ribbonButtonModifyPoly2Lw.Text = "Polyline to lwpolyline";
+            this.ribbonButtonModifyPoly2Lw.Click += new System.EventHandler(this.ribbonButtonModifyPoly2Lw_Click);
             // 
             // ribbonButtonModifyExplodeRegion
             // 
@@ -1970,22 +2355,71 @@
             // 
             // ribbonButtonModifyJoin
             // 
+            this.ribbonButtonModifyJoin.DropDownItems.Add(this.ribbonButtonJoinTwoEntities);
+            this.ribbonButtonModifyJoin.DropDownItems.Add(this.ribbonButtonAutoJoinWindow);
+            this.ribbonButtonModifyJoin.DropDownItems.Add(this.ribbonButtonAutoJoinAll);
             this.ribbonButtonModifyJoin.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyJoin.Image")));
             this.ribbonButtonModifyJoin.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyJoin.LargeImage")));
             this.ribbonButtonModifyJoin.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButtonModifyJoin.Name = "ribbonButtonModifyJoin";
             this.ribbonButtonModifyJoin.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyJoin.SmallImage")));
+            this.ribbonButtonModifyJoin.Style = System.Windows.Forms.RibbonButtonStyle.SplitDropDown;
             this.ribbonButtonModifyJoin.Text = "";
             this.ribbonButtonModifyJoin.ToolTip = "Joins two entities";
             this.ribbonButtonModifyJoin.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonModifyJoin.ToolTipImage")));
             this.ribbonButtonModifyJoin.ToolTipTitle = "Join";
             this.ribbonButtonModifyJoin.Click += new System.EventHandler(this.ribbonButtonModifyJoin_Click);
             // 
+            // ribbonButtonJoinTwoEntities
+            // 
+            this.ribbonButtonJoinTwoEntities.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonJoinTwoEntities.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonJoinTwoEntities.Image")));
+            this.ribbonButtonJoinTwoEntities.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonJoinTwoEntities.LargeImage")));
+            this.ribbonButtonJoinTwoEntities.Name = "ribbonButtonJoinTwoEntities";
+            this.ribbonButtonJoinTwoEntities.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonJoinTwoEntities.SmallImage")));
+            this.ribbonButtonJoinTwoEntities.Text = "Join two entites";
+            this.ribbonButtonJoinTwoEntities.Click += new System.EventHandler(this.ribbonButtonJoinTwoEntities_Click);
+            // 
+            // ribbonButtonAutoJoinWindow
+            // 
+            this.ribbonButtonAutoJoinWindow.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonAutoJoinWindow.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAutoJoinWindow.Image")));
+            this.ribbonButtonAutoJoinWindow.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAutoJoinWindow.LargeImage")));
+            this.ribbonButtonAutoJoinWindow.Name = "ribbonButtonAutoJoinWindow";
+            this.ribbonButtonAutoJoinWindow.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAutoJoinWindow.SmallImage")));
+            this.ribbonButtonAutoJoinWindow.Text = "Auto join entities selecting by windows";
+            this.ribbonButtonAutoJoinWindow.Click += new System.EventHandler(this.ribbonButtonAutoJoinWindow_Click);
+            // 
+            // ribbonButtonAutoJoinAll
+            // 
+            this.ribbonButtonAutoJoinAll.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonAutoJoinAll.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAutoJoinAll.Image")));
+            this.ribbonButtonAutoJoinAll.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAutoJoinAll.LargeImage")));
+            this.ribbonButtonAutoJoinAll.Name = "ribbonButtonAutoJoinAll";
+            this.ribbonButtonAutoJoinAll.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAutoJoinAll.SmallImage")));
+            this.ribbonButtonAutoJoinAll.Text = "Auto join all entities";
+            this.ribbonButtonAutoJoinAll.Click += new System.EventHandler(this.ribbonButtonAutoJoinAll_Click);
+            // 
+            // ribbonButtonNormalize
+            // 
+            this.ribbonButtonNormalize.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonNormalize.Image")));
+            this.ribbonButtonNormalize.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonNormalize.LargeImage")));
+            this.ribbonButtonNormalize.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonNormalize.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonNormalize.Name = "ribbonButtonNormalize";
+            this.ribbonButtonNormalize.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonNormalize.SmallImage")));
+            this.ribbonButtonNormalize.ToolTip = "Projects all entities whose normal vector is not 0,0,1 on the XY plane";
+            this.ribbonButtonNormalize.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonNormalize.ToolTipImage")));
+            this.ribbonButtonNormalize.ToolTipTitle = "Normalize entities";
+            this.ribbonButtonNormalize.Click += new System.EventHandler(this.ribbonButtonNormalize_Click);
+            // 
             // ribbonPanelAnnotations
             // 
+            this.ribbonPanelAnnotations.ButtonMoreVisible = false;
             this.ribbonPanelAnnotations.Image = ((System.Drawing.Image)(resources.GetObject("ribbonPanelAnnotations.Image")));
             this.ribbonPanelAnnotations.Items.Add(this.ribbonButtonAnnotationsText);
             this.ribbonPanelAnnotations.Items.Add(this.ribbonButtonAnnotationsDimension);
+            this.ribbonPanelAnnotations.Items.Add(this.ribbonButtonLeader);
             this.ribbonPanelAnnotations.Items.Add(this.ribbonComboBoxDimensionStyle);
             this.ribbonPanelAnnotations.Items.Add(this.ribbonComboBoxTextStyle);
             this.ribbonPanelAnnotations.Items.Add(this.ribbonComboBoxLayout);
@@ -1997,6 +2431,8 @@
             // 
             this.ribbonButtonAnnotationsText.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAnnotationsText.Image")));
             this.ribbonButtonAnnotationsText.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAnnotationsText.LargeImage")));
+            this.ribbonButtonAnnotationsText.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonAnnotationsText.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButtonAnnotationsText.Name = "ribbonButtonAnnotationsText";
             this.ribbonButtonAnnotationsText.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAnnotationsText.SmallImage")));
             this.ribbonButtonAnnotationsText.Text = "Text";
@@ -2014,6 +2450,8 @@
             this.ribbonButtonAnnotationsDimension.DropDownItems.Add(this.ribbonButtonAnnotationsDimensionradius);
             this.ribbonButtonAnnotationsDimension.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAnnotationsDimension.Image")));
             this.ribbonButtonAnnotationsDimension.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAnnotationsDimension.LargeImage")));
+            this.ribbonButtonAnnotationsDimension.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonAnnotationsDimension.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButtonAnnotationsDimension.Name = "ribbonButtonAnnotationsDimension";
             this.ribbonButtonAnnotationsDimension.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAnnotationsDimension.SmallImage")));
             this.ribbonButtonAnnotationsDimension.Style = System.Windows.Forms.RibbonButtonStyle.SplitDropDown;
@@ -2150,6 +2588,20 @@
             this.ribbonButtonAnnotationsDimensionradius.Text = "Radius";
             this.ribbonButtonAnnotationsDimensionradius.Click += new System.EventHandler(this.ribbonButtonAnnotationsDimensionradius_Click);
             // 
+            // ribbonButtonLeader
+            // 
+            this.ribbonButtonLeader.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonLeader.Image")));
+            this.ribbonButtonLeader.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonLeader.LargeImage")));
+            this.ribbonButtonLeader.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonLeader.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonLeader.Name = "ribbonButtonLeader";
+            this.ribbonButtonLeader.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonLeader.SmallImage")));
+            this.ribbonButtonLeader.Text = "Leader";
+            this.ribbonButtonLeader.ToolTip = "Creates LEADER entities";
+            this.ribbonButtonLeader.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonLeader.ToolTipImage")));
+            this.ribbonButtonLeader.ToolTipTitle = "Leader";
+            this.ribbonButtonLeader.Click += new System.EventHandler(this.ribbonButtonLeader_Click);
+            // 
             // ribbonComboBoxDimensionStyle
             // 
             this.ribbonComboBoxDimensionStyle.AllowTextEdit = false;
@@ -2193,19 +2645,21 @@
             this.ribbonComboBoxLayout.Text = "Layout";
             this.ribbonComboBoxLayout.TextAlignment = System.Windows.Forms.RibbonItem.RibbonItemTextAlignment.Right;
             this.ribbonComboBoxLayout.TextBoxText = "";
-            this.ribbonComboBoxLayout.Visible = false;
             this.ribbonComboBoxLayout.DropDownItemClicked += new System.Windows.Forms.RibbonComboBox.RibbonItemEventHandler(this.ribbonComboBoxLayout_DropDownItemClicked);
             // 
             // ribbonPanelProperites
             // 
+            this.ribbonPanelProperites.ButtonMoreVisible = false;
             this.ribbonPanelProperites.Image = ((System.Drawing.Image)(resources.GetObject("ribbonPanelProperites.Image")));
             this.ribbonPanelProperites.Items.Add(this.ribbonComboBoxLayers);
             this.ribbonPanelProperites.Items.Add(this.ribbonComboBoxLineTypes);
             this.ribbonPanelProperites.Items.Add(this.ribbonItemGroupCurrentColor);
-            this.ribbonPanelProperites.Items.Add(this.ribbonButtonPropertiesUnits);
             this.ribbonPanelProperites.Items.Add(this.ribbonTextBoxElevation);
             this.ribbonPanelProperites.Items.Add(this.ribbonTextBoxThickness);
             this.ribbonPanelProperites.Items.Add(this.ribbonTextBoxLtScale);
+            this.ribbonPanelProperites.Items.Add(this.ribbonButtonPropertiesUnits);
+            this.ribbonPanelProperites.Items.Add(this.ribbonButtonPropertiesLayers);
+            this.ribbonPanelProperites.Items.Add(this.ribbonButtonPropertiesDimStyles);
             this.ribbonPanelProperites.Name = "ribbonPanelProperites";
             this.ribbonPanelProperites.Text = "Properties";
             this.ribbonPanelProperites.ButtonMoreClick += new System.EventHandler(this.ribbonPanelProperites_ButtonMoreClick);
@@ -2302,18 +2756,6 @@
             this.ribbonLabelCurrentColor.ToolTipTitle = "Current color";
             this.ribbonLabelCurrentColor.Click += new System.EventHandler(this.ribbonLabelCurrentColor_Click);
             // 
-            // ribbonButtonPropertiesUnits
-            // 
-            this.ribbonButtonPropertiesUnits.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesUnits.Image")));
-            this.ribbonButtonPropertiesUnits.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesUnits.LargeImage")));
-            this.ribbonButtonPropertiesUnits.Name = "ribbonButtonPropertiesUnits";
-            this.ribbonButtonPropertiesUnits.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesUnits.SmallImage")));
-            this.ribbonButtonPropertiesUnits.Text = "Units";
-            this.ribbonButtonPropertiesUnits.ToolTip = "Specifies drawing units";
-            this.ribbonButtonPropertiesUnits.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesUnits.ToolTipImage")));
-            this.ribbonButtonPropertiesUnits.ToolTipTitle = "Drawing Units";
-            this.ribbonButtonPropertiesUnits.Click += new System.EventHandler(this.ribbonButtonPropertiesUnits_Click);
-            // 
             // ribbonTextBoxElevation
             // 
             this.ribbonTextBoxElevation.LabelWidth = 90;
@@ -2356,6 +2798,47 @@
             this.ribbonTextBoxLtScale.TextBoxKeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ribbonTextBoxLtScale_TextBoxKeyPress);
             this.ribbonTextBoxLtScale.TextBoxValidated += new System.EventHandler(this.ribbonTextBoxLtScale_TextBoxValidated);
             // 
+            // ribbonButtonPropertiesUnits
+            // 
+            this.ribbonButtonPropertiesUnits.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesUnits.Image")));
+            this.ribbonButtonPropertiesUnits.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesUnits.LargeImage")));
+            this.ribbonButtonPropertiesUnits.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonPropertiesUnits.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonPropertiesUnits.Name = "ribbonButtonPropertiesUnits";
+            this.ribbonButtonPropertiesUnits.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesUnits.SmallImage")));
+            this.ribbonButtonPropertiesUnits.Text = "Units";
+            this.ribbonButtonPropertiesUnits.ToolTip = "Specifies drawing units";
+            this.ribbonButtonPropertiesUnits.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesUnits.ToolTipImage")));
+            this.ribbonButtonPropertiesUnits.ToolTipTitle = "Drawing Units";
+            this.ribbonButtonPropertiesUnits.Click += new System.EventHandler(this.ribbonButtonPropertiesUnits_Click);
+            // 
+            // ribbonButtonPropertiesLayers
+            // 
+            this.ribbonButtonPropertiesLayers.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesLayers.Image")));
+            this.ribbonButtonPropertiesLayers.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesLayers.LargeImage")));
+            this.ribbonButtonPropertiesLayers.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonPropertiesLayers.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonPropertiesLayers.Name = "ribbonButtonPropertiesLayers";
+            this.ribbonButtonPropertiesLayers.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesLayers.SmallImage")));
+            this.ribbonButtonPropertiesLayers.Text = "Layers";
+            this.ribbonButtonPropertiesLayers.ToolTip = "Open layers dialog";
+            this.ribbonButtonPropertiesLayers.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesLayers.ToolTipImage")));
+            this.ribbonButtonPropertiesLayers.ToolTipTitle = "Layers";
+            this.ribbonButtonPropertiesLayers.Click += new System.EventHandler(this.ribbonButtonPropertiesLayers_Click);
+            // 
+            // ribbonButtonPropertiesDimStyles
+            // 
+            this.ribbonButtonPropertiesDimStyles.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesDimStyles.Image")));
+            this.ribbonButtonPropertiesDimStyles.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesDimStyles.LargeImage")));
+            this.ribbonButtonPropertiesDimStyles.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonPropertiesDimStyles.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonPropertiesDimStyles.Name = "ribbonButtonPropertiesDimStyles";
+            this.ribbonButtonPropertiesDimStyles.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesDimStyles.SmallImage")));
+            this.ribbonButtonPropertiesDimStyles.ToolTip = "Opens dimension styles dialog";
+            this.ribbonButtonPropertiesDimStyles.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPropertiesDimStyles.ToolTipImage")));
+            this.ribbonButtonPropertiesDimStyles.ToolTipTitle = "Dimension Styles";
+            this.ribbonButtonPropertiesDimStyles.Click += new System.EventHandler(this.ribbonButtonPropertiesDimStyles_Click);
+            // 
             // ribbonPanelObjectSnap
             // 
             this.ribbonPanelObjectSnap.ButtonMoreVisible = false;
@@ -2369,7 +2852,10 @@
             this.ribbonPanelObjectSnap.Items.Add(this.ribbonButtonObjectSnapNearest);
             this.ribbonPanelObjectSnap.Items.Add(this.ribbonButtonObjectSnapNode);
             this.ribbonPanelObjectSnap.Items.Add(this.ribbonButtonObjectSnapCenter);
+            this.ribbonPanelObjectSnap.Items.Add(this.ribbonButtonObjectSnapGeometricCenter);
             this.ribbonPanelObjectSnap.Items.Add(this.ribbonButtonObjectSnapIntersection);
+            this.ribbonPanelObjectSnap.Items.Add(this.ribbonButtonObjectSnapSelectAll);
+            this.ribbonPanelObjectSnap.Items.Add(this.ribbonButtonObjectSnapClear);
             this.ribbonPanelObjectSnap.Name = "ribbonPanelObjectSnap";
             this.ribbonPanelObjectSnap.Text = "Object Snap";
             // 
@@ -2378,6 +2864,7 @@
             this.ribbonButtonObjectSnapEndpoint.CheckOnClick = true;
             this.ribbonButtonObjectSnapEndpoint.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapEndpoint.Image")));
             this.ribbonButtonObjectSnapEndpoint.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapEndpoint.LargeImage")));
+            this.ribbonButtonObjectSnapEndpoint.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButtonObjectSnapEndpoint.Name = "ribbonButtonObjectSnapEndpoint";
             this.ribbonButtonObjectSnapEndpoint.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapEndpoint.SmallImage")));
             this.ribbonButtonObjectSnapEndpoint.Text = "Endpoint";
@@ -2480,7 +2967,7 @@
             this.ribbonButtonObjectSnapNearest.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButtonObjectSnapNearest.Name = "ribbonButtonObjectSnapNearest";
             this.ribbonButtonObjectSnapNearest.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapNearest.SmallImage")));
-            this.ribbonButtonObjectSnapNearest.Text = "ribbonButton30";
+            this.ribbonButtonObjectSnapNearest.Text = "Nearest";
             this.ribbonButtonObjectSnapNearest.ToolTip = "Snaps to the nearest point on an object";
             this.ribbonButtonObjectSnapNearest.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapNearest.ToolTipImage")));
             this.ribbonButtonObjectSnapNearest.ToolTipTitle = "Snap, Nearest";
@@ -2495,7 +2982,7 @@
             this.ribbonButtonObjectSnapNode.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButtonObjectSnapNode.Name = "ribbonButtonObjectSnapNode";
             this.ribbonButtonObjectSnapNode.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapNode.SmallImage")));
-            this.ribbonButtonObjectSnapNode.Text = "ribbonButton31";
+            this.ribbonButtonObjectSnapNode.Text = "Node";
             this.ribbonButtonObjectSnapNode.ToolTip = "Snaps to a point object";
             this.ribbonButtonObjectSnapNode.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapNode.ToolTipImage")));
             this.ribbonButtonObjectSnapNode.ToolTipTitle = "Snap, Node";
@@ -2516,6 +3003,20 @@
             this.ribbonButtonObjectSnapCenter.ToolTipTitle = "Snap, Center";
             this.ribbonButtonObjectSnapCenter.Click += new System.EventHandler(this.ribbonButtonObjectSnapCenter_Click_1);
             // 
+            // ribbonButtonObjectSnapGeometricCenter
+            // 
+            this.ribbonButtonObjectSnapGeometricCenter.CheckOnClick = true;
+            this.ribbonButtonObjectSnapGeometricCenter.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapGeometricCenter.Image")));
+            this.ribbonButtonObjectSnapGeometricCenter.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapGeometricCenter.LargeImage")));
+            this.ribbonButtonObjectSnapGeometricCenter.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonObjectSnapGeometricCenter.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonObjectSnapGeometricCenter.Name = "ribbonButtonObjectSnapGeometricCenter";
+            this.ribbonButtonObjectSnapGeometricCenter.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapGeometricCenter.SmallImage")));
+            this.ribbonButtonObjectSnapGeometricCenter.ToolTip = "Snaps to the geometric centre point of a polyline, 2d polyline and 2d spline.";
+            this.ribbonButtonObjectSnapGeometricCenter.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapGeometricCenter.ToolTipImage")));
+            this.ribbonButtonObjectSnapGeometricCenter.ToolTipTitle = "Snap, Geometric center";
+            this.ribbonButtonObjectSnapGeometricCenter.Click += new System.EventHandler(this.ribbonButtonObjectSnapGeometricCenter_Click);
+            // 
             // ribbonButtonObjectSnapIntersection
             // 
             this.ribbonButtonObjectSnapIntersection.CheckOnClick = true;
@@ -2525,11 +3026,39 @@
             this.ribbonButtonObjectSnapIntersection.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButtonObjectSnapIntersection.Name = "ribbonButtonObjectSnapIntersection";
             this.ribbonButtonObjectSnapIntersection.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapIntersection.SmallImage")));
-            this.ribbonButtonObjectSnapIntersection.Text = "ribbonButton30";
+            this.ribbonButtonObjectSnapIntersection.Text = "Intersection";
             this.ribbonButtonObjectSnapIntersection.ToolTip = "Snaps to the intersection of two objecs";
             this.ribbonButtonObjectSnapIntersection.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapIntersection.ToolTipImage")));
             this.ribbonButtonObjectSnapIntersection.ToolTipTitle = "Snap, Intersection";
             this.ribbonButtonObjectSnapIntersection.Click += new System.EventHandler(this.ribbonButtonObjectSnapIntersection_Click_1);
+            // 
+            // ribbonButtonObjectSnapSelectAll
+            // 
+            this.ribbonButtonObjectSnapSelectAll.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapSelectAll.Image")));
+            this.ribbonButtonObjectSnapSelectAll.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapSelectAll.LargeImage")));
+            this.ribbonButtonObjectSnapSelectAll.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonObjectSnapSelectAll.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonObjectSnapSelectAll.Name = "ribbonButtonObjectSnapSelectAll";
+            this.ribbonButtonObjectSnapSelectAll.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapSelectAll.SmallImage")));
+            this.ribbonButtonObjectSnapSelectAll.Text = "Select all";
+            this.ribbonButtonObjectSnapSelectAll.ToolTip = "Select all";
+            this.ribbonButtonObjectSnapSelectAll.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapSelectAll.ToolTipImage")));
+            this.ribbonButtonObjectSnapSelectAll.ToolTipTitle = "Snap, Select all snap modes";
+            this.ribbonButtonObjectSnapSelectAll.Click += new System.EventHandler(this.ribbonButtonObjectSnapSelectAll_Click);
+            // 
+            // ribbonButtonObjectSnapClear
+            // 
+            this.ribbonButtonObjectSnapClear.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapClear.Image")));
+            this.ribbonButtonObjectSnapClear.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapClear.LargeImage")));
+            this.ribbonButtonObjectSnapClear.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonObjectSnapClear.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonObjectSnapClear.Name = "ribbonButtonObjectSnapClear";
+            this.ribbonButtonObjectSnapClear.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapClear.SmallImage")));
+            this.ribbonButtonObjectSnapClear.Text = "Clear all";
+            this.ribbonButtonObjectSnapClear.ToolTip = "Clear all";
+            this.ribbonButtonObjectSnapClear.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectSnapClear.ToolTipImage")));
+            this.ribbonButtonObjectSnapClear.ToolTipTitle = "Snap, Clear all";
+            this.ribbonButtonObjectSnapClear.Click += new System.EventHandler(this.ribbonButtonObjectSnapClear_Click);
             // 
             // ribbonPanelNavigate
             // 
@@ -2542,7 +3071,7 @@
             this.ribbonPanelNavigate.Items.Add(this.ribbonButtonZoomWindow);
             this.ribbonPanelNavigate.Items.Add(this.ribbonButtonZoomPrev);
             this.ribbonPanelNavigate.Items.Add(this.ribbonButtonZoomNext);
-            this.ribbonPanelNavigate.Items.Add(this.ribbonButtonTreeView);
+            this.ribbonPanelNavigate.Items.Add(this.ribbonButtonZoomCenter);
             this.ribbonPanelNavigate.Name = "ribbonPanelNavigate";
             this.ribbonPanelNavigate.Text = "Navigate";
             // 
@@ -2653,15 +3182,18 @@
             this.ribbonButtonZoomNext.ToolTipTitle = "Zoom, Next";
             this.ribbonButtonZoomNext.Click += new System.EventHandler(this.ribbonButton12_Click);
             // 
-            // ribbonButtonTreeView
+            // ribbonButtonZoomCenter
             // 
-            this.ribbonButtonTreeView.CheckOnClick = true;
-            this.ribbonButtonTreeView.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTreeView.Image")));
-            this.ribbonButtonTreeView.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTreeView.LargeImage")));
-            this.ribbonButtonTreeView.Name = "ribbonButtonTreeView";
-            this.ribbonButtonTreeView.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTreeView.SmallImage")));
-            this.ribbonButtonTreeView.Text = "Tree view";
-            this.ribbonButtonTreeView.Click += new System.EventHandler(this.ribbonButtonTreeView_Click);
+            this.ribbonButtonZoomCenter.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonZoomCenter.Image")));
+            this.ribbonButtonZoomCenter.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonZoomCenter.LargeImage")));
+            this.ribbonButtonZoomCenter.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonZoomCenter.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonZoomCenter.Name = "ribbonButtonZoomCenter";
+            this.ribbonButtonZoomCenter.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonZoomCenter.SmallImage")));
+            this.ribbonButtonZoomCenter.ToolTip = "Zooms to center";
+            this.ribbonButtonZoomCenter.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonZoomCenter.ToolTipImage")));
+            this.ribbonButtonZoomCenter.ToolTipTitle = "Zoom, center";
+            this.ribbonButtonZoomCenter.Click += new System.EventHandler(this.ribbonButtonZoomCenter_Click);
             // 
             // ribbonPanelView
             // 
@@ -2671,6 +3203,8 @@
             this.ribbonPanelView.Items.Add(this.ribbonComboBoxRendering);
             this.ribbonPanelView.Items.Add(this.ribbonComboBoxViews);
             this.ribbonPanelView.Items.Add(this.ribbonButtonViewRefresh);
+            this.ribbonPanelView.Items.Add(this.ribbonButtonOrbit3D);
+            this.ribbonPanelView.Items.Add(this.ribbonButtonViewTreeView);
             this.ribbonPanelView.Name = "ribbonPanelView";
             this.ribbonPanelView.Text = "View";
             // 
@@ -2842,20 +3376,53 @@
             this.ribbonButtonViewRefresh.ToolTipTitle = "Refresh";
             this.ribbonButtonViewRefresh.Click += new System.EventHandler(this.ribbonButtonViewRefresh_Click);
             // 
+            // ribbonButtonOrbit3D
+            // 
+            this.ribbonButtonOrbit3D.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonOrbit3D.Image")));
+            this.ribbonButtonOrbit3D.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonOrbit3D.LargeImage")));
+            this.ribbonButtonOrbit3D.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonOrbit3D.Name = "ribbonButtonOrbit3D";
+            this.ribbonButtonOrbit3D.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonOrbit3D.SmallImage")));
+            this.ribbonButtonOrbit3D.Text = "3D Orbit";
+            this.ribbonButtonOrbit3D.ToolTip = "Rotates the view in 3D space";
+            this.ribbonButtonOrbit3D.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonOrbit3D.ToolTipImage")));
+            this.ribbonButtonOrbit3D.Click += new System.EventHandler(this.ribbonButtonOrbit3D_Click);
+            // 
+            // ribbonButtonViewTreeView
+            // 
+            this.ribbonButtonViewTreeView.CheckOnClick = true;
+            this.ribbonButtonViewTreeView.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonViewTreeView.Image")));
+            this.ribbonButtonViewTreeView.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonViewTreeView.LargeImage")));
+            this.ribbonButtonViewTreeView.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonViewTreeView.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonViewTreeView.Name = "ribbonButtonViewTreeView";
+            this.ribbonButtonViewTreeView.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonViewTreeView.SmallImage")));
+            this.ribbonButtonViewTreeView.Tag = "Tree View";
+            this.ribbonButtonViewTreeView.ToolTip = "Displays a tree view of file structure";
+            this.ribbonButtonViewTreeView.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonViewTreeView.ToolTipImage")));
+            this.ribbonButtonViewTreeView.ToolTipTitle = "Tree View";
+            this.ribbonButtonViewTreeView.Click += new System.EventHandler(this.ribbonButtonViewTreeView_Click);
+            // 
             // ribbonPanelInquiryMeasure
             // 
+            this.ribbonPanelInquiryMeasure.ButtonMoreVisible = false;
             this.ribbonPanelInquiryMeasure.Image = ((System.Drawing.Image)(resources.GetObject("ribbonPanelInquiryMeasure.Image")));
             this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonInquiryMeasure);
+            this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonDrawingInfo);
             this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonInquiryEntityInfo);
+            this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonShowSelectedEntitiesInfo);
+            this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonObjectByHandle);
             this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonInquiryXdata);
             this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonInquiryTest);
             this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButton1SaveTest);
             this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonPointInPolygon);
             this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonShowFilledAreas);
-            this.ribbonPanelInquiryMeasure.Items.Add(this.barButtonItemGrabPoints);
             this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonPrintEntityProp);
             this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonPrintEntitiesList);
-            
+            this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonShowData);
+            this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonTruTOPS);
+            this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonSplitSections);
+            this.ribbonPanelInquiryMeasure.Items.Add(this.ribbonButtonRecoverDXFFIle);
             this.ribbonPanelInquiryMeasure.Name = "ribbonPanelInquiryMeasure";
             this.ribbonPanelInquiryMeasure.Text = "Inquiry";
             this.ribbonPanelInquiryMeasure.ButtonMoreClick += new System.EventHandler(this.ribbonPanelInquiry_ButtonMoreClick);
@@ -2965,6 +3532,20 @@
             this.ribbonButtonInquiryMeasureFilledEmpty.Text = "Filled and empty areas";
             this.ribbonButtonInquiryMeasureFilledEmpty.Click += new System.EventHandler(this.ribbonButtonInquiryMeasureFilledEmpty_Click);
             // 
+            // ribbonDrawingInfo
+            // 
+            this.ribbonDrawingInfo.Image = ((System.Drawing.Image)(resources.GetObject("ribbonDrawingInfo.Image")));
+            this.ribbonDrawingInfo.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonDrawingInfo.LargeImage")));
+            this.ribbonDrawingInfo.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonDrawingInfo.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonDrawingInfo.Name = "ribbonDrawingInfo";
+            this.ribbonDrawingInfo.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonDrawingInfo.SmallImage")));
+            this.ribbonDrawingInfo.Text = "Drawing info";
+            this.ribbonDrawingInfo.ToolTip = "Shows drawing information";
+            this.ribbonDrawingInfo.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonDrawingInfo.ToolTipImage")));
+            this.ribbonDrawingInfo.ToolTipTitle = "Drawing info";
+            this.ribbonDrawingInfo.Click += new System.EventHandler(this.ribbonDrawingInfo_Click);
+            // 
             // ribbonButtonInquiryEntityInfo
             // 
             this.ribbonButtonInquiryEntityInfo.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryEntityInfo.Image")));
@@ -2973,11 +3554,36 @@
             this.ribbonButtonInquiryEntityInfo.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButtonInquiryEntityInfo.Name = "ribbonButtonInquiryEntityInfo";
             this.ribbonButtonInquiryEntityInfo.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryEntityInfo.SmallImage")));
-            this.ribbonButtonInquiryEntityInfo.Text = "ribbonButton4";
+            this.ribbonButtonInquiryEntityInfo.Text = "Entity Properties";
             this.ribbonButtonInquiryEntityInfo.ToolTip = "Shows entity properties selecting it with a mouse click";
             this.ribbonButtonInquiryEntityInfo.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryEntityInfo.ToolTipImage")));
             this.ribbonButtonInquiryEntityInfo.ToolTipTitle = "Entity Properties";
             this.ribbonButtonInquiryEntityInfo.Click += new System.EventHandler(this.ribbonButtonInquiryEntityInfo_Click);
+            // 
+            // ribbonButtonShowSelectedEntitiesInfo
+            // 
+            this.ribbonButtonShowSelectedEntitiesInfo.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowSelectedEntitiesInfo.Image")));
+            this.ribbonButtonShowSelectedEntitiesInfo.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowSelectedEntitiesInfo.LargeImage")));
+            this.ribbonButtonShowSelectedEntitiesInfo.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonShowSelectedEntitiesInfo.Name = "ribbonButtonShowSelectedEntitiesInfo";
+            this.ribbonButtonShowSelectedEntitiesInfo.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowSelectedEntitiesInfo.SmallImage")));
+            this.ribbonButtonShowSelectedEntitiesInfo.ToolTip = "Shows selected entities properties";
+            this.ribbonButtonShowSelectedEntitiesInfo.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowSelectedEntitiesInfo.ToolTipImage")));
+            this.ribbonButtonShowSelectedEntitiesInfo.ToolTipTitle = "Selected entities Properties";
+            this.ribbonButtonShowSelectedEntitiesInfo.Click += new System.EventHandler(this.ribbonButtonShowSelectedEntitiesInfo_Click);
+            // 
+            // ribbonButtonObjectByHandle
+            // 
+            this.ribbonButtonObjectByHandle.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectByHandle.Image")));
+            this.ribbonButtonObjectByHandle.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectByHandle.LargeImage")));
+            this.ribbonButtonObjectByHandle.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonObjectByHandle.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonObjectByHandle.Name = "ribbonButtonObjectByHandle";
+            this.ribbonButtonObjectByHandle.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectByHandle.SmallImage")));
+            this.ribbonButtonObjectByHandle.ToolTip = "Shows object properties selecting it by handle";
+            this.ribbonButtonObjectByHandle.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonObjectByHandle.ToolTipImage")));
+            this.ribbonButtonObjectByHandle.ToolTipTitle = "Object properties by handle";
+            this.ribbonButtonObjectByHandle.Click += new System.EventHandler(this.ribbonButtonObjectByHandle_Click);
             // 
             // ribbonButtonInquiryXdata
             // 
@@ -3040,17 +3646,6 @@
             this.ribbonButtonShowFilledAreas.ToolTip = "Show filled areas";
             this.ribbonButtonShowFilledAreas.Click += new System.EventHandler(this.ribbonButtonShowFilledAreas_Click);
             // 
-            // barButtonItemGrabPoints
-            // 
-            this.barButtonItemGrabPoints.Image = ((System.Drawing.Image)(resources.GetObject("barButtonItemGrabPoints.Image")));
-            this.barButtonItemGrabPoints.LargeImage = ((System.Drawing.Image)(resources.GetObject("barButtonItemGrabPoints.LargeImage")));
-            this.barButtonItemGrabPoints.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
-            this.barButtonItemGrabPoints.Name = "barButtonItemGrabPoints";
-            this.barButtonItemGrabPoints.SmallImage = ((System.Drawing.Image)(resources.GetObject("barButtonItemGrabPoints.SmallImage")));
-            this.barButtonItemGrabPoints.ToolTip = "Shows Grab Points";
-            this.barButtonItemGrabPoints.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("barButtonItemGrabPoints.ToolTipImage")));
-            this.barButtonItemGrabPoints.Click += new System.EventHandler(this.barButtonItemGrabPoints_Click);
-            // 
             // ribbonButtonPrintEntityProp
             // 
             this.ribbonButtonPrintEntityProp.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPrintEntityProp.Image")));
@@ -3070,7 +3665,55 @@
             this.ribbonButtonPrintEntitiesList.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPrintEntitiesList.SmallImage")));
             this.ribbonButtonPrintEntitiesList.ToolTip = "Print enitites list";
             this.ribbonButtonPrintEntitiesList.Click += new System.EventHandler(this.ribbonButtonPrintEntitiesList_Click);
-           
+            // 
+            // ribbonButtonShowData
+            // 
+            this.ribbonButtonShowData.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowData.Image")));
+            this.ribbonButtonShowData.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowData.LargeImage")));
+            this.ribbonButtonShowData.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonShowData.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonShowData.Name = "ribbonButtonShowData";
+            this.ribbonButtonShowData.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowData.SmallImage")));
+            this.ribbonButtonShowData.ToolTip = "Shows entities data on drawing";
+            this.ribbonButtonShowData.ToolTipTitle = "Show entities data";
+            this.ribbonButtonShowData.Click += new System.EventHandler(this.ribbonButtonShowData_Click);
+            // 
+            // ribbonButtonTruTOPS
+            // 
+            this.ribbonButtonTruTOPS.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTruTOPS.Image")));
+            this.ribbonButtonTruTOPS.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTruTOPS.LargeImage")));
+            this.ribbonButtonTruTOPS.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonTruTOPS.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonTruTOPS.Name = "ribbonButtonTruTOPS";
+            this.ribbonButtonTruTOPS.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTruTOPS.SmallImage")));
+            this.ribbonButtonTruTOPS.ToolTip = "Process TruTops Drawings";
+            this.ribbonButtonTruTOPS.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonTruTOPS.ToolTipImage")));
+            this.ribbonButtonTruTOPS.ToolTipTitle = "Process TruTops Drawings";
+            this.ribbonButtonTruTOPS.Click += new System.EventHandler(this.ribbonButtonTruTOPS_Click);
+            // 
+            // ribbonButtonSplitSections
+            // 
+            this.ribbonButtonSplitSections.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonSplitSections.Image")));
+            this.ribbonButtonSplitSections.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonSplitSections.LargeImage")));
+            this.ribbonButtonSplitSections.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonSplitSections.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonSplitSections.Name = "ribbonButtonSplitSections";
+            this.ribbonButtonSplitSections.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonSplitSections.SmallImage")));
+            this.ribbonButtonSplitSections.ToolTip = "Splits current drawing into SECTIONS txt files";
+            this.ribbonButtonSplitSections.ToolTipTitle = "Split sections";
+            this.ribbonButtonSplitSections.Click += new System.EventHandler(this.ribbonButtonSplitSections_Click);
+            // 
+            // ribbonButtonRecoverDXFFIle
+            // 
+            this.ribbonButtonRecoverDXFFIle.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonRecoverDXFFIle.Image")));
+            this.ribbonButtonRecoverDXFFIle.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonRecoverDXFFIle.LargeImage")));
+            this.ribbonButtonRecoverDXFFIle.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonRecoverDXFFIle.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonRecoverDXFFIle.Name = "ribbonButtonRecoverDXFFIle";
+            this.ribbonButtonRecoverDXFFIle.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonRecoverDXFFIle.SmallImage")));
+            this.ribbonButtonRecoverDXFFIle.ToolTip = "Try to recover a DXF file";
+            this.ribbonButtonRecoverDXFFIle.ToolTipTitle = "Recover DXF file";
+            this.ribbonButtonRecoverDXFFIle.Click += new System.EventHandler(this.ribbonButtonRecoverDXFFIle_Click);
             // 
             // ribbonPanelDrawMethods
             // 
@@ -3774,6 +4417,7 @@
             this.ribbonButtonRubberBandStyle.Name = "ribbonButtonRubberBandStyle";
             this.ribbonButtonRubberBandStyle.Text = "Rubber band type";
             this.ribbonButtonRubberBandStyle.TextBoxText = "";
+            this.ribbonButtonRubberBandStyle.DropDownItemClicked += new System.Windows.Forms.RibbonComboBox.RibbonItemEventHandler(this.ribbonButtonRubberBandStyle_DropDownItemClicked);
             // 
             // ribbonButtonRubberBandStyleDashed
             // 
@@ -3828,13 +4472,17 @@
             this.ribbonPanelAspect.Items.Add(this.ribbonButtonShowgrid);
             this.ribbonPanelAspect.Items.Add(this.ribbonButtonGridRuler);
             this.ribbonPanelAspect.Items.Add(this.ribbonButtonCommandLine);
-            this.ribbonPanelAspect.Items.Add(this.ribbonUpDownPickBoxSize);
-            this.ribbonPanelAspect.Items.Add(this.ribbonUpDownRubberPenWidth);
-            this.ribbonPanelAspect.Items.Add(this.ribbonUpDownZoomFactor);
             this.ribbonPanelAspect.Items.Add(this.ribbonButtonDrawingLimits);
             this.ribbonPanelAspect.Items.Add(this.ribbonButtonHighlight);
             this.ribbonPanelAspect.Items.Add(this.ribbonButtonCheckContHighligh);
             this.ribbonPanelAspect.Items.Add(this.ribbonButton11);
+            this.ribbonPanelAspect.Items.Add(this.ribbonButtonShowExtents);
+            this.ribbonPanelAspect.Items.Add(this.ribbonButtonGridInsideLimits);
+            this.ribbonPanelAspect.Items.Add(this.ribbonButtonGrabPoints);
+            this.ribbonPanelAspect.Items.Add(this.ribbonButtonContinuosSelection);
+            this.ribbonPanelAspect.Items.Add(this.ribbonUpDownPickBoxSize);
+            this.ribbonPanelAspect.Items.Add(this.ribbonUpDownRubberPenWidth);
+            this.ribbonPanelAspect.Items.Add(this.ribbonUpDownZoomFactor);
             this.ribbonPanelAspect.Name = "ribbonPanelAspect";
             this.ribbonPanelAspect.Text = "Aspect";
             // 
@@ -3843,9 +4491,11 @@
             this.ribbonButtonShowAxes.CheckOnClick = true;
             this.ribbonButtonShowAxes.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowAxes.Image")));
             this.ribbonButtonShowAxes.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowAxes.LargeImage")));
+            this.ribbonButtonShowAxes.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
+            this.ribbonButtonShowAxes.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButtonShowAxes.Name = "ribbonButtonShowAxes";
             this.ribbonButtonShowAxes.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowAxes.SmallImage")));
-            this.ribbonButtonShowAxes.Text = "Show Axes";
+            this.ribbonButtonShowAxes.Text = "Show axes";
             this.ribbonButtonShowAxes.ToolTip = "Sets whether the control will display the axes";
             this.ribbonButtonShowAxes.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowAxes.ToolTipImage")));
             this.ribbonButtonShowAxes.ToolTipTitle = "Show Axes";
@@ -3856,9 +4506,11 @@
             this.ribbonButtonShowBasepoint.CheckOnClick = true;
             this.ribbonButtonShowBasepoint.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowBasepoint.Image")));
             this.ribbonButtonShowBasepoint.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowBasepoint.LargeImage")));
+            this.ribbonButtonShowBasepoint.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
+            this.ribbonButtonShowBasepoint.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButtonShowBasepoint.Name = "ribbonButtonShowBasepoint";
             this.ribbonButtonShowBasepoint.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowBasepoint.SmallImage")));
-            this.ribbonButtonShowBasepoint.Text = "Show Basepoint";
+            this.ribbonButtonShowBasepoint.Text = "Show basepoint";
             this.ribbonButtonShowBasepoint.ToolTip = "Sets whether the control will display the base point";
             this.ribbonButtonShowBasepoint.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowBasepoint.ToolTipImage")));
             this.ribbonButtonShowBasepoint.ToolTipTitle = "Show Basepoint";
@@ -3869,9 +4521,11 @@
             this.ribbonButtonShowLimits.CheckOnClick = true;
             this.ribbonButtonShowLimits.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowLimits.Image")));
             this.ribbonButtonShowLimits.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowLimits.LargeImage")));
+            this.ribbonButtonShowLimits.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
+            this.ribbonButtonShowLimits.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButtonShowLimits.Name = "ribbonButtonShowLimits";
             this.ribbonButtonShowLimits.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowLimits.SmallImage")));
-            this.ribbonButtonShowLimits.Text = "Show Limits";
+            this.ribbonButtonShowLimits.Text = "Show limits";
             this.ribbonButtonShowLimits.ToolTip = "Sets whether the control will display the drawing limits";
             this.ribbonButtonShowLimits.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowLimits.ToolTipImage")));
             this.ribbonButtonShowLimits.ToolTipTitle = "Show Limits";
@@ -3882,6 +4536,7 @@
             this.ribbonButtonAntialias.CheckOnClick = true;
             this.ribbonButtonAntialias.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAntialias.Image")));
             this.ribbonButtonAntialias.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAntialias.LargeImage")));
+            this.ribbonButtonAntialias.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
             this.ribbonButtonAntialias.Name = "ribbonButtonAntialias";
             this.ribbonButtonAntialias.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonAntialias.SmallImage")));
             this.ribbonButtonAntialias.Text = "Antialias";
@@ -3895,9 +4550,10 @@
             this.ribbonButtonShowgrid.CheckOnClick = true;
             this.ribbonButtonShowgrid.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowgrid.Image")));
             this.ribbonButtonShowgrid.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowgrid.LargeImage")));
+            this.ribbonButtonShowgrid.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
             this.ribbonButtonShowgrid.Name = "ribbonButtonShowgrid";
             this.ribbonButtonShowgrid.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowgrid.SmallImage")));
-            this.ribbonButtonShowgrid.Text = "Show Grid";
+            this.ribbonButtonShowgrid.Text = "Show grid";
             this.ribbonButtonShowgrid.ToolTip = "Sets whether the control will display the grid";
             this.ribbonButtonShowgrid.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowgrid.ToolTipImage")));
             this.ribbonButtonShowgrid.ToolTipTitle = "Show grid";
@@ -3908,9 +4564,10 @@
             this.ribbonButtonGridRuler.CheckOnClick = true;
             this.ribbonButtonGridRuler.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonGridRuler.Image")));
             this.ribbonButtonGridRuler.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonGridRuler.LargeImage")));
+            this.ribbonButtonGridRuler.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
             this.ribbonButtonGridRuler.Name = "ribbonButtonGridRuler";
             this.ribbonButtonGridRuler.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonGridRuler.SmallImage")));
-            this.ribbonButtonGridRuler.Text = "Grid Ruler";
+            this.ribbonButtonGridRuler.Text = "Grid ruler";
             this.ribbonButtonGridRuler.ToolTip = "Sets the displaying of grid ruler";
             this.ribbonButtonGridRuler.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonGridRuler.ToolTipImage")));
             this.ribbonButtonGridRuler.ToolTipTitle = "Show Grid Ruler";
@@ -3921,46 +4578,15 @@
             this.ribbonButtonCommandLine.CheckOnClick = true;
             this.ribbonButtonCommandLine.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonCommandLine.Image")));
             this.ribbonButtonCommandLine.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonCommandLine.LargeImage")));
+            this.ribbonButtonCommandLine.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
             this.ribbonButtonCommandLine.Name = "ribbonButtonCommandLine";
             this.ribbonButtonCommandLine.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonCommandLine.SmallImage")));
-            this.ribbonButtonCommandLine.Text = "Command Line";
+            this.ribbonButtonCommandLine.Text = "Command line";
+            this.ribbonButtonCommandLine.ToolTip = "Displays command line input";
+            this.ribbonButtonCommandLine.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonCommandLine.ToolTipImage")));
+            this.ribbonButtonCommandLine.ToolTipTitle = "Command line";
             this.ribbonButtonCommandLine.Visible = false;
             this.ribbonButtonCommandLine.Click += new System.EventHandler(this.ribbonButtonCommandLine_Click);
-            // 
-            // ribbonUpDownPickBoxSize
-            // 
-            this.ribbonUpDownPickBoxSize.AllowTextEdit = false;
-            this.ribbonUpDownPickBoxSize.Image = ((System.Drawing.Image)(resources.GetObject("ribbonUpDownPickBoxSize.Image")));
-            this.ribbonUpDownPickBoxSize.Name = "ribbonUpDownPickBoxSize";
-            this.ribbonUpDownPickBoxSize.Text = "Pickbox Size";
-            this.ribbonUpDownPickBoxSize.TextBoxText = "";
-            this.ribbonUpDownPickBoxSize.TextBoxWidth = 50;
-            this.ribbonUpDownPickBoxSize.ToolTip = "Pickbox Size";
-            this.ribbonUpDownPickBoxSize.Value = "3";
-            this.ribbonUpDownPickBoxSize.UpButtonClicked += new System.Windows.Forms.MouseEventHandler(this.ribbonUpDownPickBoxSize_UpButtonClicked);
-            this.ribbonUpDownPickBoxSize.DownButtonClicked += new System.Windows.Forms.MouseEventHandler(this.ribbonUpDownPickBoxSize_DownButtonClicked);
-            // 
-            // ribbonUpDownRubberPenWidth
-            // 
-            this.ribbonUpDownRubberPenWidth.AllowTextEdit = false;
-            this.ribbonUpDownRubberPenWidth.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Large;
-            this.ribbonUpDownRubberPenWidth.Name = "ribbonUpDownRubberPenWidth";
-            this.ribbonUpDownRubberPenWidth.Text = "Rubber band pen width";
-            this.ribbonUpDownRubberPenWidth.TextBoxText = "";
-            this.ribbonUpDownRubberPenWidth.TextBoxWidth = 50;
-            this.ribbonUpDownRubberPenWidth.ToolTip = "Rubber band pen width";
-            this.ribbonUpDownRubberPenWidth.Value = "0";
-            this.ribbonUpDownRubberPenWidth.UpButtonClicked += new System.Windows.Forms.MouseEventHandler(this.ribbonUpDownRubberPenWidth_UpButtonClicked);
-            this.ribbonUpDownRubberPenWidth.DownButtonClicked += new System.Windows.Forms.MouseEventHandler(this.ribbonUpDownRubberPenWidth_DownButtonClicked);
-            // 
-            // ribbonUpDownZoomFactor
-            // 
-            this.ribbonUpDownZoomFactor.Name = "ribbonUpDownZoomFactor";
-            this.ribbonUpDownZoomFactor.Text = "Zoom factor %";
-            this.ribbonUpDownZoomFactor.TextBoxText = "";
-            this.ribbonUpDownZoomFactor.TextBoxWidth = 50;
-            this.ribbonUpDownZoomFactor.UpButtonClicked += new System.Windows.Forms.MouseEventHandler(this.ribbonUpDownZoomFactor_UpButtonClicked);
-            this.ribbonUpDownZoomFactor.DownButtonClicked += new System.Windows.Forms.MouseEventHandler(this.ribbonUpDownZoomFactor_DownButtonClicked);
             // 
             // ribbonButtonDrawingLimits
             // 
@@ -3971,6 +4597,9 @@
             this.ribbonButtonDrawingLimits.Name = "ribbonButtonDrawingLimits";
             this.ribbonButtonDrawingLimits.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDrawingLimits.SmallImage")));
             this.ribbonButtonDrawingLimits.Text = "Drawing limits";
+            this.ribbonButtonDrawingLimits.ToolTip = "Sets the drawing limits";
+            this.ribbonButtonDrawingLimits.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonDrawingLimits.ToolTipImage")));
+            this.ribbonButtonDrawingLimits.ToolTipTitle = "Drawing limits";
             this.ribbonButtonDrawingLimits.Click += new System.EventHandler(this.ribbonButtonDrawingLimits_Click);
             // 
             // ribbonButtonHighlight
@@ -3983,6 +4612,9 @@
             this.ribbonButtonHighlight.Name = "ribbonButtonHighlight";
             this.ribbonButtonHighlight.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonHighlight.SmallImage")));
             this.ribbonButtonHighlight.Text = "Highlight on hover";
+            this.ribbonButtonHighlight.ToolTip = "Sets if the entity is highlighted on cursor hover";
+            this.ribbonButtonHighlight.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonHighlight.ToolTipImage")));
+            this.ribbonButtonHighlight.ToolTipTitle = "Highlight on hover";
             this.ribbonButtonHighlight.Click += new System.EventHandler(this.ribbonButtonHighlight_Click);
             // 
             // ribbonButtonCheckContHighligh
@@ -3994,7 +4626,10 @@
             this.ribbonButtonCheckContHighligh.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButtonCheckContHighligh.Name = "ribbonButtonCheckContHighligh";
             this.ribbonButtonCheckContHighligh.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonCheckContHighligh.SmallImage")));
-            this.ribbonButtonCheckContHighligh.Text = "Continuous Highlight";
+            this.ribbonButtonCheckContHighligh.Text = "Continuous highlight";
+            this.ribbonButtonCheckContHighligh.ToolTip = "Sets if then highlighted entities are continuosly shown after zoom or redraw";
+            this.ribbonButtonCheckContHighligh.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonCheckContHighligh.ToolTipImage")));
+            this.ribbonButtonCheckContHighligh.ToolTipTitle = "Continuous highlight";
             this.ribbonButtonCheckContHighligh.Click += new System.EventHandler(this.ribbonButtonCheckContHighligh_Click);
             // 
             // ribbonButton11
@@ -4006,8 +4641,108 @@
             this.ribbonButton11.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
             this.ribbonButton11.Name = "ribbonButton11";
             this.ribbonButton11.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButton11.SmallImage")));
-            this.ribbonButton11.Text = "Highlight not Continous";
+            this.ribbonButton11.Text = "Highlight not continous";
+            this.ribbonButton11.ToolTip = "Sets if the entity the display of unconnected points.";
+            this.ribbonButton11.ToolTipTitle = "Highlight not continous";
             this.ribbonButton11.Click += new System.EventHandler(this.ribbonButton11_Click_1);
+            // 
+            // ribbonButtonShowExtents
+            // 
+            this.ribbonButtonShowExtents.CheckOnClick = true;
+            this.ribbonButtonShowExtents.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowExtents.Image")));
+            this.ribbonButtonShowExtents.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowExtents.LargeImage")));
+            this.ribbonButtonShowExtents.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
+            this.ribbonButtonShowExtents.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonShowExtents.Name = "ribbonButtonShowExtents";
+            this.ribbonButtonShowExtents.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonShowExtents.SmallImage")));
+            this.ribbonButtonShowExtents.Text = "Show extents";
+            this.ribbonButtonShowExtents.ToolTip = "Sets whether the control will display the drawing extents. ";
+            this.ribbonButtonShowExtents.ToolTipTitle = "Show extents";
+            this.ribbonButtonShowExtents.Click += new System.EventHandler(this.ribbonButtonShowExtents_Click);
+            // 
+            // ribbonButtonGridInsideLimits
+            // 
+            this.ribbonButtonGridInsideLimits.CheckOnClick = true;
+            this.ribbonButtonGridInsideLimits.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonGridInsideLimits.Image")));
+            this.ribbonButtonGridInsideLimits.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonGridInsideLimits.LargeImage")));
+            this.ribbonButtonGridInsideLimits.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
+            this.ribbonButtonGridInsideLimits.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonGridInsideLimits.Name = "ribbonButtonGridInsideLimits";
+            this.ribbonButtonGridInsideLimits.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonGridInsideLimits.SmallImage")));
+            this.ribbonButtonGridInsideLimits.Text = "Grid inside limits";
+            this.ribbonButtonGridInsideLimits.ToolTip = "Sets whether the grid is dispalyed only inside drawing\'s limits.";
+            this.ribbonButtonGridInsideLimits.ToolTipTitle = "Grid inside limits";
+            this.ribbonButtonGridInsideLimits.Click += new System.EventHandler(this.ribbonButtonGridInsideLimits_Click);
+            // 
+            // ribbonButtonGrabPoints
+            // 
+            this.ribbonButtonGrabPoints.CheckOnClick = true;
+            this.ribbonButtonGrabPoints.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonGrabPoints.Image")));
+            this.ribbonButtonGrabPoints.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonGrabPoints.LargeImage")));
+            this.ribbonButtonGrabPoints.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
+            this.ribbonButtonGrabPoints.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonGrabPoints.Name = "ribbonButtonGrabPoints";
+            this.ribbonButtonGrabPoints.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonGrabPoints.SmallImage")));
+            this.ribbonButtonGrabPoints.Text = "Highlight grab points";
+            this.ribbonButtonGrabPoints.ToolTip = "Sets whether the osnap points are visible";
+            this.ribbonButtonGrabPoints.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonGrabPoints.ToolTipImage")));
+            this.ribbonButtonGrabPoints.ToolTipTitle = "Highlight grab points";
+            this.ribbonButtonGrabPoints.Click += new System.EventHandler(this.ribbonButtonGrabPoints_Click);
+            // 
+            // ribbonButtonContinuosSelection
+            // 
+            this.ribbonButtonContinuosSelection.CheckOnClick = true;
+            this.ribbonButtonContinuosSelection.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonContinuosSelection.Image")));
+            this.ribbonButtonContinuosSelection.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonContinuosSelection.LargeImage")));
+            this.ribbonButtonContinuosSelection.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
+            this.ribbonButtonContinuosSelection.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
+            this.ribbonButtonContinuosSelection.Name = "ribbonButtonContinuosSelection";
+            this.ribbonButtonContinuosSelection.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonContinuosSelection.SmallImage")));
+            this.ribbonButtonContinuosSelection.Text = "Continuous selection";
+            this.ribbonButtonContinuosSelection.ToolTip = "Sets whether the entities selection is continuous on click";
+            this.ribbonButtonContinuosSelection.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonContinuosSelection.ToolTipImage")));
+            this.ribbonButtonContinuosSelection.ToolTipTitle = "Continuous selection";
+            this.ribbonButtonContinuosSelection.Click += new System.EventHandler(this.ribbonButtonContinuosSelection_Click);
+            // 
+            // ribbonUpDownPickBoxSize
+            // 
+            this.ribbonUpDownPickBoxSize.AllowTextEdit = false;
+            this.ribbonUpDownPickBoxSize.Image = ((System.Drawing.Image)(resources.GetObject("ribbonUpDownPickBoxSize.Image")));
+            this.ribbonUpDownPickBoxSize.Name = "ribbonUpDownPickBoxSize";
+            this.ribbonUpDownPickBoxSize.Text = "Pickbox size";
+            this.ribbonUpDownPickBoxSize.TextBoxText = "";
+            this.ribbonUpDownPickBoxSize.TextBoxWidth = 50;
+            this.ribbonUpDownPickBoxSize.ToolTip = "Set the pickbox size of cursor";
+            this.ribbonUpDownPickBoxSize.ToolTipTitle = "Pickbox Size";
+            this.ribbonUpDownPickBoxSize.Value = "3";
+            this.ribbonUpDownPickBoxSize.UpButtonClicked += new System.Windows.Forms.MouseEventHandler(this.ribbonUpDownPickBoxSize_UpButtonClicked);
+            this.ribbonUpDownPickBoxSize.DownButtonClicked += new System.Windows.Forms.MouseEventHandler(this.ribbonUpDownPickBoxSize_DownButtonClicked);
+            // 
+            // ribbonUpDownRubberPenWidth
+            // 
+            this.ribbonUpDownRubberPenWidth.AllowTextEdit = false;
+            this.ribbonUpDownRubberPenWidth.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Large;
+            this.ribbonUpDownRubberPenWidth.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
+            this.ribbonUpDownRubberPenWidth.Name = "ribbonUpDownRubberPenWidth";
+            this.ribbonUpDownRubberPenWidth.Text = "Rubber band pen width";
+            this.ribbonUpDownRubberPenWidth.TextBoxText = "";
+            this.ribbonUpDownRubberPenWidth.TextBoxWidth = 50;
+            this.ribbonUpDownRubberPenWidth.ToolTip = "Sets the rubber band pen width when solid";
+            this.ribbonUpDownRubberPenWidth.ToolTipTitle = "Rubber band pen width";
+            this.ribbonUpDownRubberPenWidth.Value = "0";
+            this.ribbonUpDownRubberPenWidth.UpButtonClicked += new System.Windows.Forms.MouseEventHandler(this.ribbonUpDownRubberPenWidth_UpButtonClicked);
+            this.ribbonUpDownRubberPenWidth.DownButtonClicked += new System.Windows.Forms.MouseEventHandler(this.ribbonUpDownRubberPenWidth_DownButtonClicked);
+            // 
+            // ribbonUpDownZoomFactor
+            // 
+            this.ribbonUpDownZoomFactor.Name = "ribbonUpDownZoomFactor";
+            this.ribbonUpDownZoomFactor.Text = "Zoom factor %";
+            this.ribbonUpDownZoomFactor.TextBoxText = "";
+            this.ribbonUpDownZoomFactor.TextBoxWidth = 50;
+            this.ribbonUpDownZoomFactor.ToolTip = "Sets the zoom factor % when zooming in and out";
+            this.ribbonUpDownZoomFactor.ToolTipTitle = "Zoom factor";
+            this.ribbonUpDownZoomFactor.UpButtonClicked += new System.Windows.Forms.MouseEventHandler(this.ribbonUpDownZoomFactor_UpButtonClicked);
+            this.ribbonUpDownZoomFactor.DownButtonClicked += new System.Windows.Forms.MouseEventHandler(this.ribbonUpDownZoomFactor_DownButtonClicked);
             // 
             // ribbonPanelPlotSettings
             // 
@@ -4039,12 +4774,13 @@
             this.ribbonComboBoxPlotMode.DropDownItems.Add(this.ribbonButtonPlotModeExtents);
             this.ribbonComboBoxPlotMode.DropDownItems.Add(this.ribbonButtonPlotModeLimits);
             this.ribbonComboBoxPlotMode.DropDownItems.Add(this.ribbonButtonPlotModeWindow);
+            this.ribbonComboBoxPlotMode.DropDownItems.Add(this.ribbonButtonPlotModeCentered);
             this.ribbonComboBoxPlotMode.LabelWidth = 60;
             this.ribbonComboBoxPlotMode.Name = "ribbonComboBoxPlotMode";
             this.ribbonComboBoxPlotMode.Text = "Plot mode";
             this.ribbonComboBoxPlotMode.TextAlignment = System.Windows.Forms.RibbonItem.RibbonItemTextAlignment.Right;
             this.ribbonComboBoxPlotMode.TextBoxText = "";
-            this.ribbonComboBoxPlotMode.TextBoxWidth = 90;
+            this.ribbonComboBoxPlotMode.TextBoxWidth = 80;
             this.ribbonComboBoxPlotMode.ToolTip = "Sets the current plotting mode";
             this.ribbonComboBoxPlotMode.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonComboBoxPlotMode.ToolTipImage")));
             this.ribbonComboBoxPlotMode.ToolTipTitle = "Plot mode";
@@ -4085,6 +4821,15 @@
             this.ribbonButtonPlotModeWindow.Text = "Window";
             this.ribbonButtonPlotModeWindow.Click += new System.EventHandler(this.ribbonButtonPlotModeWindow_Click);
             // 
+            // ribbonButtonPlotModeCentered
+            // 
+            this.ribbonButtonPlotModeCentered.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPlotModeCentered.Image")));
+            this.ribbonButtonPlotModeCentered.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPlotModeCentered.LargeImage")));
+            this.ribbonButtonPlotModeCentered.Name = "ribbonButtonPlotModeCentered";
+            this.ribbonButtonPlotModeCentered.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonPlotModeCentered.SmallImage")));
+            this.ribbonButtonPlotModeCentered.Text = "Centered";
+            this.ribbonButtonPlotModeCentered.Click += new System.EventHandler(this.ribbonButtonPlotModeCentered_Click);
+            // 
             // ribbonComboBoxPlotRendering
             // 
             this.ribbonComboBoxPlotRendering.DropDownItems.Add(this.ribbonButtonPlotRenderingGrayScale);
@@ -4095,7 +4840,7 @@
             this.ribbonComboBoxPlotRendering.Text = "Rendering";
             this.ribbonComboBoxPlotRendering.TextAlignment = System.Windows.Forms.RibbonItem.RibbonItemTextAlignment.Right;
             this.ribbonComboBoxPlotRendering.TextBoxText = "";
-            this.ribbonComboBoxPlotRendering.TextBoxWidth = 90;
+            this.ribbonComboBoxPlotRendering.TextBoxWidth = 80;
             this.ribbonComboBoxPlotRendering.ToolTip = "Sets the rendering modes on color/bw printers";
             this.ribbonComboBoxPlotRendering.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonComboBoxPlotRendering.ToolTipImage")));
             this.ribbonComboBoxPlotRendering.ToolTipTitle = "Plot rendering";
@@ -4136,7 +4881,7 @@
             this.ribbonComboBoxPlotRotation.Text = "Rotation";
             this.ribbonComboBoxPlotRotation.TextAlignment = System.Windows.Forms.RibbonItem.RibbonItemTextAlignment.Right;
             this.ribbonComboBoxPlotRotation.TextBoxText = "";
-            this.ribbonComboBoxPlotRotation.TextBoxWidth = 90;
+            this.ribbonComboBoxPlotRotation.TextBoxWidth = 80;
             this.ribbonComboBoxPlotRotation.ToolTip = "Sets the orientation of the plotted drawing";
             this.ribbonComboBoxPlotRotation.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonComboBoxPlotRotation.ToolTipImage")));
             this.ribbonComboBoxPlotRotation.ToolTipTitle = "Plot rotation";
@@ -4234,7 +4979,7 @@
             this.ribbonUpDownPlotMarginTop.Name = "ribbonUpDownPlotMarginTop";
             this.ribbonUpDownPlotMarginTop.Text = "Top";
             this.ribbonUpDownPlotMarginTop.TextBoxText = "";
-            this.ribbonUpDownPlotMarginTop.TextBoxWidth = 40;
+            this.ribbonUpDownPlotMarginTop.TextBoxWidth = 30;
             this.ribbonUpDownPlotMarginTop.ToolTip = "Sets the top margin of the plotting page";
             this.ribbonUpDownPlotMarginTop.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonUpDownPlotMarginTop.ToolTipImage")));
             this.ribbonUpDownPlotMarginTop.ToolTipTitle = "Plot margin top";
@@ -4250,7 +4995,7 @@
             this.ribbonUpDownPlotMarginLeft.Name = "ribbonUpDownPlotMarginLeft";
             this.ribbonUpDownPlotMarginLeft.Text = "Left";
             this.ribbonUpDownPlotMarginLeft.TextBoxText = "";
-            this.ribbonUpDownPlotMarginLeft.TextBoxWidth = 40;
+            this.ribbonUpDownPlotMarginLeft.TextBoxWidth = 30;
             this.ribbonUpDownPlotMarginLeft.ToolTip = "Sets the left margin of the plotting page";
             this.ribbonUpDownPlotMarginLeft.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonUpDownPlotMarginLeft.ToolTipImage")));
             this.ribbonUpDownPlotMarginLeft.ToolTipTitle = "Plot margin left";
@@ -4270,7 +5015,7 @@
             this.ribbonUpDownPlotMarginBottom.Name = "ribbonUpDownPlotMarginBottom";
             this.ribbonUpDownPlotMarginBottom.Text = "Bottom";
             this.ribbonUpDownPlotMarginBottom.TextBoxText = "";
-            this.ribbonUpDownPlotMarginBottom.TextBoxWidth = 40;
+            this.ribbonUpDownPlotMarginBottom.TextBoxWidth = 30;
             this.ribbonUpDownPlotMarginBottom.ToolTip = "Sets the bottom margin of the plotting page";
             this.ribbonUpDownPlotMarginBottom.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonUpDownPlotMarginBottom.ToolTipImage")));
             this.ribbonUpDownPlotMarginBottom.ToolTipTitle = "Plot margin bottom";
@@ -4285,7 +5030,7 @@
             this.ribbonUpDownPlotMarginRight.Name = "ribbonUpDownPlotMarginRight";
             this.ribbonUpDownPlotMarginRight.Text = "Right";
             this.ribbonUpDownPlotMarginRight.TextBoxText = "";
-            this.ribbonUpDownPlotMarginRight.TextBoxWidth = 40;
+            this.ribbonUpDownPlotMarginRight.TextBoxWidth = 30;
             this.ribbonUpDownPlotMarginRight.ToolTip = "Sets the right margin of the plotting page";
             this.ribbonUpDownPlotMarginRight.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonUpDownPlotMarginRight.ToolTipImage")));
             this.ribbonUpDownPlotMarginRight.ToolTipTitle = "Plot margin right";
@@ -4304,7 +5049,7 @@
             this.ribbonTextBoxPlotScale.Name = "ribbonTextBoxPlotScale";
             this.ribbonTextBoxPlotScale.Text = "Scale";
             this.ribbonTextBoxPlotScale.TextBoxText = "";
-            this.ribbonTextBoxPlotScale.TextBoxWidth = 55;
+            this.ribbonTextBoxPlotScale.TextBoxWidth = 30;
             this.ribbonTextBoxPlotScale.ToolTip = "Sets the plot scale factor";
             this.ribbonTextBoxPlotScale.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonTextBoxPlotScale.ToolTipImage")));
             this.ribbonTextBoxPlotScale.ToolTipTitle = "Plot scale";
@@ -4317,7 +5062,7 @@
             this.ribbonUpDownPlotPenWidth.Name = "ribbonUpDownPlotPenWidth";
             this.ribbonUpDownPlotPenWidth.Text = "Pen width";
             this.ribbonUpDownPlotPenWidth.TextBoxText = "";
-            this.ribbonUpDownPlotPenWidth.TextBoxWidth = 40;
+            this.ribbonUpDownPlotPenWidth.TextBoxWidth = 30;
             this.ribbonUpDownPlotPenWidth.ToolTip = "Sets the width (in drawing units) of the plotted lines or arcs";
             this.ribbonUpDownPlotPenWidth.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonUpDownPlotPenWidth.ToolTipImage")));
             this.ribbonUpDownPlotPenWidth.ToolTipTitle = "Plot pen width";
@@ -4332,26 +5077,34 @@
             this.statusStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.StatusLabel,
+            this.ErrorLabel,
             this.StatusLabelGrid,
             this.StatusLabelOrtho,
             this.StatusLabelSnap,
             this.toolStripStatusLabelInfo,
             this.StatusLabelX,
-            this.StatusLabelY});
+            this.StatusLabelY,
+            this.toolStripProgressBar1});
             this.statusStrip1.Location = new System.Drawing.Point(0, 480);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.ShowItemToolTips = true;
-            this.statusStrip1.Size = new System.Drawing.Size(1416, 28);
+            this.statusStrip1.Size = new System.Drawing.Size(1400, 28);
             this.statusStrip1.TabIndex = 15;
             this.statusStrip1.Text = "statusStrip1";
             // 
             // StatusLabel
             // 
             this.StatusLabel.Name = "StatusLabel";
-            this.StatusLabel.Size = new System.Drawing.Size(831, 23);
+            this.StatusLabel.Size = new System.Drawing.Size(653, 23);
             this.StatusLabel.Spring = true;
             this.StatusLabel.Text = "StatusLabel";
             this.StatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // ErrorLabel
+            // 
+            this.ErrorLabel.Name = "ErrorLabel";
+            this.ErrorLabel.Size = new System.Drawing.Size(60, 23);
+            this.ErrorLabel.Text = "ErrorLabel";
             // 
             // StatusLabelGrid
             // 
@@ -4411,6 +5164,12 @@
             this.StatusLabelY.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.StatusLabelY.ToolTipText = "Cursor Y coordinate";
             // 
+            // toolStripProgressBar1
+            // 
+            this.toolStripProgressBar1.Name = "toolStripProgressBar1";
+            this.toolStripProgressBar1.Size = new System.Drawing.Size(100, 22);
+            this.toolStripProgressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            // 
             // ribbonOrbRecentItem10
             // 
             this.ribbonOrbRecentItem10.Image = ((System.Drawing.Image)(resources.GetObject("ribbonOrbRecentItem10.Image")));
@@ -4466,9 +5225,9 @@
             this.toolStripPlotPreview.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripButtonPlot,
             this.toolStripButton1});
-            this.toolStripPlotPreview.Location = new System.Drawing.Point(0, 156);
+            this.toolStripPlotPreview.Location = new System.Drawing.Point(0, 0);
             this.toolStripPlotPreview.Name = "toolStripPlotPreview";
-            this.toolStripPlotPreview.Size = new System.Drawing.Size(1372, 25);
+            this.toolStripPlotPreview.Size = new System.Drawing.Size(1400, 25);
             this.toolStripPlotPreview.TabIndex = 19;
             this.toolStripPlotPreview.Text = "toolStrip1";
             this.toolStripPlotPreview.Visible = false;
@@ -4528,22 +5287,6 @@
             this.imageListStatusBar.Images.SetKeyName(4, "snap16Off.png");
             this.imageListStatusBar.Images.SetKeyName(5, "snap16On.png");
             // 
-            // labelCommands
-            // 
-            this.labelCommands.BackColor = System.Drawing.SystemColors.Window;
-            this.labelCommands.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.labelCommands.Location = new System.Drawing.Point(354, 442);
-            this.labelCommands.Name = "labelCommands";
-            this.labelCommands.Size = new System.Drawing.Size(400, 20);
-            this.labelCommands.TabIndex = 21;
-            this.labelCommands.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.labelCommands.Visible = false;
-            // 
-            // contextMenuStrip1
-            // 
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
-            // 
             // splitContainer1
             // 
             this.splitContainer1.Location = new System.Drawing.Point(1071, 190);
@@ -4574,6 +5317,7 @@
             // dxfReaderNETControl1
             // 
             this.dxfReaderNETControl1.AutoSize = true;
+            this.dxfReaderNETControl1.ContextMenuStrip = this.contextMenuStrip1;
             this.dxfReaderNETControl1.ContinuousHighlight = false;
             this.dxfReaderNETControl1.CustomCursor = DXFReaderNET.CustomCursorType.None;
             this.dxfReaderNETControl1.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -4612,6 +5356,8 @@
             this.dxfReaderNETControl1.DXF = dxfDocument1;
             this.dxfReaderNETControl1.FileName = null;
             this.dxfReaderNETControl1.HighlightEntityOnHover = true;
+            this.dxfReaderNETControl1.HighlightGrabPoints = false;
+            this.dxfReaderNETControl1.HighlightGrabPointsColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(163)))), ((int)(((byte)(0)))));
             this.dxfReaderNETControl1.HighlightMarkerColor2 = System.Drawing.Color.Magenta;
             this.dxfReaderNETControl1.HighlightNotContinuous = false;
             this.dxfReaderNETControl1.Location = new System.Drawing.Point(0, 0);
@@ -4638,13 +5384,136 @@
             this.dxfReaderNETControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.dxfReaderNETControl1_MouseMove);
             this.dxfReaderNETControl1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dxfReaderNETControl1_MouseUp);
             // 
+            // contextMenuStrip1
+            // 
+            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.menuLastCommand,
+            this.toolStripSeparator1,
+            this.enterToolStripMenuItem,
+            this.closeToolStripMenuItem,
+            this.cancelToolStripMenuItem,
+            this.toolStripSeparator2,
+            this.selectEntitiesToolStripMenuItem,
+            this.deleteSelectionsToolStripMenuItem,
+            this.toolStripSeparator3,
+            this.copyDisplayedAreaToClipboardToolStripMenuItem});
+            this.contextMenuStrip1.Name = "contextMenuStrip1";
+            this.contextMenuStrip1.Size = new System.Drawing.Size(248, 176);
+            this.contextMenuStrip1.Opened += new System.EventHandler(this.contextMenuStrip1_Opened);
+            // 
+            // menuLastCommand
+            // 
+            this.menuLastCommand.Name = "menuLastCommand";
+            this.menuLastCommand.Size = new System.Drawing.Size(247, 22);
+            this.menuLastCommand.Text = "Last command: ";
+            this.menuLastCommand.Click += new System.EventHandler(this.menuLastCommand_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(244, 6);
+            // 
+            // enterToolStripMenuItem
+            // 
+            this.enterToolStripMenuItem.Name = "enterToolStripMenuItem";
+            this.enterToolStripMenuItem.Size = new System.Drawing.Size(247, 22);
+            this.enterToolStripMenuItem.Text = "Enter";
+            this.enterToolStripMenuItem.Click += new System.EventHandler(this.enterToolStripMenuItem_Click);
+            // 
+            // closeToolStripMenuItem
+            // 
+            this.closeToolStripMenuItem.Name = "closeToolStripMenuItem";
+            this.closeToolStripMenuItem.Size = new System.Drawing.Size(247, 22);
+            this.closeToolStripMenuItem.Text = "Close";
+            this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeToolStripMenuItem_Click);
+            // 
+            // cancelToolStripMenuItem
+            // 
+            this.cancelToolStripMenuItem.Name = "cancelToolStripMenuItem";
+            this.cancelToolStripMenuItem.Size = new System.Drawing.Size(247, 22);
+            this.cancelToolStripMenuItem.Text = "Cancel";
+            this.cancelToolStripMenuItem.Click += new System.EventHandler(this.cancelToolStripMenuItem_Click);
+            // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(244, 6);
+            // 
+            // selectEntitiesToolStripMenuItem
+            // 
+            this.selectEntitiesToolStripMenuItem.Name = "selectEntitiesToolStripMenuItem";
+            this.selectEntitiesToolStripMenuItem.Size = new System.Drawing.Size(247, 22);
+            this.selectEntitiesToolStripMenuItem.Text = "Select entities";
+            this.selectEntitiesToolStripMenuItem.Click += new System.EventHandler(this.selectEntitiesToolStripMenuItem_Click);
+            // 
+            // deleteSelectionsToolStripMenuItem
+            // 
+            this.deleteSelectionsToolStripMenuItem.Name = "deleteSelectionsToolStripMenuItem";
+            this.deleteSelectionsToolStripMenuItem.Size = new System.Drawing.Size(247, 22);
+            this.deleteSelectionsToolStripMenuItem.Text = "Delete selections";
+            this.deleteSelectionsToolStripMenuItem.Click += new System.EventHandler(this.deleteSelectionsToolStripMenuItem_Click);
+            // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(244, 6);
+            // 
+            // copyDisplayedAreaToClipboardToolStripMenuItem
+            // 
+            this.copyDisplayedAreaToClipboardToolStripMenuItem.Name = "copyDisplayedAreaToClipboardToolStripMenuItem";
+            this.copyDisplayedAreaToClipboardToolStripMenuItem.Size = new System.Drawing.Size(247, 22);
+            this.copyDisplayedAreaToClipboardToolStripMenuItem.Text = "Copy displayed area to clipboard";
+            this.copyDisplayedAreaToClipboardToolStripMenuItem.Click += new System.EventHandler(this.copyDisplayedAreaToClipboardToolStripMenuItem_Click);
+            // 
+            // panelCommands
+            // 
+            this.panelCommands.BackColor = System.Drawing.SystemColors.Window;
+            this.panelCommands.Controls.Add(this.txtCommand);
+            this.panelCommands.Controls.Add(this.labelCommands);
+            this.panelCommands.Location = new System.Drawing.Point(485, 435);
+            this.panelCommands.Name = "panelCommands";
+            this.panelCommands.Size = new System.Drawing.Size(400, 20);
+            this.panelCommands.TabIndex = 24;
+            // 
+            // txtCommand
+            // 
+            this.txtCommand.Font = new System.Drawing.Font("Courier New", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCommand.Location = new System.Drawing.Point(101, 0);
+            this.txtCommand.Name = "txtCommand";
+            this.txtCommand.Size = new System.Drawing.Size(143, 23);
+            this.txtCommand.TabIndex = 24;
+            this.txtCommand.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtCommand_KeyDown);
+            this.txtCommand.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtCommand_KeyPress);
+            // 
+            // labelCommands
+            // 
+            this.labelCommands.AutoSize = true;
+            this.labelCommands.BackColor = System.Drawing.SystemColors.Window;
+            this.labelCommands.Font = new System.Drawing.Font("Courier New", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelCommands.Location = new System.Drawing.Point(3, 0);
+            this.labelCommands.Name = "labelCommands";
+            this.labelCommands.Size = new System.Drawing.Size(72, 17);
+            this.labelCommands.TabIndex = 22;
+            this.labelCommands.Text = "Commands";
+            this.labelCommands.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
+            // 
+            // ribbonButtonExplodeInsertAll
+            // 
+            this.ribbonButtonExplodeInsertAll.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonExplodeInsertAll.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodeInsertAll.Image")));
+            this.ribbonButtonExplodeInsertAll.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodeInsertAll.LargeImage")));
+            this.ribbonButtonExplodeInsertAll.Name = "ribbonButtonExplodeInsertAll";
+            this.ribbonButtonExplodeInsertAll.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonExplodeInsertAll.SmallImage")));
+            this.ribbonButtonExplodeInsertAll.Text = "Explode all inserts";
+            this.ribbonButtonExplodeInsertAll.Click += new System.EventHandler(this.ribbonButtonExplodeInsertAll_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1416, 508);
+            this.ClientSize = new System.Drawing.Size(1400, 508);
+            this.Controls.Add(this.panelCommands);
             this.Controls.Add(this.splitContainer1);
-            this.Controls.Add(this.labelCommands);
             this.Controls.Add(this.printPreviewControl1);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.ribbon1);
@@ -4666,6 +5535,9 @@
             this.splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            this.contextMenuStrip1.ResumeLayout(false);
+            this.panelCommands.ResumeLayout(false);
+            this.panelCommands.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -4907,6 +5779,7 @@
         private System.Windows.Forms.RibbonButton ribbonButtonPlotModeExtents;
         private System.Windows.Forms.RibbonButton ribbonButtonPlotModeLimits;
         private System.Windows.Forms.RibbonButton ribbonButtonPlotModeWindow;
+       
         private System.Windows.Forms.RibbonComboBox ribbonComboBoxPlotRendering;
         private System.Windows.Forms.RibbonComboBox ribbonComboBoxPlotRotation;
         private System.Windows.Forms.RibbonComboBox ribbonComboBox2;
@@ -4974,7 +5847,6 @@
         private System.Windows.Forms.RibbonButton ribbonButtonDrawEllipse;
         private System.Windows.Forms.RibbonSeparator ribbonSeparator1;
         private System.Windows.Forms.RibbonButton ribbonButtonDrawHatchPatterns;
-        private System.Windows.Forms.Label labelCommands;
         private System.Windows.Forms.RibbonButton ribbonButtonCommandLine;
         private System.Windows.Forms.RibbonButton ribbonButtonModifyProperties;
         private System.Windows.Forms.RibbonButton ribbonButtonModPropColor;
@@ -4994,7 +5866,6 @@
         private System.Windows.Forms.RibbonButton ribbonButtonModifyTrim;
         private System.Windows.Forms.RibbonButton ribbonButtonModifyExtend;
         private System.Windows.Forms.RibbonButton ribbonButtonModifyFillet;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.RibbonComboBox ribbonButtonRubberBandStyle;
         private System.Windows.Forms.RibbonButton ribbonButtonRubberBandStyleDashed;
         private System.Windows.Forms.RibbonButton ribbonButtonRubberBandStyleSolid;
@@ -5006,7 +5877,6 @@
         private System.Windows.Forms.RibbonButton ribbonButtonShowFilledAreas;
         private System.Windows.Forms.RibbonButton ribbonButtonModElev;
         private System.Windows.Forms.RibbonButton ribbonButtonHighlight;
-        private System.Windows.Forms.RibbonButton barButtonItemGrabPoints;
         private System.Windows.Forms.RibbonSeparator ribbonSeparator17;
         private System.Windows.Forms.RibbonButton ribbonButtonDeleteSelectedEntities;
         private System.Windows.Forms.RibbonButton ribbonButtonModifyJoin;
@@ -5027,7 +5897,6 @@
         private System.Windows.Forms.RibbonButton ribbonButtonTablesLTYPE;
         private System.Windows.Forms.SplitContainer splitContainer1;
         internal DXFReaderNET.DXFReaderNETControl dxfReaderNETControl1;
-        private System.Windows.Forms.RibbonButton ribbonButtonTreeView;
         internal System.Windows.Forms.TreeView TreeView1;
         private System.Windows.Forms.RibbonButton ribbonButtonDeleteEntitiesByLineType;
         private System.Windows.Forms.RibbonButton ribbonButtonInquiryMeasureFilledEmpty;
@@ -5040,7 +5909,77 @@
         private System.Windows.Forms.RibbonSeparator ribbonSeparator21;
         private System.Windows.Forms.RibbonButton ribbonButtonSelectContours;
         private System.Windows.Forms.RibbonButton ribbonButtonModifyExplodeDimension;
-        private System.Windows.Forms.RibbonButton ribbonButtonCDL;
+        private System.Windows.Forms.RibbonButton ribbonButtonOrbit3D;
+        private System.Windows.Forms.RibbonButton ribbonButtonShowExtents;
+        private System.Windows.Forms.RibbonButton ribbonButtonShowData;
+        private System.Windows.Forms.RibbonButton ribbonButtonZoomCenter;
+        private System.Windows.Forms.RibbonButton ribbonButtonRedo;
+        private System.Windows.Forms.ToolStripStatusLabel ErrorLabel;
+        private System.Windows.Forms.RibbonButton ribbonButtonMultiLine;
+        private System.Windows.Forms.RibbonButton ribbonButtonNormalize;
+        private System.Windows.Forms.RibbonButton ribbonButtonShowSelectedEntitiesInfo;
+        private System.Windows.Forms.RibbonButton ribbonButtonExplodePolySingle;
+        private System.Windows.Forms.RibbonButton ribbonButtonExplodePolyRect;
+        private System.Windows.Forms.RibbonButton ribbonButtonDeleteCoincident;
+        private System.Windows.Forms.RibbonSeparator ribbonSeparator22;
+        private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
+        private System.Windows.Forms.RibbonButton ribbonButtonExplodeInserSingle;
+        private System.Windows.Forms.RibbonButton ribbonButtonExplodeInsertRect;
+        private System.Windows.Forms.RibbonButton ribbonButtonGridInsideLimits;
+        private System.Windows.Forms.RibbonButton ribbonButtonTruTOPS;
+        private System.Windows.Forms.RibbonButton ribbonButtonDeleteNotConnected;
+        private System.Windows.Forms.RibbonButton ribbonDrawingInfo;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem menuLastCommand;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem enterToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem closeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem cancelToolStripMenuItem;
+        private System.Windows.Forms.RibbonButton ribbonButtonGrabPoints;
+        private System.Windows.Forms.RibbonButton ribbonButtonArcCenterStartPEndP;
+        private System.Windows.Forms.RibbonButton ribbonButtonObjectSnapGeometricCenter;
+        private System.Windows.Forms.RibbonButton ribbonButtonObjectSnapSelectAll;
+        private System.Windows.Forms.RibbonButton ribbonButtonObjectSnapClear;
+        private System.Windows.Forms.RibbonButton ribbonButtonModifyLw2Poly;
+        private System.Windows.Forms.RibbonButton ribbonButtonModifyPoly2Lw;
+        private System.Windows.Forms.RibbonButton ribbonButtonTablesLayers;
+        private System.Windows.Forms.RibbonButton ribbonButtonModVisibility;
+        private System.Windows.Forms.RibbonButton ribbonButtonModVisibilityOff;
+        private System.Windows.Forms.RibbonButton ribbonButtonModVisibilityOn;
+        private System.Windows.Forms.RibbonButton ribbonButtonSelectGroup;
+        private System.Windows.Forms.RibbonButton ribbonButtonDeleteZeroLen;
+        private System.Windows.Forms.RibbonButton ribbonButtonObjects;
+        private System.Windows.Forms.RibbonButton ribbonButtonDeleteGroup;
+        private System.Windows.Forms.RibbonButton ribbonButtonTablesDimStyles;
+        private System.Windows.Forms.RibbonButton ribbonButtonTablesTextStyles;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripMenuItem selectEntitiesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem deleteSelectionsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+        private System.Windows.Forms.ToolStripMenuItem copyDisplayedAreaToClipboardToolStripMenuItem;
+        private System.Windows.Forms.RibbonButton ribbonButtonSplitSections;
+        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private System.Windows.Forms.RibbonButton ribbonButtonObjectByHandle;
+        private System.Windows.Forms.RibbonButton ribbonButtonModifyExplodeEllipseArcs;
+        private System.Windows.Forms.RibbonButton ribbonButtonLeader;
+        private System.Windows.Forms.RibbonButton ribbonButtonModifyExplodeCircleArcs;
+        private System.Windows.Forms.RibbonButton ribbonButtonPlotModeCentered;
+        private System.Windows.Forms.RibbonButton ribbonButtonPropertiesLayers;
+        private System.Windows.Forms.RibbonButton ribbonButtonPropertiesDimStyles;
+        private System.Windows.Forms.RibbonButton ribbonButtonViewTreeView;
+        private System.Windows.Forms.RibbonButton ribbonButtonContinuosSelection;
+        private System.Windows.Forms.RibbonButton ribbonButtonSelectExtCont;
+        private System.Windows.Forms.RibbonButton ribbonButtonSelectNumber;
+        private System.Windows.Forms.RibbonButton ribbonButtonAllButSelected;
+        private System.Windows.Forms.RibbonButton ribbonButtonModPropLineWeight;
+        private System.Windows.Forms.RibbonButton ribbonButtonRecoverDXFFIle;
+        private System.Windows.Forms.RibbonButton ribbonButtonJoinTwoEntities;
+        private System.Windows.Forms.RibbonButton ribbonButtonAutoJoinWindow;
+        private System.Windows.Forms.RibbonButton ribbonButtonAutoJoinAll;
+        private System.Windows.Forms.Panel panelCommands;
+        private System.Windows.Forms.TextBox txtCommand;
+        private System.Windows.Forms.Label labelCommands;
+        private System.Windows.Forms.RibbonButton ribbonButtonExplodeInsertAll;
     }
 }
 
