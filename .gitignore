@@ -5,6 +5,8 @@
 
 #myIgnore
 file/
+bin/Release
+bin/Debug/DXFReaderNET.dll
 *.bat
 oldCode.txt
 obj/
@@ -370,3 +372,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/bin/Debug/DXFReaderNET.dll
