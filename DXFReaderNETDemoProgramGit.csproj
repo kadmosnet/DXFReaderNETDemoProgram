@@ -198,6 +198,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="bin\Debug\Cyotek.Windows.Forms.ColorPicker.dll" />
+    <Content Include="bin\Debug\DXFReaderNET.dll" />
     <Content Include="bin\Debug\gsdll32.dll" />
     <Content Include="bin\Debug\System.Windows.Forms.Ribbon.dll" />
   </ItemGroup>

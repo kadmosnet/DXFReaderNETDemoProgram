@@ -6,7 +6,6 @@
 #myIgnore
 file/
 bin/Release
-bin/Debug/DXFReaderNET.dll
 DXFReaderNETDemoProgram.csproj
 *.bat
 oldCode.txt
