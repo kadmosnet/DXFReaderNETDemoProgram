@@ -6474,6 +6474,30 @@ namespace DXFReaderNETDemoProgram
             addedMultipleEntities = false;
             switch (CurrentFunction)
             {
+                case FunctionsEnum.None:
+                    if (m_ContinuousSelection)
+                    {
+                        ent = dxfReaderNETControl1.GetEntity(pNoSnap);
+                        if (ent != null)
+                        {
+                            StatusLabel.Text = EntityInfo(dxfReaderNETControl1, ent);
+                            if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
+                            {
+                                dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
+                                ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                                dxfReaderNETControl1.HighLight(ent);
+                            }
+                            else
+                            {
+                                dxfReaderNETControl1.DXF.SelectedEntities.Remove(ent);
+                                ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                                //dxfReaderNETControl1.DrawEntity(ent);
+                                dxfReaderNETControl1.Refresh();
+
+                            }
+                        }
+                    }
+                    break;
                 case FunctionsEnum.Poly2Lw:
                     CheckContinuousSelection();
                     ent = dxfReaderNETControl1.GetEntity(pNoSnap);
@@ -7125,11 +7149,11 @@ namespace DXFReaderNETDemoProgram
                     p3 = p;
 
                     m_LastAddedEntity = dxfReaderNETControl1.AddAlignedDimension(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p2.X, p2.Y, dxfReaderNETControl1.DXF.CurrentElevation), p.ToVector3(), dxfReaderNETControl1.DXF.DrawingVariables.DimStyle, dxfReaderNETControl1.DXF.CurrentColor.Index);
-
+                    CheckContinuousSelection();
                     break;
                 case FunctionsEnum.AlignedDimension2:
                     CurrentFunction = FunctionsEnum.AlignedDimension3;
-                    CheckContinuousSelection();
+
                     StatusLabel.Text = "Select dimension position";
                     p2 = p;
                     break;
@@ -8544,7 +8568,7 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.ImageFixedSize:
                 case FunctionsEnum.Image2:
 
-                    InitStatus();
+
                     p2 = p;
                     double actualWidth = p2.X - p1.X;
                     double actualHeight = p2.Y - p1.Y;
@@ -8567,7 +8591,7 @@ namespace DXFReaderNETDemoProgram
                         System.Drawing.Image bitmap = System.Drawing.Image.FromFile(m_ImageFileName);
                         m_LastAddedEntity = dxfReaderNETControl1.AddOle2Frame(bitmap, new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), new Vector3(p1.X + actualWidth, p1.Y + actualHeight, dxfReaderNETControl1.DXF.CurrentElevation), dxfReaderNETControl1.DXF.CurrentColor.Index);
                     }
-
+                    InitStatus();
                     break;
 
                 case FunctionsEnum.Image1:
@@ -8601,7 +8625,7 @@ namespace DXFReaderNETDemoProgram
                         MajorAxis = b;
                         rotation += 90;
                     }
-                    m_LastAddedEntity = dxfReaderNETControl1.AddEllipse(center, MajorAxis, MinorAxis, rotation, dxfReaderNETControl1.DXF.CurrentColor.Index);
+                    m_LastAddedEntity = dxfReaderNETControl1.AddEllipse(center, MajorAxis, MinorAxis, rotation, 0, MathHelper.TwoPI, dxfReaderNETControl1.DXF.CurrentColor.Index);
 
                     break;
 
@@ -9695,7 +9719,6 @@ namespace DXFReaderNETDemoProgram
         {
 
             StatusLabel.Text = "Loading DXF file...";
-            StatusLabel.Text = "Loading DXF file...";
             toolStripProgressBar1.Value = 0;
             Application.DoEvents();
 
@@ -9708,6 +9731,7 @@ namespace DXFReaderNETDemoProgram
             {
                 toolStripProgressBar1.Value = 0;
                 ErrorLabel.Text = "Error: " + e.ErrorCode.ToString() + " - " + e.ErrorString;
+                Application.DoEvents();
                 Console.Beep(1000, 100);
 
             }
@@ -9882,10 +9906,17 @@ namespace DXFReaderNETDemoProgram
             }
             else
             {
+                if (dxfReaderNETControl1.RecoverDXFFile(openFileDialog1.FileName))
+                {
+                    StatusLabel.Text = "DXF file recovered";
+                }
+                else
+                {
+                    dxfReaderNETControl1.NewDrawing();
+                    InitDrawing();
+                    StatusLabel.Text = "Error in reading DXF file";
+                }
 
-                dxfReaderNETControl1.NewDrawing();
-                InitDrawing();
-                StatusLabel.Text = "Error in reading DXF file";
             }
         }
 
@@ -10421,7 +10452,7 @@ namespace DXFReaderNETDemoProgram
                                 Vector3 mjp = ((Ellipse)entity).Center + new Vector3(((Ellipse)entity).MinorAxis / 2 * Math.Cos(((Ellipse)entity).Rotation * MathHelper.DegToRad), ((Ellipse)entity).MinorAxis / 2 * Math.Sin(((Ellipse)entity).Rotation * MathHelper.DegToRad), 0);
                                 Vector3 mjpr = MathHelper.Transform(mjp, entity.Normal, CoordinateSystem.Object, CoordinateSystem.World);
                                 double newrot = 90 - Vector2.Angle(((Ellipse)entity).Center.ToVector2(), mjpr.ToVector2()) * MathHelper.RadToDeg;
-                                myDXF.AddEllipse(((Ellipse)entity).Center, ((Ellipse)entity).MajorAxis, ((Ellipse)entity).MinorAxis, newrot, entity.Color.Index, entity.Layer.Name);
+                                myDXF.AddEllipse(((Ellipse)entity).Center, ((Ellipse)entity).MajorAxis, ((Ellipse)entity).MinorAxis, newrot, ((Ellipse)entity).StartAngle, ((Ellipse)entity).EndAngle, entity.Color.Index, entity.Layer.Name);
 
                             }
                             else
@@ -14155,7 +14186,7 @@ namespace DXFReaderNETDemoProgram
             }
         }
 
-               
+
         private void ribbonButtonTablesDimStyles_Click(object sender, EventArgs e)
         {
             DeleteEntities deleteEntities = new DeleteEntities();
@@ -14572,7 +14603,7 @@ namespace DXFReaderNETDemoProgram
             ribbonButtonModifySelectSingleMulti.Enabled = !m_ContinuousSelection;
             ribbonButtonModifySelectSinlge.Enabled = !m_ContinuousSelection;
 
-            CheckContinuousSelection();
+            //CheckContinuousSelection();
             StatusLabel.Text = "";
         }
 
@@ -14650,16 +14681,19 @@ namespace DXFReaderNETDemoProgram
 
         private void CheckContinuousSelection()
         {
+            CurrentFunction = FunctionsEnum.None;
             if (m_ContinuousSelection)
             {
-                CurrentFunction = FunctionsEnum.GetEntities;
+                //CurrentFunction = FunctionsEnum.GetEntities;
                 dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairSquare;
             }
             else
             {
-                CurrentFunction = FunctionsEnum.None;
+                //CurrentFunction = FunctionsEnum.None;
                 dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
             }
+            //CurrentFunction = FunctionsEnum.None;
+            //dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
         }
 
         public static string EntityInfo(DXFReaderNETControl myDXF, EntityObject ent)
@@ -14900,7 +14934,7 @@ namespace DXFReaderNETDemoProgram
                 return true;
             }
 
-           
+
             if (!char.IsControl(key) && !char.IsDigit(key) && key != '-' && key != '.' && key != ',')
             {
                 return true;
