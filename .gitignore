@@ -373,3 +373,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /bin/Debug/DXFReaderNET.dll
+/ThumbNail.cs
+/ThumbNail.Designer.cs
+/ThumbNail.resx
