@@ -109,6 +109,12 @@
     <Compile Include="InputText.Designer.cs">
       <DependentUpon>InputText.cs</DependentUpon>
     </Compile>
+    <Compile Include="InquiryDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InquiryDialog.Designer.cs">
+      <DependentUpon>InquiryDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="PenSelector.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -158,6 +164,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="InputText.resx">
       <DependentUpon>InputText.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InquiryDialog.resx">
+      <DependentUpon>InquiryDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="PenSelector.resx">
       <DependentUpon>PenSelector.cs</DependentUpon>

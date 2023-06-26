@@ -30,9 +30,9 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(BlockSelector));
-            DXFReaderNET.DxfDocument dxfDocument1 = new DXFReaderNET.DxfDocument();
-            DXFReaderNET.AciColor aciColor1 = new DXFReaderNET.AciColor();
-            DXFReaderNET.Objects.RasterVariables rasterVariables1 = new DXFReaderNET.Objects.RasterVariables();
+            DXFReaderNET.DxfDocument dxfDocument2 = new DXFReaderNET.DxfDocument();
+            DXFReaderNET.AciColor aciColor2 = new DXFReaderNET.AciColor();
+            DXFReaderNET.Objects.RasterVariables rasterVariables2 = new DXFReaderNET.Objects.RasterVariables();
             this.ButtonCancel = new System.Windows.Forms.Button();
             this.ButtonOk = new System.Windows.Forms.Button();
             this.TextBoxRotation = new System.Windows.Forms.TextBox();
@@ -45,6 +45,8 @@
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.dxfReaderNETControl1 = new DXFReaderNET.DXFReaderNETControl();
+            this.checkBoxExploded = new System.Windows.Forms.CheckBox();
+            this.label4 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -53,7 +55,7 @@
             // 
             this.ButtonCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.ButtonCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ButtonCancel.Location = new System.Drawing.Point(204, 264);
+            this.ButtonCancel.Location = new System.Drawing.Point(205, 284);
             this.ButtonCancel.Margin = new System.Windows.Forms.Padding(2);
             this.ButtonCancel.Name = "ButtonCancel";
             this.ButtonCancel.Size = new System.Drawing.Size(88, 24);
@@ -65,7 +67,7 @@
             // 
             this.ButtonOk.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.ButtonOk.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ButtonOk.Location = new System.Drawing.Point(111, 264);
+            this.ButtonOk.Location = new System.Drawing.Point(112, 284);
             this.ButtonOk.Name = "ButtonOk";
             this.ButtonOk.Size = new System.Drawing.Size(88, 24);
             this.ButtonOk.TabIndex = 3;
@@ -158,41 +160,44 @@
             this.dxfReaderNETControl1.AutoSize = true;
             this.dxfReaderNETControl1.ContinuousHighlight = false;
             this.dxfReaderNETControl1.CustomCursor = DXFReaderNET.CustomCursorType.None;
-            dxfDocument1.ActiveLayout = "Model";
-            dxfDocument1.Comments = null;
-            aciColor1.Index = ((short)(256));
-            aciColor1.IsByBlock = false;
-            aciColor1.IsByLayer = true;
-            aciColor1.UseTrueColor = false;
-            dxfDocument1.CurrentColor = aciColor1;
-            dxfDocument1.CurrentElevation = 0D;
-            dxfDocument1.CurrentLayer = "0";
-            dxfDocument1.CurrentLineTypeName = "ByLayer";
-            dxfDocument1.CurrentLineTypeScale = 1D;
-            dxfDocument1.CurrentTextSize = 2.5D;
-            dxfDocument1.CurrentTextStyle = "STANDARD";
-            dxfDocument1.CurrentThickness = 0D;
-            dxfDocument1.DateCreated = new System.DateTime(2020, 2, 13, 12, 8, 23, 61);
-            dxfDocument1.DateLastEdited = new System.DateTime(2020, 2, 13, 12, 8, 23, 61);
-            dxfDocument1.Handle = "0";
-            dxfDocument1.IsBinary = false;
-            dxfDocument1.Modified = false;
-            dxfDocument1.Name = null;
-            dxfDocument1.Owner = null;
-            rasterVariables1.DisplayFrame = true;
-            rasterVariables1.DisplayQuality = DXFReaderNET.Objects.ImageDisplayQuality.High;
-            rasterVariables1.Handle = "2D";
-            rasterVariables1.Owner = null;
-            rasterVariables1.Units = DXFReaderNET.ImageUnits.Unitless;
-            dxfDocument1.RasterVariables = rasterVariables1;
-            dxfDocument1.ThumbnailImage = null;
-            dxfDocument1.TotalEditTime = new System.DateTime(2020, 2, 13, 0, 0, 0, 0);
-            dxfDocument1.TotalEditTimeDays = 0;
-            dxfDocument1.UserTimer = new System.DateTime(2020, 2, 13, 0, 0, 0, 0);
-            dxfDocument1.UserTimerDays = 0;
-            this.dxfReaderNETControl1.DXF = dxfDocument1;
+            dxfDocument2.ActiveLayout = "Model";
+            dxfDocument2.Comments = null;
+            aciColor2.Index = ((short)(256));
+            aciColor2.IsByBlock = false;
+            aciColor2.IsByLayer = true;
+            aciColor2.UseTrueColor = false;
+            dxfDocument2.CurrentColor = aciColor2;
+            dxfDocument2.CurrentElevation = 0D;
+            dxfDocument2.CurrentLayer = "0";
+            dxfDocument2.CurrentLineTypeName = "ByLayer";
+            dxfDocument2.CurrentLineTypeScale = 1D;
+            dxfDocument2.CurrentTextSize = 2.5D;
+            dxfDocument2.CurrentTextStyle = "STANDARD";
+            dxfDocument2.CurrentThickness = 0D;
+            dxfDocument2.DateCreated = new System.DateTime(2020, 2, 13, 12, 8, 23, 61);
+            dxfDocument2.DateLastEdited = new System.DateTime(2020, 2, 13, 12, 8, 23, 61);
+            dxfDocument2.Handle = "0";
+            dxfDocument2.IsBinary = false;
+            dxfDocument2.Modified = false;
+            dxfDocument2.Name = null;
+            dxfDocument2.Owner = null;
+            rasterVariables2.DisplayFrame = true;
+            rasterVariables2.DisplayQuality = DXFReaderNET.Objects.ImageDisplayQuality.High;
+            rasterVariables2.Handle = "2D";
+            rasterVariables2.Owner = null;
+            rasterVariables2.Units = DXFReaderNET.ImageUnits.Unitless;
+            dxfDocument2.RasterVariables = rasterVariables2;
+            dxfDocument2.ThumbnailImage = null;
+            dxfDocument2.TotalEditTime = new System.DateTime(2020, 2, 13, 0, 0, 0, 0);
+            dxfDocument2.TotalEditTimeDays = 0;
+            dxfDocument2.UserTimer = new System.DateTime(2020, 2, 13, 0, 0, 0, 0);
+            dxfDocument2.UserTimerDays = 0;
+            this.dxfReaderNETControl1.DXF = dxfDocument2;
             this.dxfReaderNETControl1.FileName = null;
+            this.dxfReaderNETControl1.HighlightGrabPoints = false;
+            this.dxfReaderNETControl1.HighlightGrabPointsColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(163)))), ((int)(((byte)(0)))));
             this.dxfReaderNETControl1.HighlightMarkerColor2 = System.Drawing.Color.Magenta;
+            this.dxfReaderNETControl1.HighlightNotContinuous = false;
             this.dxfReaderNETControl1.Location = new System.Drawing.Point(124, 39);
             this.dxfReaderNETControl1.Margin = new System.Windows.Forms.Padding(4);
             this.dxfReaderNETControl1.Name = "dxfReaderNETControl1";
@@ -201,13 +206,33 @@
             this.dxfReaderNETControl1.Size = new System.Drawing.Size(168, 126);
             this.dxfReaderNETControl1.TabIndex = 28;
             // 
+            // checkBoxExploded
+            // 
+            this.checkBoxExploded.AutoSize = true;
+            this.checkBoxExploded.Location = new System.Drawing.Point(124, 250);
+            this.checkBoxExploded.Name = "checkBoxExploded";
+            this.checkBoxExploded.Size = new System.Drawing.Size(15, 14);
+            this.checkBoxExploded.TabIndex = 34;
+            this.checkBoxExploded.UseVisualStyleBackColor = true;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(9, 250);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(51, 13);
+            this.label4.TabIndex = 33;
+            this.label4.Text = "Exploded";
+            // 
             // BlockSelector
             // 
             this.AcceptButton = this.ButtonOk;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.ButtonCancel;
-            this.ClientSize = new System.Drawing.Size(304, 298);
+            this.ClientSize = new System.Drawing.Size(304, 319);
+            this.Controls.Add(this.checkBoxExploded);
+            this.Controls.Add(this.label4);
             this.Controls.Add(this.pictureBox2);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.TextBoxScale);
@@ -247,5 +272,7 @@
         private System.Windows.Forms.PictureBox pictureBox2;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.ToolTip toolTip1;
+        internal System.Windows.Forms.CheckBox checkBoxExploded;
+        internal System.Windows.Forms.Label label4;
     }
 }

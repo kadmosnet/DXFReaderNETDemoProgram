@@ -25,7 +25,7 @@ namespace DXFReaderNETDemoProgram
 
         private static Stack<string> UnDoStack = new Stack<string>();
         private static Stack<string> ReDoStack = new Stack<string>();
-
+        private static string InquryLog = "";
 
 
         private Vector2 panPointStart = Vector2.Zero;
@@ -353,6 +353,7 @@ namespace DXFReaderNETDemoProgram
         private string m_newBlockName = "";
         private string m_BlockName = "";
         private string m_BlockRotation = "0";
+        private bool m_BlockExploded = false;
         private string m_BlockScale = "1";
         private string m_Text = "";
         private string m_DrawText = "";
@@ -1791,6 +1792,17 @@ namespace DXFReaderNETDemoProgram
                         dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHair;
                         contextMenuStrip1.Visible = false;
                         StatusLabel.Text = "Area: " + dxfReaderNETControl1.DXF.ToFormattedUnit(MathHelper.PolygonArea(vertexes)) + " Lenght: " + dxfReaderNETControl1.DXF.ToFormattedUnit((MathHelper.PolygonLenght(vertexes, true)));
+
+                        InquryLog += "Area:" + Environment.NewLine;
+                        for (int k = 0; k < vertexes.Count - 1; k++)
+                        {
+                            InquryLog += "Point " + (k + 1).ToString() + " (x=" + dxfReaderNETControl1.DXF.ToFormattedUnit(vertexes[k].X) + " y=" + dxfReaderNETControl1.DXF.ToFormattedUnit(vertexes[k].Y) + ")" + Environment.NewLine; ;
+
+                        }
+                        InquryLog += "\tArea: " + dxfReaderNETControl1.DXF.ToFormattedUnit(MathHelper.PolygonArea(vertexes)) + Environment.NewLine;
+                        InquryLog += "\tlength: " + dxfReaderNETControl1.DXF.ToFormattedUnit(MathHelper.PolygonLenght(vertexes, true)) + Environment.NewLine + Environment.NewLine;
+
+
                         vertexes.Clear();
                         break;
                     case FunctionsEnum.Solid4:
@@ -5098,6 +5110,7 @@ namespace DXFReaderNETDemoProgram
             BlockSelector blockSelector = new BlockSelector();
             blockSelector.TextBoxScale.Text = m_BlockScale;
             blockSelector.TextBoxRotation.Text = m_BlockRotation;
+            blockSelector.checkBoxExploded.Checked = m_BlockExploded;
             blockSelector.ComboBox1.Items.Clear();
             //blockSelector.DXFReaderNETControl = dxfReaderNETControl1;
             blockSelector.DXFReaderNETControl = new DXFReaderNETControl();
@@ -5111,6 +5124,7 @@ namespace DXFReaderNETDemoProgram
 
                     blockSelector.ComboBox1.Items.Add(_block.Name.ToString());
                     blockSelector.DXFReaderNETControl.DXF.Blocks.Add((DXFReaderNET.Blocks.Block)_block.Clone());
+
 #else
   if (!_block.Name.StartsWith("*") && !_block.Name.StartsWith("_")) {
 
@@ -5132,6 +5146,7 @@ namespace DXFReaderNETDemoProgram
                 m_BlockRotation = blockSelector.TextBoxRotation.Text;
                 m_BlockName = blockSelector.ComboBox1.Text;
                 m_BlockScale = blockSelector.TextBoxScale.Text;
+                m_BlockExploded = blockSelector.checkBoxExploded.Checked;
                 if (m_BlockName != "")
                 {
 
@@ -7196,6 +7211,18 @@ namespace DXFReaderNETDemoProgram
 
                     m_LastAddedEntity = dxfReaderNETControl1.AddInsert(m_BlockName, new Vector3(p2.X, p2.Y, dxfReaderNETControl1.DXF.CurrentElevation), double.Parse(m_BlockRotation, System.Globalization.CultureInfo.CurrentCulture), new Vector3(double.Parse(m_BlockScale, System.Globalization.CultureInfo.CurrentCulture), double.Parse(m_BlockScale, System.Globalization.CultureInfo.CurrentCulture), double.Parse(m_BlockScale, System.Globalization.CultureInfo.CurrentCulture)));
 
+                    if (m_BlockExploded)
+                    {
+                        List<EntityObject> insertEntities = new List<EntityObject>();
+                        insertEntities = ((Insert)m_LastAddedEntity).Explode();
+                        dxfReaderNETControl1.DXF.AddEntities(insertEntities);
+                        dxfReaderNETControl1.DXF.ModifyEntities(insertEntities, Vector2.Zero);
+
+                        dxfReaderNETControl1.DXF.RemoveEntity(m_LastAddedEntity);
+                        dxfReaderNETControl1.Refresh();
+                        m_LastAddedEntity = null;
+                    }
+
                     break;
                 case FunctionsEnum.Block:
                     InitStatus();
@@ -7929,14 +7956,29 @@ namespace DXFReaderNETDemoProgram
                             {
                                 StatusLabel.Text = "Radius: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Circle)ent).Radius);
                                 StatusLabel.Text += " Diameter: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Circle)ent).Radius * 2);
-                                StatusLabel.Text += " Area: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Circle)ent).Radius * ((Circle)ent).Radius * MathHelper.PI);
+                                StatusLabel.Text += " Perimeter: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Circle)ent).Lenght);
+                                StatusLabel.Text += " Area: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Circle)ent).Area);
+
+                                InquryLog += "Circle " + ent.Handle + ":" + Environment.NewLine;
+                                InquryLog += "\tRadius: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Circle)ent).Radius) + Environment.NewLine;
+                                InquryLog += "\tDiameter: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Circle)ent).Radius * 2) + Environment.NewLine;
+                                InquryLog += "\tPerimeter: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Circle)ent).Lenght) + Environment.NewLine;
+                                InquryLog += "\tArea: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Circle)ent).Area) + Environment.NewLine + Environment.NewLine;
 
                             }
                             if (ent.Type == EntityType.Arc)
                             {
                                 StatusLabel.Text = "Radius: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Arc)ent).Radius);
-                                StatusLabel.Text += " Diameter: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Arc)ent).Radius * 2);
+                                StatusLabel.Text += " Start angle: " + dxfReaderNETControl1.DXF.ToFormattedAngle(((Arc)ent).StartAngle * MathHelper.DegToRad);
+                                StatusLabel.Text += " End angle: " + dxfReaderNETControl1.DXF.ToFormattedAngle(((Arc)ent).EndAngle * MathHelper.DegToRad);
+
                                 StatusLabel.Text += " Lenght: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Arc)ent).Lenght);
+
+                                InquryLog += "Arc " + ent.Handle + ":" + Environment.NewLine;
+                                InquryLog += "\tRadius: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Arc)ent).Radius) + Environment.NewLine;
+                                InquryLog += "\tStart angle: " + dxfReaderNETControl1.DXF.ToFormattedAngle(((Arc)ent).StartAngle * MathHelper.DegToRad) + Environment.NewLine;
+                                InquryLog += "\tEnd angle: " + dxfReaderNETControl1.DXF.ToFormattedAngle(((Arc)ent).EndAngle * MathHelper.DegToRad) + Environment.NewLine;
+                                InquryLog += "\tLenght: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Arc)ent).Lenght) + Environment.NewLine + Environment.NewLine;
 
                             }
 
@@ -8313,6 +8355,15 @@ namespace DXFReaderNETDemoProgram
 
                     StatusLabel.Text += " ΔX: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p2.X - p1.X);
                     StatusLabel.Text += " ΔY: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p2.Y - p1.Y);
+
+                    InquryLog += "Distance:" + Environment.NewLine;
+                    InquryLog += "Point 1 (x=" + dxfReaderNETControl1.DXF.ToFormattedUnit(p1.X) + " y=" + dxfReaderNETControl1.DXF.ToFormattedUnit(p1.Y) + ") ";
+                    InquryLog += " Point 2 (x=" + dxfReaderNETControl1.DXF.ToFormattedUnit(p2.X) + " y=" + dxfReaderNETControl1.DXF.ToFormattedUnit(p2.Y) + ")" + Environment.NewLine;
+                    InquryLog += "\tDistance: " + dxfReaderNETControl1.DXF.ToFormattedUnit(DXFReaderNET.Vector2.Distance(p1, p2)) + Environment.NewLine;
+                    InquryLog += "\tAngle in XY Plane: " + dxfReaderNETControl1.DXF.ToFormattedAngle(DXFReaderNET.Vector2.Angle(p1, p2)) + Environment.NewLine;
+
+                    InquryLog += "\tΔX: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p2.X - p1.X) + Environment.NewLine;
+                    InquryLog += "\tΔY: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p2.Y - p1.Y) + Environment.NewLine + Environment.NewLine;
 
 
                     break;
@@ -10065,45 +10116,65 @@ namespace DXFReaderNETDemoProgram
 
                 //MathHelper.PolygonArea(vertexes)
                 //(MathHelper.PolygonLenght(vertexes, true))
-
+                InquryLog += "Area of selected entities:" + Environment.NewLine;
                 foreach (EntityObject entity in dxfReaderNETControl1.DXF.SelectedEntities)
                 {
                     switch (entity.Type)
                     {
                         case EntityType.Line:
                             lenght += ((Line)entity).Lenght;
+                            InquryLog += "\tLine " + entity.Handle + Environment.NewLine;
+                            InquryLog += "\t\tLength: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Line)entity).Lenght) + Environment.NewLine;
                             break;
                         case EntityType.Arc:
 
                             lenght += ((Arc)entity).Lenght;
+                            InquryLog += "\tArc " + entity.Handle + Environment.NewLine;
+                            InquryLog += "\t\tLength: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Arc)entity).Lenght) + Environment.NewLine;
                             break;
                         case EntityType.Circle:
                             lenght += ((Circle)entity).Lenght;
                             area += ((Circle)entity).Area;
-
+                            InquryLog += "\tCircle " + entity.Handle + Environment.NewLine;
+                            InquryLog += "\t\tLength: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Circle)entity).Lenght) + Environment.NewLine;
+                            InquryLog += "\t\tArea: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Circle)entity).Area) + Environment.NewLine;
                             break;
                         case EntityType.Ellipse:
                             lenght += ((Ellipse)entity).Lenght;
                             area += ((Ellipse)entity).Area;
-
+                            InquryLog += "\tEllipse " + entity.Handle + Environment.NewLine;
+                            InquryLog += "\t\tLength: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Ellipse)entity).Lenght) + Environment.NewLine;
+                            InquryLog += "\t\tArea: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Ellipse)entity).Area) + Environment.NewLine;
                             break;
                         case EntityType.LightWeightPolyline:
                             lenght += ((LwPolyline)entity).Lenght;
                             area += ((LwPolyline)entity).Area;
+                            InquryLog += "\tLwPolyline " + entity.Handle + Environment.NewLine;
+                            InquryLog += "\t\tLength: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((LwPolyline)entity).Lenght) + Environment.NewLine;
+                            InquryLog += "\t\tArea: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((LwPolyline)entity).Area) + Environment.NewLine;
                             break;
                         case EntityType.Polyline:
                             lenght += ((Polyline)entity).Lenght;
                             area += ((Polyline)entity).Area;
+                            InquryLog += "\tPolyline " + entity.Handle + Environment.NewLine;
+                            InquryLog += "\t\tLength: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Polyline)entity).Lenght) + Environment.NewLine;
+                            InquryLog += "\t\tArea: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Polyline)entity).Area) + Environment.NewLine;
+
                             break;
 
                         case EntityType.Spline:
                             lenght += ((Spline)entity).ToPolyline(100).Lenght;
                             area += ((Spline)entity).ToPolyline(100).Area;
+                            InquryLog += "\tSpline " + entity.Handle + Environment.NewLine;
+                            InquryLog += "\t\tLength: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Spline)entity).ToPolyline(100).Lenght) + Environment.NewLine;
+                            InquryLog += "\t\tArea: " + dxfReaderNETControl1.DXF.ToFormattedUnit(((Ellipse)entity).Area) + Environment.NewLine;
+
                             break;
                     }
                 }
                 StatusLabel.Text = "Area: " + dxfReaderNETControl1.DXF.ToFormattedUnit(area) + " Lenght: " + dxfReaderNETControl1.DXF.ToFormattedUnit(lenght);
-
+                InquryLog += "\tTotal area: " + dxfReaderNETControl1.DXF.ToFormattedUnit(area) + Environment.NewLine;
+                InquryLog += "\tTotal length: " + dxfReaderNETControl1.DXF.ToFormattedUnit(lenght) + Environment.NewLine + Environment.NewLine;
             }
 
 
@@ -10842,7 +10913,7 @@ namespace DXFReaderNETDemoProgram
                         }
 
                     }
-                    RemoveUnUsedBlocks(dxfReaderNETControl1);
+                    //RemoveUnUsedBlocks(dxfReaderNETControl1);
                     dxfReaderNETControl1.Refresh();
 
                 }
@@ -10949,7 +11020,7 @@ namespace DXFReaderNETDemoProgram
                             DeleteEntitiesByLayer(layerN);
 
                         }
-                        RemoveUnUsedBlocks(dxfReaderNETControl1);
+                        //RemoveUnUsedBlocks(dxfReaderNETControl1);
                         dxfReaderNETControl1.Refresh();
                     }
 
@@ -12426,7 +12497,7 @@ namespace DXFReaderNETDemoProgram
                             DeleteLinetypeEntities(layerN);
 
                         }
-                        RemoveUnUsedBlocks(dxfReaderNETControl1);
+                        //RemoveUnUsedBlocks(dxfReaderNETControl1);
                         dxfReaderNETControl1.Refresh();
                     }
 
@@ -12459,7 +12530,8 @@ namespace DXFReaderNETDemoProgram
 
                 Vector2 extension = new Vector2(dxfReaderNETControl1.DXF.DrawingVariables.ExtMax.X - dxfReaderNETControl1.DXF.DrawingVariables.ExtMin.X, dxfReaderNETControl1.DXF.DrawingVariables.ExtMax.Y - dxfReaderNETControl1.DXF.DrawingVariables.ExtMin.Y);
                 StatusLabel.Text += " Extension : " + dxfReaderNETControl1.DXF.ToFormattedUnit(extension.X) + " x " + dxfReaderNETControl1.DXF.ToFormattedUnit(extension.Y);
-
+                InquryLog += "Filled and empty areas:" + Environment.NewLine;
+                InquryLog += StatusLabel.Text + Environment.NewLine + Environment.NewLine;
             }
 
             else
@@ -14961,6 +15033,109 @@ namespace DXFReaderNETDemoProgram
             ExplodeAllInserts(dxfReaderNETControl1);
         }
 
+
+        private string ShowEntityData(EntityObject ent, DXFReaderNETControl myDXF)
+        {
+            string retString = "";
+            if (ent != null)
+            {
+
+                double area = 0;
+                double length = 0;
+                string addData = "";
+                switch (ent.Type)
+                {
+                    case EntityType.Line:
+                        length += ((Line)ent).Lenght;
+                        break;
+                    case EntityType.Arc:
+
+                        length += ((Arc)ent).Lenght;
+                        addData += " - Center (x=" + myDXF.DXF.ToFormattedUnit(((Arc)ent).Center.X) + " y=" + myDXF.DXF.ToFormattedUnit(((Arc)ent).Center.Y) + ") ";
+                        addData += " - Chord: " + myDXF.DXF.ToFormattedUnit(Vector3.Distance(((Arc)ent).StartPoint, ((Arc)ent).EndPoint));
+                        double angle = ((Arc)ent).StartAngle - ((Arc)ent).EndAngle;
+                        if (((Arc)ent).EndAngle < ((Arc)ent).StartAngle)
+                        {
+                            angle = 360 - angle;
+                        }
+                        addData += " - Radius: " + myDXF.DXF.ToFormattedUnit(((Arc)ent).Radius);
+                        addData += " - Start angle: " + myDXF.DXF.ToFormattedAngle(((Arc)ent).StartAngle * MathHelper.DegToRad);
+                        addData += " - End angle: " + myDXF.DXF.ToFormattedAngle(((Arc)ent).EndAngle * MathHelper.DegToRad);
+                        addData += " - Angle: " + myDXF.DXF.ToFormattedAngle(Math.Abs(angle) * MathHelper.DegToRad);
+
+                        break;
+                    case EntityType.Circle:
+                        length += ((Circle)ent).Lenght;
+                        area += ((Circle)ent).Area;
+                        addData += " - Center (x=" + myDXF.DXF.ToFormattedUnit(((Circle)ent).Center.X) + " y=" + myDXF.DXF.ToFormattedUnit(((Circle)ent).Center.Y) + ") ";
+                        addData += " - Radius: " + myDXF.DXF.ToFormattedUnit(((Circle)ent).Radius);
+                        addData += " - Diameter: " + myDXF.DXF.ToFormattedUnit(((Circle)ent).Radius * 2);
+
+
+
+
+                        break;
+                    case EntityType.Ellipse:
+                        length += ((Ellipse)ent).Lenght;
+                        area += ((Ellipse)ent).Area;
+                        addData += " - Center (x=" + myDXF.DXF.ToFormattedUnit(((Ellipse)ent).Center.X) + " y=" + myDXF.DXF.ToFormattedUnit(((Ellipse)ent).Center.Y) + ") ";
+                        addData += " - Major axis: " + myDXF.DXF.ToFormattedUnit(((Ellipse)ent).MajorAxis);
+                        addData += " - Minor axis: " + myDXF.DXF.ToFormattedUnit(((Ellipse)ent).MinorAxis);
+                        if (!((Ellipse)ent).IsFullEllipse)
+                        {
+                            addData += " - Start angle: " + myDXF.DXF.ToFormattedAngle(((Ellipse)ent).StartAngle);
+                            addData += " - End angle: " + myDXF.DXF.ToFormattedAngle(((Ellipse)ent).EndAngle);
+                        }
+                        break;
+                    case EntityType.LightWeightPolyline:
+                        length += ((LwPolyline)ent).Lenght;
+                        area += ((LwPolyline)ent).Area;
+                        break;
+                    case EntityType.Polyline:
+                        length += ((Polyline)ent).Lenght;
+                        area += ((Polyline)ent).Area;
+                        break;
+
+                    case EntityType.Spline:
+                        length += ((Spline)ent).ToPolyline(100).Lenght;
+                        area += ((Spline)ent).ToPolyline(100).Area;
+                        break;
+
+                }
+
+
+                retString = "Entity #" + myDXF.DXF.Entities.IndexOf(ent);
+
+                retString += " - Type: " + ent.Type.ToString();
+                string colS = ent.Color.Index.ToString();
+                if (ent.Color.IsByLayer) colS = "ByLayer";
+                if (ent.Color.IsByBlock) colS = "ByBlock";
+
+                retString += " - Color: " + colS;
+
+                retString += " - Layer: " + ent.Layer.Name;
+                retString += " - Line type: " + ent.Linetype.Name;
+                if (area > 0) retString += " - Area: " + myDXF.DXF.ToFormattedUnit(area);
+                if (length > 0) retString += " - Length: " + myDXF.DXF.ToFormattedUnit(length);
+                retString += " " + addData;
+
+
+
+            }
+            return retString;
+        }
+
+        private void ribbonButtonInquiryShowHistory_Click(object sender, EventArgs e)
+        {
+            InquiryDialog inquiryDialog = new InquiryDialog();
+
+            inquiryDialog.textBox1.Text = InquryLog;
+
+            if (inquiryDialog.ShowDialog() == DialogResult.OK)
+            {
+                if (inquiryDialog.textBox1.Text == "") InquryLog = "";
+            }
+        }
     }
 }
 

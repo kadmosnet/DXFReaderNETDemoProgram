@@ -450,6 +450,7 @@
             this.imageListStatusBar = new System.Windows.Forms.ImageList(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.TreeView1 = new System.Windows.Forms.TreeView();
+            this.dxfReaderNETControl1 = new DXFReaderNET.DXFReaderNETControl();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.menuLastCommand = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -465,7 +466,7 @@
             this.panelCommands = new System.Windows.Forms.Panel();
             this.txtCommand = new System.Windows.Forms.TextBox();
             this.labelCommands = new System.Windows.Forms.Label();
-            this.dxfReaderNETControl1 = new DXFReaderNET.DXFReaderNETControl();
+            this.ribbonButtonInquiryShowHistory = new System.Windows.Forms.RibbonButton();
             this.statusStrip1.SuspendLayout();
             this.toolStripPlotPreview.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -3446,6 +3447,7 @@
             this.ribbonButtonInquiryMeasure.DropDownItems.Add(this.ribbonButtonInquiryMeasurecenter);
             this.ribbonButtonInquiryMeasure.DropDownItems.Add(this.ribbonButtonInquiryMeasureAreaSelected);
             this.ribbonButtonInquiryMeasure.DropDownItems.Add(this.ribbonButtonInquiryMeasureFilledEmpty);
+            this.ribbonButtonInquiryMeasure.DropDownItems.Add(this.ribbonButtonInquiryShowHistory);
             this.ribbonButtonInquiryMeasure.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryMeasure.Image")));
             this.ribbonButtonInquiryMeasure.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryMeasure.LargeImage")));
             this.ribbonButtonInquiryMeasure.Name = "ribbonButtonInquiryMeasure";
@@ -5324,6 +5326,76 @@
             this.TreeView1.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.TreeView1_NodeMouseClick);
             this.TreeView1.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.TreeView1_NodeMouseDoubleClick);
             // 
+            // dxfReaderNETControl1
+            // 
+            this.dxfReaderNETControl1.AutoSize = true;
+            this.dxfReaderNETControl1.ContextMenuStrip = this.contextMenuStrip1;
+            this.dxfReaderNETControl1.ContinuousHighlight = false;
+            this.dxfReaderNETControl1.CustomCursor = DXFReaderNET.CustomCursorType.None;
+            this.dxfReaderNETControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            dxfDocument1.ActiveLayout = "Model";
+            dxfDocument1.Comments = null;
+            aciColor1.Index = ((short)(256));
+            aciColor1.IsByBlock = false;
+            aciColor1.IsByLayer = true;
+            aciColor1.UseTrueColor = false;
+            dxfDocument1.CurrentColor = aciColor1;
+            dxfDocument1.CurrentElevation = 0D;
+            dxfDocument1.CurrentLayer = "0";
+            dxfDocument1.CurrentLineTypeName = "ByLayer";
+            dxfDocument1.CurrentLineTypeScale = 1D;
+            dxfDocument1.CurrentTextSize = 2.5D;
+            dxfDocument1.CurrentTextStyle = "STANDARD";
+            dxfDocument1.CurrentThickness = 0D;
+            dxfDocument1.DateCreated = new System.DateTime(2020, 5, 25, 10, 15, 33, 345);
+            dxfDocument1.DateLastEdited = new System.DateTime(2020, 5, 25, 10, 15, 33, 345);
+            dxfDocument1.Handle = "0";
+            dxfDocument1.IsBinary = false;
+            dxfDocument1.Modified = false;
+            dxfDocument1.Name = null;
+            dxfDocument1.Owner = null;
+            rasterVariables1.DisplayFrame = true;
+            rasterVariables1.DisplayQuality = DXFReaderNET.Objects.ImageDisplayQuality.High;
+            rasterVariables1.Handle = "2D";
+            rasterVariables1.Owner = null;
+            rasterVariables1.Units = DXFReaderNET.ImageUnits.Unitless;
+            dxfDocument1.RasterVariables = rasterVariables1;
+            dxfDocument1.ThumbnailImage = null;
+            dxfDocument1.TotalEditTime = new System.DateTime(2020, 5, 25, 0, 0, 0, 0);
+            dxfDocument1.TotalEditTimeDays = 0;
+            dxfDocument1.UserTimer = new System.DateTime(2020, 5, 25, 0, 0, 0, 0);
+            dxfDocument1.UserTimerDays = 0;
+            this.dxfReaderNETControl1.DXF = dxfDocument1;
+            this.dxfReaderNETControl1.FileName = null;
+            this.dxfReaderNETControl1.HighlightEntityOnHover = true;
+            this.dxfReaderNETControl1.HighlightGrabPoints = false;
+            this.dxfReaderNETControl1.HighlightGrabPointsColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(163)))), ((int)(((byte)(0)))));
+            this.dxfReaderNETControl1.HighlightMarkerColor2 = System.Drawing.Color.Magenta;
+            this.dxfReaderNETControl1.HighlightNotContinuous = false;
+            this.dxfReaderNETControl1.Location = new System.Drawing.Point(0, 0);
+            this.dxfReaderNETControl1.Margin = new System.Windows.Forms.Padding(4);
+            this.dxfReaderNETControl1.Name = "dxfReaderNETControl1";
+            this.dxfReaderNETControl1.ShowAxes = false;
+            this.dxfReaderNETControl1.ShowGridRuler = false;
+            this.dxfReaderNETControl1.Size = new System.Drawing.Size(198, 272);
+            this.dxfReaderNETControl1.TabIndex = 19;
+            this.dxfReaderNETControl1.Error += new System.EventHandler<DXFReaderNET.ErrorEventArgs>(this.dxfReaderNETControl1_Error);
+            this.dxfReaderNETControl1.StartRead += new System.EventHandler<DXFReaderNET.StartReadEventArgs>(this.dxfReaderNETControl1_StartRead);
+            this.dxfReaderNETControl1.ReadStatus += new System.EventHandler<DXFReaderNET.ReadStatusEventArgs>(this.dxfReaderNETControl1_ReadStatus);
+            this.dxfReaderNETControl1.EndRead += new System.EventHandler<DXFReaderNET.EndReadEventArgs>(this.dxfReaderNETControl1_EndRead);
+            this.dxfReaderNETControl1.StartWrite += new System.EventHandler<DXFReaderNET.StartWriteEventArgs>(this.dxfReaderNETControl1_StartWrite);
+            this.dxfReaderNETControl1.WriteStatus += new System.EventHandler<DXFReaderNET.WriteStatusEventArgs>(this.dxfReaderNETControl1_WriteStatus);
+            this.dxfReaderNETControl1.EndWrite += new System.EventHandler<DXFReaderNET.EndWriteEventArgs>(this.dxfReaderNETControl1_EndWrite);
+            this.dxfReaderNETControl1.StartDrawing += new System.EventHandler<DXFReaderNET.StartDrawingEventArgs>(this.dxfReaderNETControl1_StartDrawing);
+            this.dxfReaderNETControl1.DrawingStatus += new System.EventHandler<DXFReaderNET.DrawingStatusEventArgs>(this.dxfReaderNETControl1_DrawingStatus);
+            this.dxfReaderNETControl1.EndDrawing += new System.EventHandler<DXFReaderNET.EndDrawingEventArgs>(this.dxfReaderNETControl1_EndDrawing);
+            this.dxfReaderNETControl1.StartPlot += new System.EventHandler<DXFReaderNET.StartPlotEventArgs>(this.dxfReaderNETControl1_StartPlot);
+            this.dxfReaderNETControl1.PlotStatus += new System.EventHandler<DXFReaderNET.PlotStatusEventArgs>(this.dxfReaderNETControl1_PlotStatus);
+            this.dxfReaderNETControl1.EndPlot += new System.EventHandler<DXFReaderNET.EndPlotEventArgs>(this.dxfReaderNETControl1_EndPlot);
+            this.dxfReaderNETControl1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.dxfReaderNETControl1_MouseDown);
+            this.dxfReaderNETControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.dxfReaderNETControl1_MouseMove);
+            this.dxfReaderNETControl1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dxfReaderNETControl1_MouseUp);
+            // 
             // contextMenuStrip1
             // 
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -5437,75 +5509,15 @@
             this.labelCommands.Text = "Commands";
             this.labelCommands.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
             // 
-            // dxfReaderNETControl1
+            // ribbonButtonInquiryShowHistory
             // 
-            this.dxfReaderNETControl1.AutoSize = true;
-            this.dxfReaderNETControl1.ContextMenuStrip = this.contextMenuStrip1;
-            this.dxfReaderNETControl1.ContinuousHighlight = false;
-            this.dxfReaderNETControl1.CustomCursor = DXFReaderNET.CustomCursorType.None;
-            this.dxfReaderNETControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            dxfDocument1.ActiveLayout = "Model";
-            dxfDocument1.Comments = null;
-            aciColor1.Index = ((short)(256));
-            aciColor1.IsByBlock = false;
-            aciColor1.IsByLayer = true;
-            aciColor1.UseTrueColor = false;
-            dxfDocument1.CurrentColor = aciColor1;
-            dxfDocument1.CurrentElevation = 0D;
-            dxfDocument1.CurrentLayer = "0";
-            dxfDocument1.CurrentLineTypeName = "ByLayer";
-            dxfDocument1.CurrentLineTypeScale = 1D;
-            dxfDocument1.CurrentTextSize = 2.5D;
-            dxfDocument1.CurrentTextStyle = "STANDARD";
-            dxfDocument1.CurrentThickness = 0D;
-            dxfDocument1.DateCreated = new System.DateTime(2020, 5, 25, 10, 15, 33, 345);
-            dxfDocument1.DateLastEdited = new System.DateTime(2020, 5, 25, 10, 15, 33, 345);
-            dxfDocument1.Handle = "0";
-            dxfDocument1.IsBinary = false;
-            dxfDocument1.Modified = false;
-            dxfDocument1.Name = null;
-            dxfDocument1.Owner = null;
-            rasterVariables1.DisplayFrame = true;
-            rasterVariables1.DisplayQuality = DXFReaderNET.Objects.ImageDisplayQuality.High;
-            rasterVariables1.Handle = "2D";
-            rasterVariables1.Owner = null;
-            rasterVariables1.Units = DXFReaderNET.ImageUnits.Unitless;
-            dxfDocument1.RasterVariables = rasterVariables1;
-            dxfDocument1.ThumbnailImage = null;
-            dxfDocument1.TotalEditTime = new System.DateTime(2020, 5, 25, 0, 0, 0, 0);
-            dxfDocument1.TotalEditTimeDays = 0;
-            dxfDocument1.UserTimer = new System.DateTime(2020, 5, 25, 0, 0, 0, 0);
-            dxfDocument1.UserTimerDays = 0;
-            this.dxfReaderNETControl1.DXF = dxfDocument1;
-            this.dxfReaderNETControl1.FileName = null;
-            this.dxfReaderNETControl1.HighlightEntityOnHover = true;
-            this.dxfReaderNETControl1.HighlightGrabPoints = false;
-            this.dxfReaderNETControl1.HighlightGrabPointsColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(163)))), ((int)(((byte)(0)))));
-            this.dxfReaderNETControl1.HighlightMarkerColor2 = System.Drawing.Color.Magenta;
-            this.dxfReaderNETControl1.HighlightNotContinuous = false;
-            this.dxfReaderNETControl1.Location = new System.Drawing.Point(0, 0);
-            this.dxfReaderNETControl1.Margin = new System.Windows.Forms.Padding(4);
-            this.dxfReaderNETControl1.Name = "dxfReaderNETControl1";
-            this.dxfReaderNETControl1.ShowAxes = false;
-            this.dxfReaderNETControl1.ShowGridRuler = false;
-            this.dxfReaderNETControl1.Size = new System.Drawing.Size(198, 272);
-            this.dxfReaderNETControl1.TabIndex = 19;
-            this.dxfReaderNETControl1.Error += new System.EventHandler<DXFReaderNET.ErrorEventArgs>(this.dxfReaderNETControl1_Error);
-            this.dxfReaderNETControl1.StartRead += new System.EventHandler<DXFReaderNET.StartReadEventArgs>(this.dxfReaderNETControl1_StartRead);
-            this.dxfReaderNETControl1.ReadStatus += new System.EventHandler<DXFReaderNET.ReadStatusEventArgs>(this.dxfReaderNETControl1_ReadStatus);
-            this.dxfReaderNETControl1.EndRead += new System.EventHandler<DXFReaderNET.EndReadEventArgs>(this.dxfReaderNETControl1_EndRead);
-            this.dxfReaderNETControl1.StartWrite += new System.EventHandler<DXFReaderNET.StartWriteEventArgs>(this.dxfReaderNETControl1_StartWrite);
-            this.dxfReaderNETControl1.WriteStatus += new System.EventHandler<DXFReaderNET.WriteStatusEventArgs>(this.dxfReaderNETControl1_WriteStatus);
-            this.dxfReaderNETControl1.EndWrite += new System.EventHandler<DXFReaderNET.EndWriteEventArgs>(this.dxfReaderNETControl1_EndWrite);
-            this.dxfReaderNETControl1.StartDrawing += new System.EventHandler<DXFReaderNET.StartDrawingEventArgs>(this.dxfReaderNETControl1_StartDrawing);
-            this.dxfReaderNETControl1.DrawingStatus += new System.EventHandler<DXFReaderNET.DrawingStatusEventArgs>(this.dxfReaderNETControl1_DrawingStatus);
-            this.dxfReaderNETControl1.EndDrawing += new System.EventHandler<DXFReaderNET.EndDrawingEventArgs>(this.dxfReaderNETControl1_EndDrawing);
-            this.dxfReaderNETControl1.StartPlot += new System.EventHandler<DXFReaderNET.StartPlotEventArgs>(this.dxfReaderNETControl1_StartPlot);
-            this.dxfReaderNETControl1.PlotStatus += new System.EventHandler<DXFReaderNET.PlotStatusEventArgs>(this.dxfReaderNETControl1_PlotStatus);
-            this.dxfReaderNETControl1.EndPlot += new System.EventHandler<DXFReaderNET.EndPlotEventArgs>(this.dxfReaderNETControl1_EndPlot);
-            this.dxfReaderNETControl1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.dxfReaderNETControl1_MouseDown);
-            this.dxfReaderNETControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.dxfReaderNETControl1_MouseMove);
-            this.dxfReaderNETControl1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dxfReaderNETControl1_MouseUp);
+            this.ribbonButtonInquiryShowHistory.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonInquiryShowHistory.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryShowHistory.Image")));
+            this.ribbonButtonInquiryShowHistory.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryShowHistory.LargeImage")));
+            this.ribbonButtonInquiryShowHistory.Name = "ribbonButtonInquiryShowHistory";
+            this.ribbonButtonInquiryShowHistory.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryShowHistory.SmallImage")));
+            this.ribbonButtonInquiryShowHistory.Text = "Show history";
+            this.ribbonButtonInquiryShowHistory.Click += new System.EventHandler(this.ribbonButtonInquiryShowHistory_Click);
             // 
             // Form1
             // 
@@ -5980,6 +5992,7 @@
         private System.Windows.Forms.TextBox txtCommand;
         private System.Windows.Forms.Label labelCommands;
         private System.Windows.Forms.RibbonButton ribbonButtonExplodeInsertAll;
+        private System.Windows.Forms.RibbonButton ribbonButtonInquiryShowHistory;
     }
 }
 
