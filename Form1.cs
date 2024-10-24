@@ -26,7 +26,8 @@ namespace DXFReaderNETDemoProgram
         private static Stack<string> UnDoStack = new Stack<string>();
         private static Stack<string> ReDoStack = new Stack<string>();
         private static string InquryLog = "";
-
+        private short m_PolygonSides = 6;
+        private bool m_Circumscribed = false;
 
         private Vector2 panPointStart = Vector2.Zero;
         internal enum Commands
@@ -1399,20 +1400,31 @@ namespace DXFReaderNETDemoProgram
                     break;
                 case FunctionsEnum.Polygon2:
                     vertexes.Clear();
-                    stepAng = 360 / (double)PolygonSides * MathHelper.DegToRad;
+                     stepAng = 360 / (double)m_PolygonSides * MathHelper.DegToRad;
 
                     double Radius = Vector2.Distance(p, p1);
                     double Rotation = Vector2.Angle(p, p1);
-                    if (PolygonSides % 2 != 0)
+
+
+                    if (m_PolygonSides % 2 != 0)
                     {
                         Rotation += stepAng / 2;
                     }
-                    for (double k = 0; k < PolygonSides; k++)
+                    if (m_Circumscribed)
+                    {
+                        //Radius = Math.Sqrt(Radius * Radius + (Radius / 2) * (Radius / 2));
+                        Radius = Radius / Math.Cos(stepAng / 2);
+                        Rotation += stepAng / 2;
+
+                    }
+                    for (double k = 0; k < m_PolygonSides; k++)
                     {
 
                         vertexes.Add(new Vector2(p1.X + Radius * Math.Cos(stepAng * k + Rotation), p1.Y + Radius * Math.Sin(stepAng * k + Rotation)));
                     }
+
                     dxfReaderNETControl1.ShowRubberBandPolygon(vertexes, true, m_RubberBandColor, m_RubberBandType);
+                    dxfReaderNETControl1.ShowRubberBandLine(p1, p, m_RubberBandColor, RubberBandType.Solid);
 
                     break;
                 case FunctionsEnum.Spline:
@@ -3580,22 +3592,35 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonDrawPolylinePolygon_Click(object sender, EventArgs e)
         {
-            string inputValue = PolygonSides.ToString();
-            if (ShowInputDialog(ref inputValue, "Polygon sides", true) == DialogResult.OK)
+
+            InputDialog inputBox = new InputDialog();
+            inputBox.textBox1.Text = m_PolygonSides.ToString();
+            inputBox.label1.Text = "Polygon sides"; ;
+            inputBox.ForceNumeric = true;
+            inputBox.checkBoxInputDialog.Visible = true;
+            inputBox.checkBoxInputDialog.Text = "Circumscribed";
+            inputBox.checkBoxInputDialog.Checked = m_Circumscribed;
+            DialogResult result = inputBox.ShowDialog();
+
+
+
+
+            if (result == DialogResult.OK)
             {
-                short nSides = short.Parse(inputValue, System.Globalization.CultureInfo.CurrentCulture);
+                short nSides = short.Parse(inputBox.textBox1.Text, System.Globalization.CultureInfo.CurrentCulture);
 
                 if (nSides > 2)
                 {
-                    PolygonSides = nSides;
-
+                    m_PolygonSides = nSides;
+                    m_Circumscribed = inputBox.checkBoxInputDialog.Checked;
                     CurrentFunction = FunctionsEnum.Polygon1;
                     CheckSnap();
                     StatusLabel.Text = "Select center point";
-                    LastCommand = Commands.POLIGON;
+
                 }
             }
         }
+
 
         private void ribbonButtonDrawImageImage_Click(object sender, EventArgs e)
         {
@@ -6594,7 +6619,7 @@ namespace DXFReaderNETDemoProgram
                     if (ent != null)
                     {
                         DateTime StartTime = DateTime.Now;
-                        List<EntityObject> contours = dxfReaderNETControl1.Contour(ent);
+                        List<EntityObject> contours = dxfReaderNETControl1.Contour(dxfReaderNETControl1.DXF.Entities, ent);
                         TimeSpan ElapsedTime = DateTime.Now.Subtract(StartTime);
                         toolStripStatusLabelInfo.Text = "Time: " + ElapsedTime.ToString(@"s\.fff\s");
 
@@ -8604,8 +8629,12 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.Polygon2:
                     InitStatus();
                     p2 = p;
+                    double ang = Vector2.Angle(p1, p2);
+                    double rp = Vector2.Distance(p1, p2);
 
-                    m_LastAddedEntity = dxfReaderNETControl1.AddPolygon(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), Vector2.Distance(p1, p2), PolygonSides, Vector2.Angle(p1, p2) * MathHelper.RadToDeg, dxfReaderNETControl1.DXF.CurrentColor.Index);
+                    //if (m_Circumscribed) ang += 360 / (m_PolygonSides * 2);
+                    ang *= MathHelper.RadToDeg;
+                    m_LastAddedEntity = dxfReaderNETControl1.AddPolygon(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), rp, m_PolygonSides, ang, m_Circumscribed, dxfReaderNETControl1.DXF.CurrentColor.Index);
 
                     break;
 
@@ -13376,21 +13405,116 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonDeleteCoincident_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            //if (MessageBox.Show("Are you sure?", ProgramName, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            //{
+            //SaveUndo();
+            List<EntityObject> entitesToDelete = MathHelper.CoincidentEntities();
+
+            if (entitesToDelete.Count > 0)
             {
-                List<EntityObject> entitesToDelete = dxfReaderNETControl1.CoincidentEntities();
 
-                if (entitesToDelete.Count > 0)
+                dxfReaderNETControl1.DXF.RemoveEntities(entitesToDelete);
+
+
+            }
+            int vNumber = 0;
+            int prec = dxfReaderNETControl1.DXF.DrawingVariables.LUprec;
+
+            foreach (LwPolyline lw in dxfReaderNETControl1.DXF.LwPolylines)
+            {
+                List<LwPolylineVertex> newVertexes = new List<LwPolylineVertex>();
+
+                for (int k = 0; k < lw.Vertexes.Count() - 1; k++)
                 {
-                    SaveUndo();
-                    dxfReaderNETControl1.DXF.RemoveEntities(entitesToDelete);
-                    //dxfReaderNETControl1.DXF.ModifyEntities(entitesToDelete,Vector2.Zero,new Vector2(100, 100),1,0);
-                    dxfReaderNETControl1.Refresh();
+                    Vector2 v1 = Vector2.Round(lw.Vertexes[k].Position, prec);
+                    Vector2 v2 = Vector2.Round(lw.Vertexes[k + 1].Position, prec);
 
-
-
+                    //if (k==9) System.Diagnostics.Debugger.Break(); //stop
+                    if (!(v1.X == v2.X && v1.Y == v2.Y && lw.Vertexes[k].Bulge == lw.Vertexes[k + 1].Bulge))
+                    {
+                        newVertexes.Add(lw.Vertexes[k]);
+                    }
 
                 }
+
+                Vector2 v1e = Vector2.Round(lw.Vertexes[lw.Vertexes.Count() - 1].Position, prec);
+                Vector2 v2e = Vector2.Round(lw.Vertexes[0].Position, prec);
+                //if (!(lw.Vertexes[lw.Vertexes.Count() - 1].Position.X == lw.Vertexes[0].Position.X && lw.Vertexes[lw.Vertexes.Count() - 1].Position.Y == lw.Vertexes[0].Position.Y && lw.Vertexes[lw.Vertexes.Count() - 1].Bulge == lw.Vertexes[0].Bulge))
+                if (!(v1e.X == v2e.X && v1e.Y == v2e.Y && lw.Vertexes[lw.Vertexes.Count() - 1].Bulge == lw.Vertexes[0].Bulge))
+
+                {
+                    newVertexes.Add(lw.Vertexes[lw.Vertexes.Count() - 1]);
+                }
+
+
+                if (newVertexes.Count() != lw.Vertexes.Count())
+                {
+                    lw.Vertexes = newVertexes;
+                    vNumber += lw.Vertexes.Count - newVertexes.Count;
+                }
+            }
+
+            foreach (Polyline p in dxfReaderNETControl1.DXF.Polylines)
+            {
+                List<PolylineVertex> newVertexes = new List<PolylineVertex>();
+
+                for (int k = 0; k < p.Vertexes.Count() - 1; k++)
+                {
+                    Vector2 v1 = Vector2.Round(p.Vertexes[k].Position.ToVector2(), prec);
+                    Vector2 v2 = Vector2.Round(p.Vertexes[k + 1].Position.ToVector2(), prec);
+
+                    //if (!(p.Vertexes[k].Position.X == p.Vertexes[k + 1].Position.X && p.Vertexes[k].Position.Y == p.Vertexes[k + 1].Position.Y && p.Vertexes[k].Bulge == p.Vertexes[k + 1].Bulge))
+                    if (!(v1.X == v2.X && v1.Y == v2.Y && p.Vertexes[k].Bulge == p.Vertexes[k + 1].Bulge))
+                    {
+                        newVertexes.Add(p.Vertexes[k]);
+                    }
+
+                }
+
+                Vector2 v1e = Vector2.Round(p.Vertexes[p.Vertexes.Count() - 1].Position.ToVector2(), prec);
+                Vector2 v2e = Vector2.Round(p.Vertexes[0].Position.ToVector2(), prec);
+                //  if (!(p.Vertexes[p.Vertexes.Count() - 1].Position.X == p.Vertexes[0].Position.X && p.Vertexes[p.Vertexes.Count() - 1].Position.Y == p.Vertexes[0].Position.Y && p.Vertexes[p.Vertexes.Count() - 1].Bulge == p.Vertexes[0].Bulge))
+                if (!(v1e.X == v2e.X && v1e.Y == v2e.Y && p.Vertexes[p.Vertexes.Count() - 1].Bulge == p.Vertexes[0].Bulge))
+
+                {
+                    newVertexes.Add(p.Vertexes[p.Vertexes.Count() - 1]);
+                }
+
+
+                if (newVertexes.Count() != p.Vertexes.Count())
+                {
+                    p.Vertexes = newVertexes;
+                    vNumber += p.Vertexes.Count - newVertexes.Count;
+                }
+
+                for (int k = 0; k < p.Vertexes.Count() - 1; k++)
+                {
+                    Vector2 v1 = Vector2.Round(p.Vertexes[k].Position.ToVector2(), prec);
+                    Vector2 v2 = Vector2.Round(p.Vertexes[p.Vertexes.Count() - 1].Position.ToVector2(), prec);
+
+                    //if (!(p.Vertexes[k].Position.X == p.Vertexes[k + 1].Position.X && p.Vertexes[k].Position.Y == p.Vertexes[k + 1].Position.Y && p.Vertexes[k].Bulge == p.Vertexes[k + 1].Bulge))
+                    if (v1.X == v2.X && v1.Y == v2.Y && p.Vertexes[k].Bulge == p.Vertexes[k + 1].Bulge)
+                    {
+                        p.Vertexes.RemoveAt(p.Vertexes.Count() - 1);
+                        break;
+
+                    }
+
+                }
+            }
+
+
+            string text = "";
+            if (entitesToDelete.Count > 0) text += entitesToDelete.Count.ToString() + " entities deleted ";
+            if (vNumber > 0) text += vNumber.ToString() + " vertexes deleted ";
+            StatusLabel.Text = text;
+            if (entitesToDelete.Count > 0 || vNumber > 0)
+            {
+                dxfReaderNETControl1.Refresh();
+            }
+            else
+            {
+                StatusLabel.Text = "No entities or vertexes deleted";
             }
         }
 
@@ -14117,91 +14241,32 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonDeleteZeroLen_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            //if (MessageBox.Show("Are you sure?", ProgramName, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            //{
+            List<EntityObject> entitesToDelete = MathHelper.ZeroLenghtEntities(dxfReaderNETControl1.DXF.Entities);
+
+
+
+            if (entitesToDelete.Count > 0)
             {
-                List<EntityObject> entitesToDelete = dxfReaderNETControl1.CoincidentEntities();
-                int prec = dxfReaderNETControl1.DXF.DrawingVariables.LUprec - 1;
-                foreach (EntityObject entity in dxfReaderNETControl1.DXF.Entities)
-                {
-
-                    switch (entity.Type)
-                    {
+                //SaveUndo();
+                dxfReaderNETControl1.DXF.RemoveEntities(entitesToDelete);
 
 
-                        case EntityType.Line:
-                            Line myLine = (Line)entity;
+                StatusLabel.Text = entitesToDelete.Count.ToString() + " entities deleted ";
 
-                            if (Math.Round(myLine.Lenght, prec) == 0)
-                                entitesToDelete.Add(myLine);
-                            break;
-                        case EntityType.Arc:
-                            Arc myArc = (Arc)entity;
-                            if (Math.Round(myArc.Lenght, prec) == 0)
-                                entitesToDelete.Add(myArc);
-                            break;
-
-                        case EntityType.Circle:
-                            Circle myCircle = (Circle)entity;
-                            if (Math.Round(myCircle.Lenght, prec) == 0)
-                                entitesToDelete.Add(myCircle);
-
-                            break;
-                        case EntityType.Ellipse:
-                            Ellipse myEllipse = (Ellipse)entity;
-                            if (Math.Round(myEllipse.Lenght, prec) == 0)
-                                entitesToDelete.Add(myEllipse);
-
-                            break;
-                        case EntityType.LightWeightPolyline:
-                            LwPolyline myLwPolyline = (LwPolyline)entity;
-                            if (Math.Round(myLwPolyline.Lenght, prec) == 0)
-                                entitesToDelete.Add(myLwPolyline);
-                            break;
-
-                        case EntityType.Polyline:
-                            Polyline myPolyline = (Polyline)entity;
-                            if (Math.Round(myPolyline.Lenght, prec) == 0)
-                                entitesToDelete.Add(myPolyline);
-                            break;
-                        //case EntityType.Spline:
-                        //    Spline mySpline = (Spline)entity;
-                        //    if (Math.Round(mySpline.Area, prec) == 0)
-                        //        entitesToDelete.Add(mySpline);
-                        //    break;
-
-                        case EntityType.Solid:
-                            Solid mySolid = (Solid)entity;
-                            if (Math.Round(mySolid.Area, prec) == 0)
-                                entitesToDelete.Add(mySolid);
-                            break;
-
-                        case EntityType.Trace:
-                            Trace myTrace = (Trace)entity;
-                            if (Math.Round(myTrace.Lenght, prec) == 0)
-                                entitesToDelete.Add(myTrace);
-                            break;
+                dxfReaderNETControl1.Refresh();
 
 
 
 
-                    }
-                }
-
-
-                if (entitesToDelete.Count > 0)
-                {
-                    SaveUndo();
-                    dxfReaderNETControl1.DXF.RemoveEntities(entitesToDelete);
-                    //dxfReaderNETControl1.DXF.ModifyEntities(entitesToDelete,Vector2.Zero,new Vector2(100, 100),1,0);
-                    dxfReaderNETControl1.Refresh();
-
-
-
-
-                }
             }
-        }
+            else
+            {
+                StatusLabel.Text = "No entities deleted";
+            }
 
+        }
 
 
         private void ribbonButtonDeleteGroup_Click(object sender, EventArgs e)
@@ -14345,10 +14410,10 @@ namespace DXFReaderNETDemoProgram
             }
         }
 
-        private void AutoJoinEntities(IEnumerable<EntityObject> Entities)
+        private void AutoJoinEntities(List<EntityObject> Entities)
         {
 
-            List<Vector2> pointsNotConnected = dxfReaderNETControl1.DXF.NotConnectedPoints(Entities);
+            List<Vector2> pointsNotConnected = MathHelper.NotConnectedPoints(Entities);
             //MathHelper.Epsilon = Math.Pow(10, -dxfReaderNETControl1.DXF.DrawingVariables.LUprec);
             double eps = Math.Pow(10, -dxfReaderNETControl1.DXF.DrawingVariables.LUprec) * 2;
             int n = 0;
@@ -14389,25 +14454,18 @@ namespace DXFReaderNETDemoProgram
 
 
             }
-            List<EntityObject> allEntities = new List<EntityObject>();
-            foreach (EntityObject entity in Entities)
-            {
 
-                allEntities.Add(entity);
-            }
             for (int k = 0; k < points1.Count; k++)
             {
-                EntityObject e1 = dxfReaderNETControl1.GetEntity(allEntities, points1[k]);
+                EntityObject e1 = dxfReaderNETControl1.GetEntity(Entities, points1[k]);
                 if (e1 != null)
-                    allEntities.Remove(e1);
-                EntityObject e2 = dxfReaderNETControl1.GetEntity(allEntities, points2[k]);
+                    Entities.Remove(e1);
+                EntityObject e2 = dxfReaderNETControl1.GetEntity(Entities, points2[k]);
 
                 //dxfReaderNETControl1.AddLine(points1[k].ToVector3(), points2[k].ToVector3());
                 dxfReaderNETControl1.Join(e1, e2, points1[k]);
             }
             //System.Diagnostics.Debugger.Break(); //stop
-
-
 
 
         }
@@ -14918,7 +14976,7 @@ namespace DXFReaderNETDemoProgram
             if (MessageBox.Show("Are you sure?", "DXFReader.NET Demo Program", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
                 SaveUndo();
-                AutoJoinEntities(dxfReaderNETControl1.DXF.Entities);
+                AutoJoinEntities(dxfReaderNETControl1.DXF.Entities.ToList());
                 dxfReaderNETControl1.Refresh();
 
             }
