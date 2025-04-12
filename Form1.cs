@@ -291,7 +291,145 @@ namespace DXFReaderNETDemoProgram
             set
             {
                 _CurrentFunction = value;
-                ShowCommandLine();
+
+                if (_CurrentFunction == FunctionsEnum.None)
+                {
+                    dxfReaderNETControl1.HighlightGrabPointsOnHover = false;
+                }
+                else
+                {
+                    //LastCommand = _CurrentFunction;
+                    if (dxfReaderNETControl1.HighlightGrabPointsOnHover)
+                    {
+
+
+
+                        switch (_CurrentFunction)
+                        {
+                            case FunctionsEnum.MoveEntities2:
+                            case FunctionsEnum.MoveEntities1:
+                            case FunctionsEnum.Point:
+                            case FunctionsEnum.Line1:
+                            case FunctionsEnum.Line2:
+                            case FunctionsEnum.Lines:
+                           
+                            case FunctionsEnum.Circle1:
+                            case FunctionsEnum.Circle2:
+                            case FunctionsEnum.Circle2p1:
+                            case FunctionsEnum.Circle2p2:
+                            case FunctionsEnum.Circle3p1:
+                            case FunctionsEnum.Circle3p2:
+                            
+                            case FunctionsEnum.Ellipse1:
+                            case FunctionsEnum.Ellipse2:
+                            case FunctionsEnum.Ellipse3:
+                           
+
+                            case FunctionsEnum.LocatePoint:
+
+                            case FunctionsEnum.Area:
+                            case FunctionsEnum.LwPolyline:
+                            case FunctionsEnum.Polyline:
+                            case FunctionsEnum.PolylineLenght:
+                            case FunctionsEnum.Mline:
+                            case FunctionsEnum.Spline:
+                            case FunctionsEnum.SetLimits1:
+                            case FunctionsEnum.SetLimits2:
+                            case FunctionsEnum.Ray1:
+                            case FunctionsEnum.Ray2:
+                            case FunctionsEnum.Xline1:
+                            case FunctionsEnum.Xline2:
+                            case FunctionsEnum.Rectangle0:
+                            case FunctionsEnum.Rectangle1:
+                            case FunctionsEnum.Rectangle2:
+                            case FunctionsEnum.Trace1:
+                            case FunctionsEnum.Trace2:
+                            case FunctionsEnum.Solid1:
+                            case FunctionsEnum.Solid2:
+                            case FunctionsEnum.Solid3:
+                            case FunctionsEnum.Solid4:
+                            
+                            case FunctionsEnum.Polygon1:
+                            case FunctionsEnum.Polygon2:
+                            case FunctionsEnum.PlotWindow1:
+                            case FunctionsEnum.PlotWindow2:
+                            case FunctionsEnum.Image1:
+                            case FunctionsEnum.Image2:
+                            case FunctionsEnum.ImageFixedSize:
+                            case FunctionsEnum.PDFUnderlay:
+
+                            case FunctionsEnum.HatchRecangle1:
+                            case FunctionsEnum.HatchRecangle2:
+
+                            case FunctionsEnum.GradientHatchRectangle1:
+                            case FunctionsEnum.GradientHatchRectangle2:
+                            case FunctionsEnum.Arc1:
+                            case FunctionsEnum.Arc2:
+                            case FunctionsEnum.Arc3:
+                            case FunctionsEnum.ArcCenterPStartPEnd1:
+                            case FunctionsEnum.ArcCenterPStartPEnd2:
+                            case FunctionsEnum.ArcCenterPStartPEnd3:
+                            case FunctionsEnum.ArcStartMiddleEnd1:
+                            case FunctionsEnum.ArcStartMiddleEnd2:
+                            case FunctionsEnum.ArcStartMiddleEnd3:
+                            case FunctionsEnum.ArcStartEndMiddle1:
+                            case FunctionsEnum.ArcStartEndMiddle2:
+                            case FunctionsEnum.ArcStartEndMiddle3:
+
+                            case FunctionsEnum.DrawPoint:
+                            case FunctionsEnum.DrawLine1:
+                            case FunctionsEnum.DrawLine2:
+                            case FunctionsEnum.DrawCircle1:
+                            case FunctionsEnum.DrawCircle2:
+                            case FunctionsEnum.DrawArc1:
+                            case FunctionsEnum.DrawArc2:
+                            case FunctionsEnum.DrawArc3:
+                            case FunctionsEnum.DrawPolygon:
+                            case FunctionsEnum.DrawImage1:
+                            case FunctionsEnum.DrawImage2:
+                            case FunctionsEnum.DrawImageFixedSize:
+                            case FunctionsEnum.DrawText:
+                            case FunctionsEnum.AlignedDimension1:
+                            case FunctionsEnum.AlignedDimension2:
+                            case FunctionsEnum.AlignedDimension3:
+                            ///case FunctionsEnum.AlignedDimensionLine1:
+                            case FunctionsEnum.AlignedDimensionLine2:
+                            case FunctionsEnum.LinearDimension1:
+                            case FunctionsEnum.LinearDimension2:
+                            case FunctionsEnum.LinearDimension3:
+                            //case FunctionsEnum.LinearDimensionLine1:
+                            case FunctionsEnum.LinearDimensionLine2:
+                            //case FunctionsEnum.AngularDimension2Lines1:
+                            //case FunctionsEnum.AngularDimension2Lines2:
+                            case FunctionsEnum.AngularDimension2Lines3:
+                            //case FunctionsEnum.AngularDimensionArc1:
+                            case FunctionsEnum.AngularDimensionArc2:
+                            case FunctionsEnum.AngularDimensionCenterStartEnd1:
+                            case FunctionsEnum.AngularDimensionCenterStartEnd2:
+                            case FunctionsEnum.AngularDimensionCenterStartEnd3:
+                            case FunctionsEnum.AngularDimensionCenterStartEnd4:
+                            //case FunctionsEnum.DiametricDimension1:
+                            case FunctionsEnum.DiametricDimension2:
+                            //case FunctionsEnum.RadialDimension1:
+                            case FunctionsEnum.RadialDimension2:
+                            case FunctionsEnum.Array1:
+                            case FunctionsEnum.Array2:
+                            case FunctionsEnum.ArrayPolar:
+                            case FunctionsEnum.Leader1:
+                            case FunctionsEnum.Leader2:
+                            case FunctionsEnum.Leader3:
+                            
+
+                                dxfReaderNETControl1.HighlightGrabPointsOnHover = true;
+
+                                break;
+                        }
+
+                    }
+
+                }
+
+
             }
         }
         private int m_SelectedContours = 0;
@@ -703,7 +841,7 @@ namespace DXFReaderNETDemoProgram
 
             }
             ////////////////////////////////////////////////////////////////////////
-            switch (dxfReaderNETControl1.PlotRotation)
+            switch (dxfReaderNETControl1.PlotOrientation)
             {
                 case PlotOrientationType.Portrait:
                     ribbonComboBoxPlotRotation.SelectedItem = ribbonButtonPlotRotationPortrait;
@@ -788,7 +926,7 @@ namespace DXFReaderNETDemoProgram
             ribbonButtonHighlight.Checked = dxfReaderNETControl1.HighlightEntityOnHover;
             ribbonButtonCheckContHighligh.Checked = dxfReaderNETControl1.ContinuousHighlight;
             ribbonButton11.Checked = dxfReaderNETControl1.HighlightNotContinuous;
-            ribbonButtonGrabPoints.Checked = dxfReaderNETControl1.HighlightGrabPoints;
+            ribbonButtonGrabPoints.Checked = dxfReaderNETControl1.HighlightGrabPointsOnHover;
             ribbonButtonContinuosSelection.Checked = m_ContinuousSelection;
 
             ribbonButtonModifySelectSingleMulti.Enabled = !m_ContinuousSelection;
@@ -3067,7 +3205,7 @@ namespace DXFReaderNETDemoProgram
             dxfReaderNETControl1.HighlightEntityOnHover = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightEntityOnHover", false).ToString());
             dxfReaderNETControl1.ContinuousHighlight = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ContinuousHighlight", false).ToString());
             dxfReaderNETControl1.HighlightNotContinuous = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightNotContinuous", false).ToString());
-            dxfReaderNETControl1.HighlightGrabPoints = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightGrabPoints", false).ToString());
+            dxfReaderNETControl1.HighlightGrabPointsOnHover = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightGrabPointsOnHover", false).ToString());
 
             dxfReaderNETControl1.ShowAxes = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowAxes", false).ToString());
             dxfReaderNETControl1.ShowBasePoint = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowBasePoint", false).ToString());
@@ -3112,7 +3250,7 @@ namespace DXFReaderNETDemoProgram
 
             dxfReaderNETControl1.GridDisplay = (GridDisplayType)Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "GridDisplay", 0);
 
-            dxfReaderNETControl1.PlotRotation = (PlotOrientationType)Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotRotation", 0);
+            dxfReaderNETControl1.PlotOrientation = (PlotOrientationType)Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotOrientation", 0);
             dxfReaderNETControl1.PlotRendering = (PlotRenderingType)Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotRendering", 0);
             dxfReaderNETControl1.PlotMode = (PlotModeType)Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotMode", 0);
             dxfReaderNETControl1.PlotUnits = (PlotUnitsType)Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotUnits", 0);
@@ -3206,7 +3344,7 @@ namespace DXFReaderNETDemoProgram
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightEntityOnHover", dxfReaderNETControl1.HighlightEntityOnHover);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ContinuousHighlight", dxfReaderNETControl1.ContinuousHighlight);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightNotContinuous", dxfReaderNETControl1.HighlightNotContinuous);
-            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightGrabPoints", dxfReaderNETControl1.HighlightGrabPoints);
+            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightGrabPointsOnHover", dxfReaderNETControl1.HighlightGrabPointsOnHover);
 
 
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ShowAxes", dxfReaderNETControl1.ShowAxes);
@@ -3264,7 +3402,7 @@ namespace DXFReaderNETDemoProgram
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "mWindowState", this.WindowState);
 
 
-            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotRotation", System.Convert.ToInt32(dxfReaderNETControl1.PlotRotation));
+            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotOrientation", System.Convert.ToInt32(dxfReaderNETControl1.PlotOrientation));
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotRendering", System.Convert.ToInt32(dxfReaderNETControl1.PlotRendering));
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotMode", System.Convert.ToInt32(dxfReaderNETControl1.PlotMode));
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "PlotUnits", System.Convert.ToInt32(dxfReaderNETControl1.PlotUnits));
@@ -3384,10 +3522,7 @@ namespace DXFReaderNETDemoProgram
 
             dxfReaderNETControl1.ObjectOsnapMode = m_OsnapMode;
             CheckSnap();
-            if (dxfReaderNETControl1.HighlightGrabPoints)
-            {
-                dxfReaderNETControl1.Refresh();
-            }
+           
         }
 
 
@@ -5809,12 +5944,12 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonPlotRotationPortrait_Click(object sender, EventArgs e)
         {
-            dxfReaderNETControl1.PlotRotation = PlotOrientationType.Portrait;
+            dxfReaderNETControl1.PlotOrientation = PlotOrientationType.Portrait;
         }
 
         private void ribbonButtonPlotRotationLandscape_Click(object sender, EventArgs e)
         {
-            dxfReaderNETControl1.PlotRotation = PlotOrientationType.Landscape;
+            dxfReaderNETControl1.PlotOrientation = PlotOrientationType.Landscape;
         }
 
         private void ribbonButtonPlotUnitsInchs_Click(object sender, EventArgs e)
@@ -13408,7 +13543,7 @@ namespace DXFReaderNETDemoProgram
             //if (MessageBox.Show("Are you sure?", ProgramName, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             //{
             //SaveUndo();
-            List<EntityObject> entitesToDelete = MathHelper.CoincidentEntities();
+            List<EntityObject> entitesToDelete = MathHelper.CoincidentEntities(dxfReaderNETControl1.DXF.Entities.ToList());
 
             if (entitesToDelete.Count > 0)
             {
@@ -14009,8 +14144,8 @@ namespace DXFReaderNETDemoProgram
 
         private void ribbonButtonGrabPoints_Click(object sender, EventArgs e)
         {
-            dxfReaderNETControl1.HighlightGrabPoints = ribbonButtonGrabPoints.Checked;
-            dxfReaderNETControl1.Refresh();
+            dxfReaderNETControl1.HighlightGrabPointsOnHover  = ribbonButtonGrabPoints.Checked;
+            //dxfReaderNETControl1.Refresh();
         }
 
         private void ribbonButtonArcCenterStartPEndP_Click(object sender, EventArgs e)
@@ -14029,10 +14164,10 @@ namespace DXFReaderNETDemoProgram
         {
             dxfReaderNETControl1.ObjectOsnapMode = ObjectOsnapTypeFlags.None;
             SetSnapRibbon();
-            if (dxfReaderNETControl1.HighlightGrabPoints)
-            {
-                dxfReaderNETControl1.Refresh();
-            }
+            //if (dxfReaderNETControl1.HighlightGrabPointsOnHover)
+            //{
+            //    dxfReaderNETControl1.Refresh();
+            //}
         }
 
         private void ribbonButtonObjectSnapSelectAll_Click(object sender, EventArgs e)
@@ -14073,10 +14208,10 @@ namespace DXFReaderNETDemoProgram
 
             dxfReaderNETControl1.ObjectOsnapMode = m_OsnapMode;
             SetSnapRibbon();
-            if (dxfReaderNETControl1.HighlightGrabPoints)
-            {
-                dxfReaderNETControl1.Refresh();
-            }
+            //if (dxfReaderNETControl1.HighlightGrabPointsOnHover)
+            //{
+            //    dxfReaderNETControl1.Refresh();
+            //}
         }
 
         private void ribbonButtonModifyLw2Poly_Click(object sender, EventArgs e)

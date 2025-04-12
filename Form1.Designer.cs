@@ -5368,8 +5368,7 @@
             this.dxfReaderNETControl1.DXF = dxfDocument1;
             this.dxfReaderNETControl1.FileName = null;
             this.dxfReaderNETControl1.HighlightEntityOnHover = true;
-            this.dxfReaderNETControl1.HighlightGrabPoints = false;
-            this.dxfReaderNETControl1.HighlightGrabPointsColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(163)))), ((int)(((byte)(0)))));
+           
             this.dxfReaderNETControl1.HighlightMarkerColor2 = System.Drawing.Color.Magenta;
             this.dxfReaderNETControl1.HighlightNotContinuous = false;
             this.dxfReaderNETControl1.Location = new System.Drawing.Point(0, 0);
