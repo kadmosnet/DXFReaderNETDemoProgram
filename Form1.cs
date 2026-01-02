@@ -28,6 +28,7 @@ namespace DXFReaderNETDemoProgram
         private static string InquryLog = "";
         private short m_PolygonSides = 6;
         private bool m_Circumscribed = false;
+        private List<EntityObject> clonedEntities = new List<EntityObject>();
 
         private Vector2 panPointStart = Vector2.Zero;
         internal enum Commands
@@ -163,8 +164,7 @@ namespace DXFReaderNETDemoProgram
             Solid4,
             Polygon1,
             Polygon2,
-            MoveEnt1,
-            MoveEnt2,
+            
             PlotWindow1,
             PlotWindow2,
             Image1,
@@ -895,7 +895,7 @@ namespace DXFReaderNETDemoProgram
 
             ribbonUpDownZoomFactor.TextBoxText = dxfReaderNETControl1.ZoomInOutPercent.ToString("###0");
 
-            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
             ShowStatusLabels();
 
             LastCommand = Commands.None;
@@ -924,7 +924,7 @@ namespace DXFReaderNETDemoProgram
             ribbonColorChooserHighlightMarker2.Color = dxfReaderNETControl1.HighlightMarkerColor2;
             ribbonColorChooserRubberBand.Color = m_RubberBandColor;
             ribbonButtonHighlight.Checked = dxfReaderNETControl1.HighlightEntityOnHover;
-            ribbonButtonCheckContHighligh.Checked = dxfReaderNETControl1.ContinuousHighlight;
+            
             ribbonButton11.Checked = dxfReaderNETControl1.HighlightNotContinuous;
             ribbonButtonGrabPoints.Checked = dxfReaderNETControl1.HighlightGrabPointsOnHover;
             ribbonButtonContinuosSelection.Checked = m_ContinuousSelection;
@@ -1107,7 +1107,7 @@ namespace DXFReaderNETDemoProgram
 
 
 
-                    dxfReaderNETControl1.ShowRubberBandEntities(slotEnts, Vector2.Zero, m_RubberBandColor, m_RubberBandType);
+                    dxfReaderNETControl1.ShowRubberBandEntities(slotEnts, Vector2.Zero);
                     toolStripStatusLabelInfo.Text = "ΔX: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p.X - p1.X) + " ΔY: " + dxfReaderNETControl1.DXF.ToFormattedUnit(p.Y - p1.Y);
                     break;
 
@@ -1168,8 +1168,10 @@ namespace DXFReaderNETDemoProgram
 
                 case FunctionsEnum.AngularDimensionArc2:
                     Arc arc = (Arc)SelectedEntity;
-                    dxfReaderNETControl1.ShowRubberBandAngularDimension(arc.Center.ToVector2(), arc.Radius, arc.StartAngle, arc.EndAngle, p, m_RubberBandColor, m_RubberBandType);
-                    break;
+                    List<EntityObject> dimEnts = new List<EntityObject>();
+                    dimEnts.Add(dxfReaderNETControl1.AddAngularDimension(arc, p.ToVector3(), dxfReaderNETControl1.DXF.DrawingVariables.DimStyle, dxfReaderNETControl1.DXF.CurrentColor.Index, "", "", false));
+
+                    dxfReaderNETControl1.ShowRubberBandEntities(dimEnts); break;
                 case FunctionsEnum.GradientHatchBoundaries:
                 case FunctionsEnum.HatchBoundaries:
 
@@ -1290,7 +1292,7 @@ namespace DXFReaderNETDemoProgram
                         }
                         rectEnts.Add(a);
 
-                        dxfReaderNETControl1.ShowRubberBandEntities(rectEnts, Vector2.Zero, m_RubberBandColor, m_RubberBandType);
+                        dxfReaderNETControl1.ShowRubberBandEntities(rectEnts, Vector2.Zero);
 
                     }
                     else
@@ -1328,62 +1330,15 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.ArrayPolar:
                     p1 = p;
 
-                    double stepAng = 360 / (double)m_PolarArrayItems;
-                    //double radius = Vector2.Distance(p2, p1);
-                    List<EntityObject> arrayPaEnts = new List<EntityObject>();
-                    for (int k = 0; k < m_PolarArrayItems; k++)
-                    {
+                    List<EntityObject> arrayPaEnts = dxfReaderNETControl1.PolarArrayOfEntities(dxfReaderNETControl1.DXF.SelectedEntities, p, m_PolarArrayItems);
 
-                        foreach (EntityObject entPA in dxfReaderNETControl1.DXF.SelectedEntities)
-                        {
-                            EntityObject newEnt = (EntityObject)entPA.Clone();
-                            dxfReaderNETControl1.DXF.ModifyEntity(ref newEnt, p1, null, 1, stepAng * k);
-
-                            arrayPaEnts.Add(newEnt);
-
-                        }
-
-                    }
-
-                    dxfReaderNETControl1.ShowRubberBandEntities(arrayPaEnts, Vector2.Zero);
+                    
+                    dxfReaderNETControl1.ShowRubberBandEntities(arrayPaEnts);
                     break;
                 case FunctionsEnum.Array2:
-
-                    List<EntityObject> arrayEnts = new List<EntityObject>();
-
-
-
-                    //double spacingX = Math.Abs(p.X - p1.X);
-                    //double spacingY = Math.Abs(p.Y - p1.Y);
-
-                    double spacingX = p.X - p1.X;
-                    double spacingY = p.Y - p1.Y;
-
-
-
-                    Vector2 displacement = Vector2.Zero;
-                    for (int k = 0; k < m_ArrayRows; k++)
-                    {
-                        for (int j = 0; j < m_ArrayColumns; j++)
-                        {
-
-                            foreach (EntityObject entA in dxfReaderNETControl1.DXF.SelectedEntities)
-                            {
-                                EntityObject newEnt = (EntityObject)entA.Clone();
-                                dxfReaderNETControl1.DXF.ModifyEntity(ref newEnt, Vector2.Zero, displacement);
-                                arrayEnts.Add(newEnt);
-
-                            }
-                            displacement.X += spacingX;
-                        }
-                        displacement.Y += spacingY;
-                        displacement.X = 0;
-                    }
-
-
-
-
-                    dxfReaderNETControl1.ShowRubberBandEntities(arrayEnts, Vector2.Zero);
+                    List<EntityObject> arrayEnts = dxfReaderNETControl1.ArrayOfEntities(dxfReaderNETControl1.DXF.SelectedEntities, p1, p, m_ArrayColumns, m_ArrayRows);
+                   
+                    dxfReaderNETControl1.ShowRubberBandEntities(arrayEnts);
 
                     break;
 
@@ -1453,7 +1408,7 @@ namespace DXFReaderNETDemoProgram
                 case FunctionsEnum.MoveEntities2:
 
                     //dxfReaderNETControl1.ShowRubberBandEntities(dxfReaderNETControl1.DXF.SelectedEntities, p - p1, m_RubberBandColor, m_RubberBandType);
-                    dxfReaderNETControl1.ShowRubberBandEntities(dxfReaderNETControl1.DXF.SelectedEntities, p - p1, null, m_RubberBandType);
+                    dxfReaderNETControl1.ShowRubberBandEntities(dxfReaderNETControl1.DXF.SelectedEntities, p - p1);
 
                     break;
                 case FunctionsEnum.Solid2:
@@ -1496,73 +1451,26 @@ namespace DXFReaderNETDemoProgram
 
                 case FunctionsEnum.MoveEntitiesRubber3:
 
-                    dxfReaderNETControl1.ShowRubberBandEntities(dxfReaderNETControl1.DXF.SelectedEntities, p - p2, m_RubberBandColor, m_RubberBandType);
+                    dxfReaderNETControl1.ShowRubberBandEntities(dxfReaderNETControl1.DXF.SelectedEntities);
 
                     break;
-                case FunctionsEnum.MoveEnt2:
-
-                    switch (SelectedEntity.Type)
-                    {
-                        case EntityType.Line:
-                            dxfReaderNETControl1.ShowRubberBandLine(((Line)SelectedEntity).StartPoint.ToVector2() + p - p1, ((Line)SelectedEntity).EndPoint.ToVector2() + p - p1);
-
-                            break;
-                        case EntityType.Arc:
-                            dxfReaderNETControl1.ShowRubberBandArc(((Arc)SelectedEntity).Center.ToVector2() + p - p1, ((Arc)SelectedEntity).Radius, ((Arc)SelectedEntity).StartAngle, ((Arc)SelectedEntity).EndAngle);
-                            break;
-                        case EntityType.Circle:
-                            dxfReaderNETControl1.ShowRubberBandCircle(((Circle)SelectedEntity).Center.ToVector2() + p - p1, ((Circle)SelectedEntity).Radius);
-                            break;
-                        case EntityType.LightWeightPolyline:
-                            vertexes.Clear();
-                            foreach (LwPolylineVertex v in ((LwPolyline)SelectedEntity).Vertexes)
-                            {
-                                vertexes.Add(new Vector2(v.Position.X, v.Position.Y) + p - p1);
-                            }
-                            dxfReaderNETControl1.ShowRubberBandPolygon(vertexes, false);
-                            break;
-
-                        case EntityType.Polyline:
-                            vertexes.Clear();
-                            foreach (PolylineVertex v in ((Polyline)SelectedEntity).Vertexes)
-                            {
-                                vertexes.Add(new Vector2(v.Position.X, v.Position.Y) + p - p1);
-                            }
-                            dxfReaderNETControl1.ShowRubberBandPolygon(vertexes, false);
-                            break;
-
-
-                    }
-
-
-                    break;
+               
                 case FunctionsEnum.Polygon2:
-                    vertexes.Clear();
-                     stepAng = 360 / (double)m_PolygonSides * MathHelper.DegToRad;
 
                     double Radius = Vector2.Distance(p, p1);
-                    double Rotation = Vector2.Angle(p, p1);
+                    double Rotation = Vector2.Angle(p1, p) * MathHelper.RadToDeg;
 
 
-                    if (m_PolygonSides % 2 != 0)
-                    {
-                        Rotation += stepAng / 2;
-                    }
-                    if (m_Circumscribed)
-                    {
-                        //Radius = Math.Sqrt(Radius * Radius + (Radius / 2) * (Radius / 2));
-                        Radius = Radius / Math.Cos(stepAng / 2);
-                        Rotation += stepAng / 2;
+                    List<EntityObject> rubEntities = new List<EntityObject>();
 
-                    }
-                    for (double k = 0; k < m_PolygonSides; k++)
-                    {
 
-                        vertexes.Add(new Vector2(p1.X + Radius * Math.Cos(stepAng * k + Rotation), p1.Y + Radius * Math.Sin(stepAng * k + Rotation)));
-                    }
 
-                    dxfReaderNETControl1.ShowRubberBandPolygon(vertexes, true, m_RubberBandColor, m_RubberBandType);
-                    dxfReaderNETControl1.ShowRubberBandLine(p1, p, m_RubberBandColor, RubberBandType.Solid);
+                    rubEntities.Add(dxfReaderNETControl1.AddPolygon(p1, Radius, m_PolygonSides, Rotation, m_Circumscribed, dxfReaderNETControl1.DXF.CurrentColor.Index, "", "", false));
+
+                    Line l2c = new Line(p1, p);
+                    l2c.Linetype = new Linetype(RubberBandType.Dashed.ToString());
+                    rubEntities.Add(l2c);
+                    dxfReaderNETControl1.ShowRubberBandEntities(rubEntities);
 
                     break;
                 case FunctionsEnum.Spline:
@@ -3203,7 +3111,7 @@ namespace DXFReaderNETDemoProgram
             if (mWindowState == "Maximized") this.WindowState = FormWindowState.Maximized;
 
             dxfReaderNETControl1.HighlightEntityOnHover = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightEntityOnHover", false).ToString());
-            dxfReaderNETControl1.ContinuousHighlight = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ContinuousHighlight", false).ToString());
+           
             dxfReaderNETControl1.HighlightNotContinuous = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightNotContinuous", false).ToString());
             dxfReaderNETControl1.HighlightGrabPointsOnHover = Convert.ToBoolean(Registry.GetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightGrabPointsOnHover", false).ToString());
 
@@ -3342,7 +3250,7 @@ namespace DXFReaderNETDemoProgram
 
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "GridDisplay", System.Convert.ToInt32(dxfReaderNETControl1.GridDisplay));
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightEntityOnHover", dxfReaderNETControl1.HighlightEntityOnHover);
-            Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "ContinuousHighlight", dxfReaderNETControl1.ContinuousHighlight);
+            
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightNotContinuous", dxfReaderNETControl1.HighlightNotContinuous);
             Registry.SetValue(@"HKEY_CURRENT_USER\Software\DXFReaderNETDemoProgram", "HighlightGrabPointsOnHover", dxfReaderNETControl1.HighlightGrabPointsOnHover);
 
@@ -3467,8 +3375,8 @@ namespace DXFReaderNETDemoProgram
                     dxfReaderNETControl1.CustomCursor = CustomCursorType.CrossHairObjectSnapQuestionMark;
             }
         }
-
-        private bool EntitesSelected()
+        
+        private bool EntitiesSelected()
         {
             return dxfReaderNETControl1.DXF.SelectedEntities.Count() > 0;
         }
@@ -4516,7 +4424,7 @@ namespace DXFReaderNETDemoProgram
                     if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
                     {
                         dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
-                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                     }
 
                 }
@@ -4528,7 +4436,7 @@ namespace DXFReaderNETDemoProgram
         private void ribbonButtonModyfiSelectClear_Click(object sender, EventArgs e)
         {
             dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
             dxfReaderNETControl1.Refresh();
         }
 
@@ -4540,7 +4448,7 @@ namespace DXFReaderNETDemoProgram
                 SaveUndo();
                 dxfReaderNETControl1.DXF.RemoveEntities(dxfReaderNETControl1.DXF.SelectedEntities);
                 dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                 dxfReaderNETControl1.Refresh();
 
             }
@@ -4574,7 +4482,7 @@ namespace DXFReaderNETDemoProgram
                     //dxfReaderNETControl1.DXF.RemoveEntities();
                     //dxfReaderNETControl1.DXF.AddEntities(dxfReaderNETControl1.DXF.SelectedEntities);
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                     dxfReaderNETControl1.Refresh();
                 }
 
@@ -5191,7 +5099,7 @@ namespace DXFReaderNETDemoProgram
                         dxfReaderNETControl1.DXF.AddEntity(newPoly);
                         dxfReaderNETControl1.DXF.RemoveEntities(dxfReaderNETControl1.DXF.SelectedEntities);
                         dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                         dxfReaderNETControl1.Refresh();
                     }
                 }
@@ -6659,13 +6567,13 @@ namespace DXFReaderNETDemoProgram
                             if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
                             {
                                 dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
-                                ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                                ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                                 dxfReaderNETControl1.HighLight(ent);
                             }
                             else
                             {
                                 dxfReaderNETControl1.DXF.SelectedEntities.Remove(ent);
-                                ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                                ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                                 //dxfReaderNETControl1.DrawEntity(ent);
                                 dxfReaderNETControl1.Refresh();
 
@@ -6776,7 +6684,7 @@ namespace DXFReaderNETDemoProgram
                         //    dxfReaderNETControl1.DXF.Groups.Add(newGgroupF);
                         //    addedContours.Add(newGgroupF);
                         //    dxfReaderNETControl1.DXF.Modified = false;
-                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                         m_SelectedContours += 1;
                         StatusLabel.Text = "Select an entity of the contour. ESC to end. Selected contours: " + m_SelectedContours.ToString();
                         //}
@@ -7356,7 +7264,7 @@ namespace DXFReaderNETDemoProgram
 
                     dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                     break;
 
                 case FunctionsEnum.RotateAxis1:
@@ -7391,7 +7299,7 @@ namespace DXFReaderNETDemoProgram
                     {
                         StatusLabel.Text = "Block '" + m_newBlockName + "' created";
                         dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                         dxfReaderNETControl1.Refresh();
                         m_newBlockName = "";
                     }
@@ -8187,7 +8095,7 @@ namespace DXFReaderNETDemoProgram
                                     if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(_ent))
                                     {
                                         dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
-                                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                                        ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                                     }
                                     dxfReaderNETControl1.HighLight(_ent);
 
@@ -8220,13 +8128,13 @@ namespace DXFReaderNETDemoProgram
                         if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
                         {
                             dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
-                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                             dxfReaderNETControl1.HighLight(ent);
                         }
                         else
                         {
                             dxfReaderNETControl1.DXF.SelectedEntities.Remove(ent);
-                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                             //dxfReaderNETControl1.DrawEntity(ent);
                             dxfReaderNETControl1.Refresh();
 
@@ -8238,25 +8146,7 @@ namespace DXFReaderNETDemoProgram
                         CheckContinuousSelection();
                     }
                     break;
-                case FunctionsEnum.MoveEnt1:
-                    StatusLabel.Text = "";
-                    CurrentFunction = FunctionsEnum.None;
-                    CheckContinuousSelection();
-                    ent = dxfReaderNETControl1.GetEntity(pNoSnap);
-                    if (ent != null)
-                    {
-
-                        CurrentFunction = FunctionsEnum.MoveEnt2;
-                        SelectedEntity = ent;
-                        p1 = p;
-
-                    }
-                    else
-                    {
-                        StatusLabel.Text = "No entity found";
-                        CheckContinuousSelection();
-                    }
-                    break;
+                
 
                 case FunctionsEnum.GetEntities:
                     ent = dxfReaderNETControl1.GetEntity(pNoSnap);
@@ -8266,13 +8156,13 @@ namespace DXFReaderNETDemoProgram
                         if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
                         {
                             dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
-                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                             dxfReaderNETControl1.HighLight(ent);
                         }
                         else
                         {
                             dxfReaderNETControl1.DXF.SelectedEntities.Remove(ent);
-                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                             //dxfReaderNETControl1.DrawEntity(ent);
                             dxfReaderNETControl1.Refresh();
 
@@ -8427,70 +8317,29 @@ namespace DXFReaderNETDemoProgram
                     InitStatus();
 
                     toolStripStatusLabelInfo.Text = "";
-                    p1 = p;
-                    //p2 = MathHelper.EntitiesCenter(dxfReaderNETControl1.DXF.SelectedEntities);
-
-                    double stepAng = 360 / (double)m_PolarArrayItems;
-                    //double radius = Vector2.Distance(p2, p1);
-                    for (double k = 0; k < m_PolarArrayItems; k++)
-                    {
 
 
-                        foreach (EntityObject entPA in dxfReaderNETControl1.DXF.SelectedEntities)
-                        {
-                            EntityObject newEnt = (EntityObject)entPA.Clone();
-                            //dxfReaderNETControl1.DXF.ModifyEntity(ref newEnt, p1, new Vector2(p1.X + radius * Math.Cos((stepAng * k) * MathHelper.DegToRad), p1.Y + radius * Math.Sin((stepAng * k) * MathHelper.DegToRad)));
-                            dxfReaderNETControl1.DXF.ModifyEntity(ref newEnt, p1, null, 1, stepAng * k);
-
-                            dxfReaderNETControl1.DXF.AddEntity(newEnt);
-
-                        }
-
-                    }
+                    List<EntityObject> arrayPolarOfEntities = dxfReaderNETControl1.PolarArrayOfEntities(dxfReaderNETControl1.DXF.SelectedEntities, p, m_PolarArrayItems);
                     dxfReaderNETControl1.DXF.RemoveEntities(dxfReaderNETControl1.DXF.SelectedEntities);
+                    dxfReaderNETControl1.DXF.AddEntities(arrayPolarOfEntities);
+
+
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                     dxfReaderNETControl1.Refresh();
                     break;
 
                 case FunctionsEnum.Array2:
                     InitStatus();
-
-                    p2 = p;
-                    //double spacingX = Math.Abs(p2.X - p1.X);
-                    //double spacingY = Math.Abs(p2.Y - p1.Y);
-                    double spacingX = p2.X - p1.X;
-                    double spacingY = p2.Y - p1.Y;
-
                     toolStripStatusLabelInfo.Text = "";
+                    List<EntityObject> arrayOfEntities = dxfReaderNETControl1.ArrayOfEntities(dxfReaderNETControl1.DXF.SelectedEntities, p1, p, m_ArrayColumns, m_ArrayRows);
 
 
-
-                    Vector2 displacement = Vector2.Zero;
-                    //for (int k = 0; k < m_ArrayColumns; k++)
-                    //{
-                    //    for (int j = 0; j < m_ArrayRows; j++)
-
-                    for (int k = 0; k < m_ArrayRows; k++)
-                    {
-                        for (int j = 0; j < m_ArrayColumns; j++)
-                        {
-
-                            foreach (EntityObject entA in dxfReaderNETControl1.DXF.SelectedEntities)
-                            {
-                                EntityObject newEnt = (EntityObject)entA.Clone();
-                                dxfReaderNETControl1.DXF.ModifyEntity(ref newEnt, Vector2.Zero, displacement);
-                                dxfReaderNETControl1.DXF.AddEntity(newEnt);
-
-                            }
-                            displacement.X += spacingX;
-                        }
-                        displacement.Y += spacingY;
-                        displacement.X = 0;
-                    }
                     dxfReaderNETControl1.DXF.RemoveEntities(dxfReaderNETControl1.DXF.SelectedEntities);
+                    dxfReaderNETControl1.DXF.AddEntities(arrayOfEntities);
+                   
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                     dxfReaderNETControl1.Refresh();
 
 
@@ -8769,7 +8618,7 @@ namespace DXFReaderNETDemoProgram
 
                     //if (m_Circumscribed) ang += 360 / (m_PolygonSides * 2);
                     ang *= MathHelper.RadToDeg;
-                    m_LastAddedEntity = dxfReaderNETControl1.AddPolygon(new Vector3(p1.X, p1.Y, dxfReaderNETControl1.DXF.CurrentElevation), rp, m_PolygonSides, ang, m_Circumscribed, dxfReaderNETControl1.DXF.CurrentColor.Index);
+                    m_LastAddedEntity = dxfReaderNETControl1.AddPolygon(new Vector2(p1.X, p1.Y), rp, m_PolygonSides, ang, m_Circumscribed, dxfReaderNETControl1.DXF.CurrentColor.Index);
 
                     break;
 
@@ -9061,7 +8910,7 @@ namespace DXFReaderNETDemoProgram
                         if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(entity) && entity.Layer.Name.ToUpper() != "AUXILIARY")
                         {
                             dxfReaderNETControl1.DXF.SelectedEntities.Add(entity);
-                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                         }
                     }
 
@@ -9398,7 +9247,7 @@ namespace DXFReaderNETDemoProgram
                     dxfReaderNETControl1.DXF.ModifyEntities(dxfReaderNETControl1.DXF.SelectedEntities, p1, p3 - p2);
                     dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
 
                     break;
                 case FunctionsEnum.MoveEntitiesRubber2:
@@ -9413,7 +9262,7 @@ namespace DXFReaderNETDemoProgram
                         if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(entity))
                         {
                             dxfReaderNETControl1.DXF.SelectedEntities.Add(entity);
-                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                         }
                     }
 
@@ -9439,7 +9288,7 @@ namespace DXFReaderNETDemoProgram
                     dxfReaderNETControl1.DXF.AddEntities(newEntities);
                     dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
 
                     break;
 
@@ -9450,32 +9299,25 @@ namespace DXFReaderNETDemoProgram
                     break;
 
 
-                case FunctionsEnum.MoveEnt2:
-
-                    InitStatus();
-                    p2 = p;
-
-                    dxfReaderNETControl1.DXF.ModifyEntity(ref SelectedEntity, p1, p2 - p1);
-
-
-                    dxfReaderNETControl1.Refresh();
-
-                    SelectedEntity = null;
-                    break;
+               
 
                 case FunctionsEnum.MoveEntities2:
-                    InitStatus();
-                    p2 = p;
+                    List<EntityObject> rubEntities = new List<EntityObject>();
+                    rubEntities.AddRange(clonedEntities);
+                    Line myLine = new Line(p1, p1 + (p1 - p));
 
-                    dxfReaderNETControl1.DXF.ModifyEntities(dxfReaderNETControl1.DXF.SelectedEntities, p1, p2 - p1);
-                    dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                    dxfReaderNETControl1.Refresh();
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+
+                    myLine.Linetype = new Linetype(RubberBandType.Dashed.ToString());
+                    rubEntities.Add(myLine);
+
+
+                    dxfReaderNETControl1.ShowRubberBandEntities(rubEntities, p - p1);
 
                     break;
 
                 case FunctionsEnum.MoveEntities1:
                     CurrentFunction = FunctionsEnum.MoveEntities2;
+                    clonedEntities = dxfReaderNETControl1.DXF.CloneEntities(dxfReaderNETControl1.DXF.SelectedEntities);
                     StatusLabel.Text = "Select translation point";
                     p1 = p;
                     break;
@@ -9489,7 +9331,7 @@ namespace DXFReaderNETDemoProgram
 
                     dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
 
                     break;
                 case FunctionsEnum.RotateEntities2:
@@ -9503,7 +9345,7 @@ namespace DXFReaderNETDemoProgram
                     dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
                     InitStatus();
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
 
 
                     break;
@@ -9524,7 +9366,7 @@ namespace DXFReaderNETDemoProgram
 
                     dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
 
                     break;
                 case FunctionsEnum.ScaleEntities2:
@@ -9537,7 +9379,7 @@ namespace DXFReaderNETDemoProgram
 
                     dxfReaderNETControl1.Refresh();
                     dxfReaderNETControl1.DXF.SelectedEntities.Clear();
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
 
                     break;
                 case FunctionsEnum.ScaleEntities1:
@@ -9591,7 +9433,7 @@ namespace DXFReaderNETDemoProgram
                 }
                 dxfReaderNETControl1.Refresh();
 
-                ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                 dxfReaderNETControl1.DXF.Modified = true;
             }
         }
@@ -9650,7 +9492,7 @@ namespace DXFReaderNETDemoProgram
             dxfReaderNETControl1.Refresh();
 
 
-            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
             dxfReaderNETControl1.DXF.Modified = true;
         }
 
@@ -9749,7 +9591,7 @@ namespace DXFReaderNETDemoProgram
             }
             dxfReaderNETControl1.Refresh();
 
-            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
             dxfReaderNETControl1.DXF.Modified = true;
         }
 
@@ -9810,7 +9652,7 @@ namespace DXFReaderNETDemoProgram
             }
             dxfReaderNETControl1.Refresh();
 
-            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
             dxfReaderNETControl1.DXF.Modified = true;
         }
 
@@ -10037,7 +9879,7 @@ namespace DXFReaderNETDemoProgram
                         if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
                         {
                             dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
-                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                         }
 
                         dxfReaderNETControl1.HighLight(ent);
@@ -10869,7 +10711,7 @@ namespace DXFReaderNETDemoProgram
                     }
                     dxfReaderNETControl1.Refresh();
 
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                     dxfReaderNETControl1.DXF.Modified = true;
                 }
             }
@@ -11475,10 +11317,7 @@ namespace DXFReaderNETDemoProgram
             ribbonUpDownZoomFactor.TextBoxText = value.ToString("##0");
         }
 
-        private void ribbonButtonCheckContHighligh_Click(object sender, EventArgs e)
-        {
-            dxfReaderNETControl1.ContinuousHighlight = ribbonButtonCheckContHighligh.Checked;
-        }
+       
 
         private void ribbonButton11_Click_1(object sender, EventArgs e)
         {
@@ -12680,7 +12519,7 @@ namespace DXFReaderNETDemoProgram
             double ExternalArea = 0;
             double InternalLenght = 0;
             double InternalArea = 0;
-            bool ret = MathHelper.FindClosedAreaData(dxfReaderNETControl1.DXF.Entities, out ExternalLenght, out ExternalArea, out InternalLenght, out InternalArea, out InternalCountoursNumber);
+            bool ret = MathHelper.FindClosedAreaData(dxfReaderNETControl1.DXF.Entities.ToList(), out ExternalLenght, out ExternalArea, out InternalLenght, out InternalArea, out InternalCountoursNumber);
 
             if (ret)
             {
@@ -12772,7 +12611,7 @@ namespace DXFReaderNETDemoProgram
                         }
 
                     }
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
 
 
                     dxfReaderNETControl1.HighLight(dxfReaderNETControl1.DXF.SelectedEntities);
@@ -12930,7 +12769,7 @@ namespace DXFReaderNETDemoProgram
 
 
             myDXF.HighLight(myDXF.DXF.SelectedEntities);
-            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
 
 
         }
@@ -13001,7 +12840,7 @@ namespace DXFReaderNETDemoProgram
 
                     }
 
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                 }
             }
         }
@@ -13082,7 +12921,7 @@ namespace DXFReaderNETDemoProgram
             myDXF.DXF.SelectedEntities.Clear();
 
             myDXF.DXF.SelectedEntities.AddRange(EntitiesToDelete);
-            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
             myDXF.HighLight(myDXF.DXF.SelectedEntities);
 
         }
@@ -14362,7 +14201,7 @@ namespace DXFReaderNETDemoProgram
                         }
 
                     }
-                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                    ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
 
 
                     dxfReaderNETControl1.HighLight(dxfReaderNETControl1.DXF.SelectedEntities);
@@ -14907,7 +14746,7 @@ namespace DXFReaderNETDemoProgram
                         if (!dxfReaderNETControl1.DXF.SelectedEntities.Contains(ent))
                         {
                             dxfReaderNETControl1.DXF.SelectedEntities.Add(ent);
-                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitesSelected();
+                            ribbonButtonShowSelectedEntitiesInfo.Enabled = EntitiesSelected();
                         }
 
                         dxfReaderNETControl1.HighLight(ent);

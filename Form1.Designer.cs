@@ -292,6 +292,7 @@
             this.ribbonButtonInquiryMeasurecenter = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonInquiryMeasureAreaSelected = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonInquiryMeasureFilledEmpty = new System.Windows.Forms.RibbonButton();
+            this.ribbonButtonInquiryShowHistory = new System.Windows.Forms.RibbonButton();
             this.ribbonDrawingInfo = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonInquiryEntityInfo = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonShowSelectedEntitiesInfo = new System.Windows.Forms.RibbonButton();
@@ -387,7 +388,6 @@
             this.ribbonButtonCommandLine = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonDrawingLimits = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonHighlight = new System.Windows.Forms.RibbonButton();
-            this.ribbonButtonCheckContHighligh = new System.Windows.Forms.RibbonButton();
             this.ribbonButton11 = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonShowExtents = new System.Windows.Forms.RibbonButton();
             this.ribbonButtonGridInsideLimits = new System.Windows.Forms.RibbonButton();
@@ -466,7 +466,6 @@
             this.panelCommands = new System.Windows.Forms.Panel();
             this.txtCommand = new System.Windows.Forms.TextBox();
             this.labelCommands = new System.Windows.Forms.Label();
-            this.ribbonButtonInquiryShowHistory = new System.Windows.Forms.RibbonButton();
             this.statusStrip1.SuspendLayout();
             this.toolStripPlotPreview.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -3544,6 +3543,16 @@
             this.ribbonButtonInquiryMeasureFilledEmpty.Text = "Filled and empty areas";
             this.ribbonButtonInquiryMeasureFilledEmpty.Click += new System.EventHandler(this.ribbonButtonInquiryMeasureFilledEmpty_Click);
             // 
+            // ribbonButtonInquiryShowHistory
+            // 
+            this.ribbonButtonInquiryShowHistory.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.ribbonButtonInquiryShowHistory.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryShowHistory.Image")));
+            this.ribbonButtonInquiryShowHistory.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryShowHistory.LargeImage")));
+            this.ribbonButtonInquiryShowHistory.Name = "ribbonButtonInquiryShowHistory";
+            this.ribbonButtonInquiryShowHistory.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryShowHistory.SmallImage")));
+            this.ribbonButtonInquiryShowHistory.Text = "Show history";
+            this.ribbonButtonInquiryShowHistory.Click += new System.EventHandler(this.ribbonButtonInquiryShowHistory_Click);
+            // 
             // ribbonDrawingInfo
             // 
             this.ribbonDrawingInfo.Image = ((System.Drawing.Image)(resources.GetObject("ribbonDrawingInfo.Image")));
@@ -4486,7 +4495,6 @@
             this.ribbonPanelAspect.Items.Add(this.ribbonButtonCommandLine);
             this.ribbonPanelAspect.Items.Add(this.ribbonButtonDrawingLimits);
             this.ribbonPanelAspect.Items.Add(this.ribbonButtonHighlight);
-            this.ribbonPanelAspect.Items.Add(this.ribbonButtonCheckContHighligh);
             this.ribbonPanelAspect.Items.Add(this.ribbonButton11);
             this.ribbonPanelAspect.Items.Add(this.ribbonButtonShowExtents);
             this.ribbonPanelAspect.Items.Add(this.ribbonButtonGridInsideLimits);
@@ -4628,21 +4636,6 @@
             this.ribbonButtonHighlight.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonHighlight.ToolTipImage")));
             this.ribbonButtonHighlight.ToolTipTitle = "Highlight on hover";
             this.ribbonButtonHighlight.Click += new System.EventHandler(this.ribbonButtonHighlight_Click);
-            // 
-            // ribbonButtonCheckContHighligh
-            // 
-            this.ribbonButtonCheckContHighligh.CheckOnClick = true;
-            this.ribbonButtonCheckContHighligh.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonCheckContHighligh.Image")));
-            this.ribbonButtonCheckContHighligh.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonCheckContHighligh.LargeImage")));
-            this.ribbonButtonCheckContHighligh.MaxSizeMode = System.Windows.Forms.RibbonElementSizeMode.Medium;
-            this.ribbonButtonCheckContHighligh.MinSizeMode = System.Windows.Forms.RibbonElementSizeMode.Compact;
-            this.ribbonButtonCheckContHighligh.Name = "ribbonButtonCheckContHighligh";
-            this.ribbonButtonCheckContHighligh.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonCheckContHighligh.SmallImage")));
-            this.ribbonButtonCheckContHighligh.Text = "Continuous highlight";
-            this.ribbonButtonCheckContHighligh.ToolTip = "Sets if then highlighted entities are continuosly shown after zoom or redraw";
-            this.ribbonButtonCheckContHighligh.ToolTipImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonCheckContHighligh.ToolTipImage")));
-            this.ribbonButtonCheckContHighligh.ToolTipTitle = "Continuous highlight";
-            this.ribbonButtonCheckContHighligh.Click += new System.EventHandler(this.ribbonButtonCheckContHighligh_Click);
             // 
             // ribbonButton11
             // 
@@ -5330,8 +5323,9 @@
             // 
             this.dxfReaderNETControl1.AutoSize = true;
             this.dxfReaderNETControl1.ContextMenuStrip = this.contextMenuStrip1;
-            this.dxfReaderNETControl1.ContinuousHighlight = false;
             this.dxfReaderNETControl1.CustomCursor = DXFReaderNET.CustomCursorType.None;
+            this.dxfReaderNETControl1.CustomCursorColor = System.Drawing.Color.White;
+            this.dxfReaderNETControl1.DistributionCode = "";
             this.dxfReaderNETControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             dxfDocument1.ActiveLayout = "Model";
             dxfDocument1.Comments = null;
@@ -5360,6 +5354,7 @@
             rasterVariables1.Owner = null;
             rasterVariables1.Units = DXFReaderNET.ImageUnits.Unitless;
             dxfDocument1.RasterVariables = rasterVariables1;
+            dxfDocument1.SortentsTables = null;
             dxfDocument1.ThumbnailImage = null;
             dxfDocument1.TotalEditTime = new System.DateTime(2020, 5, 25, 0, 0, 0, 0);
             dxfDocument1.TotalEditTimeDays = 0;
@@ -5367,13 +5362,16 @@
             dxfDocument1.UserTimerDays = 0;
             this.dxfReaderNETControl1.DXF = dxfDocument1;
             this.dxfReaderNETControl1.FileName = null;
+            this.dxfReaderNETControl1.GrabPointsSize = 8;
             this.dxfReaderNETControl1.HighlightEntityOnHover = true;
-           
+            this.dxfReaderNETControl1.HighlightGrabPointsOnHover = false;
+            this.dxfReaderNETControl1.HighlightGrabPointsOnHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(163)))), ((int)(((byte)(0)))));
             this.dxfReaderNETControl1.HighlightMarkerColor2 = System.Drawing.Color.Magenta;
             this.dxfReaderNETControl1.HighlightNotContinuous = false;
             this.dxfReaderNETControl1.Location = new System.Drawing.Point(0, 0);
             this.dxfReaderNETControl1.Margin = new System.Windows.Forms.Padding(4);
             this.dxfReaderNETControl1.Name = "dxfReaderNETControl1";
+            this.dxfReaderNETControl1.RubberBandColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(150)))), ((int)(((byte)(150)))));
             this.dxfReaderNETControl1.ShowAxes = false;
             this.dxfReaderNETControl1.ShowGridRuler = false;
             this.dxfReaderNETControl1.Size = new System.Drawing.Size(198, 272);
@@ -5507,16 +5505,6 @@
             this.labelCommands.TabIndex = 22;
             this.labelCommands.Text = "Commands";
             this.labelCommands.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
-            // 
-            // ribbonButtonInquiryShowHistory
-            // 
-            this.ribbonButtonInquiryShowHistory.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
-            this.ribbonButtonInquiryShowHistory.Image = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryShowHistory.Image")));
-            this.ribbonButtonInquiryShowHistory.LargeImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryShowHistory.LargeImage")));
-            this.ribbonButtonInquiryShowHistory.Name = "ribbonButtonInquiryShowHistory";
-            this.ribbonButtonInquiryShowHistory.SmallImage = ((System.Drawing.Image)(resources.GetObject("ribbonButtonInquiryShowHistory.SmallImage")));
-            this.ribbonButtonInquiryShowHistory.Text = "Show history";
-            this.ribbonButtonInquiryShowHistory.Click += new System.EventHandler(this.ribbonButtonInquiryShowHistory_Click);
             // 
             // Form1
             // 
@@ -5901,7 +5889,6 @@
         private System.Windows.Forms.RibbonButton ribbonButtonPrintEntitiesList;
         private System.Windows.Forms.RibbonButton ribbonButtonArcStartEndMiddle;
         private System.Windows.Forms.RibbonUpDown ribbonUpDownZoomFactor;
-        private System.Windows.Forms.RibbonButton ribbonButtonCheckContHighligh;
         private System.Windows.Forms.RibbonButton ribbonButton11;
         private System.Windows.Forms.RibbonSeparator ribbonSeparator19;
         private System.Windows.Forms.RibbonButton ribbonButtonTables;
